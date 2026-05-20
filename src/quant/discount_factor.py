@@ -2,6 +2,8 @@ import datetime
 # Absolute import from your project root
 from src.quant.day_counter import calculate_year_fraction
 
+
+
 def calculate_discount_factor(rate: float, time_fraction: float) -> float:
     """
     Pure Math: Calculates the present value of $1 received at a specific future time.
@@ -15,13 +17,9 @@ def calculate_discount_factor(rate: float, time_fraction: float) -> float:
         
     return 1.0 / ((1.0 + rate) ** time_fraction)
 
-def calculate_df_from_dates(
-    rate: float, 
-    start_date: datetime.date, 
-    end_date: datetime.date, 
-    convention: str,
-    frequency: int = None
-) -> float:
+
+
+def calculate_df_from_dates(rate: float, start_date: datetime.date, end_date: datetime.date, convention: str,frequency: int = None) -> float:
     """
     Integration: Bridges the calendar logic with the financial math.
     Automatically calculates the day count fraction and returns the discount factor.
@@ -31,6 +29,7 @@ def calculate_df_from_dates(
     
     # 2. Feed that fraction into the pure discounting formula
     return calculate_discount_factor(rate, time_fraction=t)
+
 
 
 # --- Execution and Proof Block ---
