@@ -7,7 +7,7 @@ sys.path.append(project_root)
 
 # Now Python can safely find the 'src' folder
 from src.data.csv_to_py import DataParser
-from src.curve_builder import CurveBuilder
+from curve_builder import CurveBuilder
 from src.quant.day_counter import calculate_year_fraction
 from src.quant.discount_factor import calculate_discount_factor, calculate_df_from_dates
 from src.quant.stub_factor import interpolate_stub_rates_linearly, calculate_stub_present_value
@@ -25,16 +25,14 @@ def main():
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
     # Import your custom classes
-    # Adjust the import paths if your file names differ slightly
-    from src.data.csv_to_py import MarketDataParser
-    from src.curve_builder import CurveBuilder
+    # Adjust the import paths if your fi
 
     def run_curve_pipeline():
         print("--- Starting Yield Curve Pipeline ---")
         
         # 1. Initialize the Parser
         # Update these paths if your csv/json are stored in a different folder
-        parser = MarketDataParser(data_path="data.csv", config_path="config.json")
+        parser = DataParser(data_path="data/data.csv", config_path="data/config.json")
         
         # 2. Load the Data
         parser.load_configuration()

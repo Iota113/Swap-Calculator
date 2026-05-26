@@ -87,6 +87,7 @@ class CurveBuilder:
             'discount_factor': final_discount_factor,
             'zero_rate': zero_rate
         })
+        self.plot_curve(self)
 
     def _tenor_to_date(self, tenor_str):
         """Helper to convert standard market strings ('5Y', '1W', 'O/N') into exact dates."""
