@@ -16,6 +16,9 @@ class FuturesCurveBuilder:
         self.freq = config['payment_frequency']
         self.interpolation_method = config['interpolation_method']
         
+        # Pulls the cutoff from config, defaults to 2.0 if you forget to add it
+        self.futures_cutoff_years = config.get('futures_cutoff_years', 2.0)
+        
         # T=0 always has a discount factor of 1.0
         self.discount_factors = {0.0: 1.0}
 
@@ -43,7 +46,6 @@ class FuturesCurveBuilder:
 
     def _parse_imm_future(self, tenor_str):
         """Parses quarterly IMM future ticker (e.g., SR3M6) to start and maturity dates."""
-        # Standard IMM Delivery Months
         month_codes = {'H': 3, 'M': 6, 'U': 9, 'Z': 12}
         
         month_char = tenor_str[-2].upper()
@@ -51,7 +53,6 @@ class FuturesCurveBuilder:
         
         month = month_codes.get(month_char, 3)
         
-        # Calculate the settlement year based on the current decade of the trade date
         trade_year = self.trade_date.year
         decade = (trade_year // 10) * 10
         target_year = decade + year_digit
@@ -59,13 +60,11 @@ class FuturesCurveBuilder:
         if target_year < trade_year:
             target_year += 10
             
-        # Standard IMM settlement is the 3rd Wednesday of the delivery month
         imm_date = datetime.date(target_year, month, 15)
-        while imm_date.weekday() != 2:  # 2 == Wednesday
+        while imm_date.weekday() != 2:  
             imm_date += datetime.timedelta(days=1)
             
         start_date = imm_date
-        # 3-month reference period for the underlying rate
         maturity_date = start_date + relativedelta(months=3)
         
         return start_date, maturity_date
@@ -82,7 +81,6 @@ class FuturesCurveBuilder:
     def _process_futures(self):
         futures_data = [d for d in self.market_data if d['Instrument'] == 'Future']
         
-        # Calculate dates before sorting to ensure chronological processing
         for item in futures_data:
             start_date, mat_date = self._parse_imm_future(item['Tenor'])
             item['parsed_start_date'] = start_date
@@ -94,6 +92,11 @@ class FuturesCurveBuilder:
             t_start = calculate_year_fraction(self.trade_date, item['parsed_start_date'], self.convention)
             t_end = calculate_year_fraction(self.trade_date, item['parsed_mat_date'], self.convention)
             
+            # THE CUTOFF RULE: Ignores futures extending beyond the user-defined boundary
+            # The +0.1 buffer accounts for IMM dates not landing exactly on perfect year fractions
+            if t_end > self.futures_cutoff_years + 0.1:
+                continue
+            
             tau = t_end - t_start 
             implied_forward_rate = (100.0 - item['Quote']) / 100.0
             
@@ -102,7 +105,6 @@ class FuturesCurveBuilder:
                 df_end = df_start / (1.0 + implied_forward_rate * tau)
                 self.discount_factors[t_end] = df_end
             else:
-                # Interpolate df_start if it falls between existing gridpoints
                 df_start = self._get_discount_factor(t_start)
                 df_end = df_start / (1.0 + implied_forward_rate * tau)
                 self.discount_factors[t_end] = df_end
@@ -118,6 +120,11 @@ class FuturesCurveBuilder:
         for item in swap_data:
             mat_date = item['parsed_mat_date']
             t_maturity = calculate_year_fraction(self.trade_date, mat_date, self.convention)
+            
+            # THE CUTOFF RULE: Skips overlapping swaps 
+            if t_maturity <= self.futures_cutoff_years + 0.1:
+                continue
+
             par_rate = item['CleanedRate']
             
             schedule = self._generate_forward_schedule(mat_date)
@@ -171,7 +178,9 @@ class FuturesCurveBuilder:
             print("No curve data to display. Execute build_curve() first.")
             return
 
-        times = np.array(sorted(self.discount_factors.keys()))
+        # 1. Filter out t=0 to avoid the artificial origin anchor
+        valid_times = [t for t in sorted(self.discount_factors.keys()) if t > 0]
+        times = np.array(valid_times)
         dfs = np.array([self.discount_factors[t] for t in times])
         
         # Generate more smooth points specifically weighted towards the short end
@@ -180,25 +189,24 @@ class FuturesCurveBuilder:
         # Make the canvas slightly wider to accommodate the new labels
         plt.figure(figsize=(12, 6))
 
-        # --- 1. DEFINE CUSTOM GRID POINTS ---
+        # --- 2. DEFINE CUSTOM GRID POINTS (Removed 0.0) ---
         month_ticks = [i / 12.0 for i in range(1, 13)]  # 1M to 12M
         year_ticks = [2, 3, 5, 7, 10, 15, 20, 30]       # 2Y to 30Y
-        custom_ticks = [0.0] + month_ticks + year_ticks
+        custom_ticks = month_ticks + year_ticks
         
         # Create readable string labels for the axis
-        custom_labels = ['0'] + [f"{i}M" for i in range(1, 13)] + [f"{i}Y" for i in year_ticks]
+        custom_labels = [f"{i}M" for i in range(1, 13)] + [f"{i}Y" for i in year_ticks]
 
         if plot_type == 'zero_rate':
-            rates = np.array([
-                0.0 if t == 0 else (-np.log(df) / t) * 100 for t, df in zip(times, dfs)
-            ])
+            # Simplified calculation since t=0 is no longer in the array
+            rates = np.array([(-np.log(df) / t) * 100 for t, df in zip(times, dfs)])
 
             if len(times) >= 3:
                 curve = CubicSplineCurve(times, rates)
                 rates_smooth = curve.evaluate(times_smooth)
-                plt.plot(times_smooth, rates_smooth, '-', color='b', label='Smoothed Spline Zero Curve')
+                plt.plot(times_smooth, rates_smooth, linestyle='-', color='b', label='Smoothed Spline Zero Curve')
             else:
-                plt.plot(times, rates, '--', color='b', label='Linear Zero Curve')
+                plt.plot(times, rates, linestyle='--', color='b', label='Linear Zero Curve')
 
             plt.scatter(times, rates, color='red', zorder=5, label='Bootstrapped Knots')
             plt.ylabel('Continuous Zero Rate (%)', fontsize=12)
@@ -208,16 +216,16 @@ class FuturesCurveBuilder:
             if len(times) >= 3:
                 curve = CubicSplineCurve(times, dfs)
                 dfs_smooth = curve.evaluate(times_smooth)
-                plt.plot(times_smooth, dfs_smooth, '-', color='g', label='Smoothed Spline DF Curve')
+                plt.plot(times_smooth, dfs_smooth, linestyle='-', color='g', label='Smoothed Spline DF Curve')
             else:
-                plt.plot(times, dfs, '--', color='g', label='Linear DF Curve')
+                plt.plot(times, dfs, linestyle='--', color='g', label='Linear DF Curve')
 
             plt.scatter(times, dfs, color='red', zorder=5, label='Bootstrapped Knots')
             plt.ylabel('Discount Factor D(0, T)', fontsize=12)
             plt.title('Discount Factor Curve', fontsize=14, fontweight='bold')
 
-        # --- 2. APPLY ADVANCED AXIS SCALING ---
-        # Stretches the 0-1.5 year range linearly, compresses the 2-30 year range logarithmically
+        # --- 3. APPLY ADVANCED AXIS SCALING ---
+        # Stretches the short end linearly, compresses the long end logarithmically
         plt.xscale('symlog', linthresh=1.5)
         
         # Apply our custom markers and rotate them so they do not overlap
@@ -227,6 +235,5 @@ class FuturesCurveBuilder:
         plt.grid(True, linestyle='--', alpha=0.7)
         plt.legend()
         
-        # Ensures the rotated X-axis labels aren't cut off at the bottom of the window
         plt.tight_layout() 
         plt.show(block=True)
