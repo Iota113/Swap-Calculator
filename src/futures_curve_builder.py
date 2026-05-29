@@ -25,23 +25,170 @@ class FuturesCurveBuilder:
         self._process_swaps()
         return self.discount_factors
     
+    def _tenor_to_date(self, tenor_str):
+        """Converts standard cash/swap tenors to maturity dates."""
+        tenor_str = tenor_str.upper().strip()
+        if tenor_str in ('O/N', 'OVERNIGHT'): 
+            return self.trade_date + relativedelta(days=1)
+        try:
+            value = int(tenor_str[:-1])
+            unit = tenor_str[-1]
+            if unit == 'Y': return self.trade_date + relativedelta(years=value)
+            elif unit == 'M': return self.trade_date + relativedelta(months=value)
+            elif unit == 'W': return self.trade_date + relativedelta(weeks=value)
+            elif unit == 'D': return self.trade_date + relativedelta(days=value)
+            else: raise ValueError(f"Unknown unit: {unit}")
+        except ValueError: 
+            raise ValueError(f"Error parsing tenor string: {tenor_str}")
+
+    def _parse_imm_future(self, tenor_str):
+        """Parses quarterly IMM future ticker (e.g., SR3M6) to start and maturity dates."""
+        # Standard IMM Delivery Months
+        month_codes = {'H': 3, 'M': 6, 'U': 9, 'Z': 12}
+        
+        month_char = tenor_str[-2].upper()
+        year_digit = int(tenor_str[-1])
+        
+        month = month_codes.get(month_char, 3)
+        
+        # Calculate the settlement year based on the current decade of the trade date
+        trade_year = self.trade_date.year
+        decade = (trade_year // 10) * 10
+        target_year = decade + year_digit
+        
+        if target_year < trade_year:
+            target_year += 10
+            
+        # Standard IMM settlement is the 3rd Wednesday of the delivery month
+        imm_date = datetime.date(target_year, month, 15)
+        while imm_date.weekday() != 2:  # 2 == Wednesday
+            imm_date += datetime.timedelta(days=1)
+            
+        start_date = imm_date
+        # 3-month reference period for the underlying rate
+        maturity_date = start_date + relativedelta(months=3)
+        
+        return start_date, maturity_date
+
+    def _process_cash_rates(self):
+        cash_data = [d for d in self.market_data if d['Instrument'] == 'Cash']
+        
+        for item in cash_data:
+            mat_date = self._tenor_to_date(item['Tenor'])
+            t = calculate_year_fraction(self.trade_date, mat_date, self.convention)
+            df = 1.0 / (1.0 + item['CleanedRate'] * t)
+            self.discount_factors[t] = df
+
+    def _process_futures(self):
+        futures_data = [d for d in self.market_data if d['Instrument'] == 'Future']
+        
+        # Calculate dates before sorting to ensure chronological processing
+        for item in futures_data:
+            start_date, mat_date = self._parse_imm_future(item['Tenor'])
+            item['parsed_start_date'] = start_date
+            item['parsed_mat_date'] = mat_date
+            
+        futures_data.sort(key=lambda x: x['parsed_start_date'])
+        
+        for item in futures_data:
+            t_start = calculate_year_fraction(self.trade_date, item['parsed_start_date'], self.convention)
+            t_end = calculate_year_fraction(self.trade_date, item['parsed_mat_date'], self.convention)
+            
+            tau = t_end - t_start 
+            implied_forward_rate = (100.0 - item['Quote']) / 100.0
+            
+            if t_start in self.discount_factors:
+                df_start = self.discount_factors[t_start]
+                df_end = df_start / (1.0 + implied_forward_rate * tau)
+                self.discount_factors[t_end] = df_end
+            else:
+                # Interpolate df_start if it falls between existing gridpoints
+                df_start = self._get_discount_factor(t_start)
+                df_end = df_start / (1.0 + implied_forward_rate * tau)
+                self.discount_factors[t_end] = df_end
+
+    def _process_swaps(self):
+        swap_data = [d for d in self.market_data if d['Instrument'] == 'Swap']
+        
+        for item in swap_data:
+            item['parsed_mat_date'] = self._tenor_to_date(item['Tenor'])
+            
+        swap_data.sort(key=lambda x: x['parsed_mat_date'])
+        
+        for item in swap_data:
+            mat_date = item['parsed_mat_date']
+            t_maturity = calculate_year_fraction(self.trade_date, mat_date, self.convention)
+            par_rate = item['CleanedRate']
+            
+            schedule = self._generate_forward_schedule(mat_date)
+            running_coupon_pv = 0.0
+            prev_date = self.trade_date
+            
+            for current_date in schedule[:-1]:
+                t_i = calculate_year_fraction(self.trade_date, current_date, self.convention)
+                tau_i = calculate_year_fraction(prev_date, current_date, self.convention)
+                
+                df_i = self._get_discount_factor(t_i)
+                
+                running_coupon_pv += tau_i * df_i
+                prev_date = current_date
+                
+            tau_n = calculate_year_fraction(prev_date, mat_date, self.convention)
+            
+            numerator = 1.0 - (par_rate * running_coupon_pv)
+            denominator = 1.0 + (par_rate * tau_n)
+            final_df = numerator / denominator
+            
+            self.discount_factors[t_maturity] = final_df
+
+    def _get_discount_factor(self, t):
+        """Continuous getter that applies zero-rate interpolation for missing nodes."""
+        if t in self.discount_factors:
+            return self.discount_factors[t]
+        
+        known_times = sorted(self.discount_factors.keys())
+        zero_rates = [
+            0.0 if t_known == 0 else -np.log(self.discount_factors[t_known]) / t_known 
+            for t_known in known_times
+        ]
+        
+        interpolated_zero = float(np.interp(t, known_times, zero_rates))
+        return np.exp(-interpolated_zero * t)
+
+    def _generate_forward_schedule(self, maturity_date):
+        months_step = int(12 / self.freq)
+        schedule = []
+        current_date = maturity_date
+        while current_date > self.trade_date:
+            schedule.append(current_date)
+            current_date -= relativedelta(months=months_step)
+        schedule.reverse()
+        return schedule
+        
     def plot_curve(self, plot_type='zero_rate'):
         """Plots the yield curve using CubicSplineCurve over verified knots."""
         if not self.discount_factors:
             print("No curve data to display. Execute build_curve() first.")
             return
 
-        # 1. Extract sorted times and corresponding discount factors
         times = np.array(sorted(self.discount_factors.keys()))
         dfs = np.array([self.discount_factors[t] for t in times])
+        
+        # Generate more smooth points specifically weighted towards the short end
+        times_smooth = np.linspace(times.min(), times.max(), 1000)
 
-        # 2. Generate smooth points for plotting the continuous line
-        times_smooth = np.linspace(times.min(), times.max(), 500)
+        # Make the canvas slightly wider to accommodate the new labels
+        plt.figure(figsize=(12, 6))
 
-        plt.figure(figsize=(10, 6))
+        # --- 1. DEFINE CUSTOM GRID POINTS ---
+        month_ticks = [i / 12.0 for i in range(1, 13)]  # 1M to 12M
+        year_ticks = [2, 3, 5, 7, 10, 15, 20, 30]       # 2Y to 30Y
+        custom_ticks = [0.0] + month_ticks + year_ticks
+        
+        # Create readable string labels for the axis
+        custom_labels = ['0'] + [f"{i}M" for i in range(1, 13)] + [f"{i}Y" for i in year_ticks]
 
         if plot_type == 'zero_rate':
-            # Calculate zero rates, handling T=0 to avoid division by zero
             rates = np.array([
                 0.0 if t == 0 else (-np.log(df) / t) * 100 for t, df in zip(times, dfs)
             ])
@@ -69,98 +216,17 @@ class FuturesCurveBuilder:
             plt.ylabel('Discount Factor D(0, T)', fontsize=12)
             plt.title('Discount Factor Curve', fontsize=14, fontweight='bold')
 
-        plt.xlabel('Time (Years)', fontsize=12)
+        # --- 2. APPLY ADVANCED AXIS SCALING ---
+        # Stretches the 0-1.5 year range linearly, compresses the 2-30 year range logarithmically
+        plt.xscale('symlog', linthresh=1.5)
+        
+        # Apply our custom markers and rotate them so they do not overlap
+        plt.xticks(custom_ticks, custom_labels, rotation=45, fontsize=9)
+        
+        plt.xlabel('Tenor', fontsize=12)
         plt.grid(True, linestyle='--', alpha=0.7)
         plt.legend()
-        plt.show()
-
-    def _process_cash_rates(self):
-        cash_data = [d for d in self.market_data if d['type'] == 'Cash']
         
-        for item in cash_data:
-            t = calculate_year_fraction(self.trade_date, item['maturity_date'], self.convention)
-            df = 1.0 / (1.0 + item['rate'] * t)
-            self.discount_factors[t] = df
-
-    def _process_futures(self):
-        futures_data = [d for d in self.market_data if d['type'] == 'Future']
-        futures_data.sort(key=lambda x: x['start_date'])
-        
-        for item in futures_data:
-            t_start = calculate_year_fraction(self.trade_date, item['start_date'], self.convention)
-            t_end = calculate_year_fraction(self.trade_date, item['maturity_date'], self.convention)
-            
-            # The duration of the future in years
-            tau = t_end - t_start 
-            implied_forward_rate = (100.0 - item['price']) / 100.0
-            
-            if t_start in self.discount_factors:
-                df_start = self.discount_factors[t_start]
-                df_end = df_start / (1.0 + implied_forward_rate * tau)
-                self.discount_factors[t_end] = df_end
-            else:
-                # If t_start does not perfectly align with a previously calculated grid point,
-                # you must interpolate the discount curve to find df_start here.
-                pass
-
-    def _process_swaps(self):
-        swap_data = [d for d in self.market_data if d['type'] == 'Swap']
-        swap_data.sort(key=lambda x: x['maturity_date'])
-        
-        for item in swap_data:
-            mat_date = item['maturity_date']
-            t_maturity = calculate_year_fraction(self.trade_date, mat_date, self.convention)
-            par_rate = item['rate']
-            
-            # Using the analytical bootstrap logic you provided
-            schedule = self._generate_forward_schedule(mat_date)
-            running_coupon_pv = 0.0
-            prev_date = self.trade_date
-            
-            for current_date in schedule[:-1]:
-                t_i = calculate_year_fraction(self.trade_date, current_date, self.convention)
-                tau_i = calculate_year_fraction(prev_date, current_date, self.convention)
-                
-                # Fetch or interpolate the discount factor
-                df_i = self._get_discount_factor(t_i)
-                
-                running_coupon_pv += tau_i * df_i
-                prev_date = current_date
-                
-            tau_n = calculate_year_fraction(prev_date, mat_date, self.convention)
-            
-            numerator = 1.0 - (par_rate * running_coupon_pv)
-            denominator = 1.0 + (par_rate * tau_n)
-            final_df = numerator / denominator
-            
-            self.discount_factors[t_maturity] = final_df
-
-    def _get_discount_factor(self, t):
-        """Continuous getter that applies zero-rate interpolation for missing nodes."""
-        if t in self.discount_factors:
-            return self.discount_factors[t]
-        
-        # Convert all known DFs to zero rates for smooth interpolation
-        known_times = sorted(self.discount_factors.keys())
-        # Prevent division by zero for T=0
-        zero_rates = [
-            0.0 if t_known == 0 else -np.log(self.discount_factors[t_known]) / t_known 
-            for t_known in known_times
-        ]
-        
-        # Stolen and adapted interpolation logic
-        interpolated_zero = float(np.interp(t, known_times, zero_rates))
-        
-        # Convert back to discount factor
-        return np.exp(-interpolated_zero * t)
-
-    def _generate_forward_schedule(self, maturity_date):
-        """Stolen directly from curve_builder.py"""
-        months_step = int(12 / self.freq)
-        schedule = []
-        current_date = maturity_date
-        while current_date > self.trade_date:
-            schedule.append(current_date)
-            current_date -= relativedelta(months=months_step)
-        schedule.reverse()
-        return schedule
+        # Ensures the rotated X-axis labels aren't cut off at the bottom of the window
+        plt.tight_layout() 
+        plt.show(block=True)

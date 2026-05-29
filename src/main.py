@@ -9,6 +9,7 @@ sys.path.append(project_root)
 from src.data.csv_to_py import DataParser
 from curve_builder import CurveBuilder
 from futures_curve_builder import FuturesCurveBuilder
+
 # from src.quant.day_counter import calculate_year_fraction
 # from src.quant.discount_factor import calculate_discount_factor, calculate_df_from_dates
 # from src.quant.stub_factor import interpolate_stub_rates_linearly, calculate_stub_present_value
@@ -78,8 +79,43 @@ def run_curve_builder_w_futures(market_data, config, plot_type='zero_rate'):
     # Optional: Return the calculated data if you need to use it elsewhere in your script
     return discount_factors
 
+def run_curve_builder(plot_type='zero_rate'):
+    print("--- Starting Futures Curve Pipeline ---")
+
+    parser = DataParser(data_path="src/data/real-data.csv", config_path="src/data/config.json")
+    parser.load_configuration()
+    parser.load_market_data()
+
+    if parser.curve_data.empty or not parser.settings:
+        print("Error: Pipeline halted due to missing data or configuration.")
+        return
+
+    print("\n--- Initializing Futures Curve Builder ---")
+    try:
+        market_data_records = parser.curve_data.to_dict(orient='records')
+
+        # 1. Instantiate the builder
+        builder = FuturesCurveBuilder(
+            market_data=market_data_records,
+            config=parser.settings
+        )
+        
+        # 2. Build the curve and capture the output
+        discount_factors = builder.build_curve()
+        
+        # 3. Trigger the plot
+        builder.plot_curve(plot_type=plot_type)
+        
+        print("Futures curve complete. Discount factors calculated successfully.")
+        return discount_factors
+        
+    except Exception as e:
+        print(f"Error during futures curve build: {e}")
+        return
+    
 if __name__ == "__main__":
-    run_curve_pipeline()
+    #run_curve_pipeline()
+    run_curve_builder()
     # run_curve_builder_w_futures()     -- MIGHT OR MIGHT NOT WORK
 
 # if __name__ == "__main__":
