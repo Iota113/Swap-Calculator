@@ -3,3 +3,8 @@ darkdetect==0.8.0
 packaging==26.2
 flask
 gunicorn
+numpy
+pandas
+scipy
+python-dateutil
+matplotlib
