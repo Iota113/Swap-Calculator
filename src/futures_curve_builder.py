@@ -16,7 +16,6 @@ class FuturesCurveBuilder:
         self.freq = config['payment_frequency']
         self.interpolation_method = config['interpolation_method']
         
-        # Pulls the cutoff from config, defaults to 2.0 if you forget to add it
         self.futures_cutoff_years = config.get('futures_cutoff_years', 2.0)
         
         # T=0 always has a discount factor of 1.0
