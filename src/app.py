@@ -84,18 +84,11 @@ def calculate():
                     'error': f"Row {idx + 1} ({tenor}): Quote value must be a valid number. Got '{quote_val}'"
                 }), 400
                 
-            # Clean quote rates
-            if inst in ['Cash', 'Swap']:
-                cleaned_rate = quote / 100.0
-            else: # Future
-                cleaned_rate = (100.0 - quote) / 100.0
-                
             market_data_records.append({
                 'Instrument': inst,
                 'Tenor': tenor,
                 'QuoteType': quote_type,
-                'Quote': quote,
-                'CleanedRate': cleaned_rate
+                'Quote': quote
             })
 
         # 3. Build interest rate curve

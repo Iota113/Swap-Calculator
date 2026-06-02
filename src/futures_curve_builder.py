@@ -74,7 +74,7 @@ class FuturesCurveBuilder:
         for item in cash_data:
             mat_date = self._tenor_to_date(item['Tenor'])
             t = calculate_year_fraction(self.trade_date, mat_date, self.convention)
-            df = 1.0 / (1.0 + item['CleanedRate'] * t)
+            df = 1.0 / (1.0 + (item['Quote'] / 100.0) * t)
             self.discount_factors[t] = df
 
     def _process_futures(self):
@@ -124,7 +124,7 @@ class FuturesCurveBuilder:
             if t_maturity <= self.futures_cutoff_years + 0.1:
                 continue
 
-            par_rate = item['CleanedRate']
+            par_rate = item['Quote'] / 100.0
             
             schedule = self._generate_forward_schedule(mat_date)
             running_coupon_pv = 0.0
