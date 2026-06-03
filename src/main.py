@@ -1,8 +1,12 @@
 from data.csv_to_py import DataParser
 from futures_curve_builder import FuturesCurveBuilder
+from quant.swap_pricer import SwapPricer
+import datetime
 
 def main():
     print("=== SWAP CALCULATOR QUICK-TEST SANDBOX ===\n")
+    # This line ensures the curve builder actually runs when main() is called
+    run_curve_builder()
 
 def run_curve_builder(plot_type='zero_rate'):
     print("--- Starting Futures Curve Pipeline ---")
@@ -25,10 +29,27 @@ def run_curve_builder(plot_type='zero_rate'):
         )
         
         discount_factors = builder.build_curve()
+        print("Futures curve complete. Discount factors calculated successfully.")
+
+        # --- NEW SWAP PRICING LOGIC ---
+        print("\n--- Pricing Swap Portfolio ---")
+        pricer = SwapPricer(builder)
+
+        # Example Trade: 10M Notional, 5-Year Maturity, 3.5% Fixed Rate, Payer Swap
+        maturity_date = builder.trade_date + datetime.timedelta(days=5*365)
+        notional = 10000000
+        fixed_rate = 0.035
+        freq = 2
+
+        results = pricer.calculate_dv01(notional, fixed_rate, maturity_date, freq, is_payer=True)
+
+        print(f"Base Swap NPV: ${results['base_npv']:,.2f}")
+        print(f"Shifted NPV (+1bp): ${results['bumped_npv']:,.2f}")
+        print(f"Swap Delta (DV01): ${results['dv01']:,.2f}")
         
+        # Plot the curve at the very end
         builder.plot_curve(plot_type=plot_type)
         
-        print("Futures curve complete. Discount factors calculated successfully.")
         return discount_factors
         
     except Exception as e:
@@ -36,4 +57,5 @@ def run_curve_builder(plot_type='zero_rate'):
         return
     
 if __name__ == "__main__":
-    run_curve_builder()
+    # This triggers the main() function when you run the script
+    main()

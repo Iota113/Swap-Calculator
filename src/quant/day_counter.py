@@ -1,6 +1,8 @@
 import datetime
 import calendar
 from typing import Optional
+from dateutil.relativedelta import relativedelta
+
 
 def calculate_year_fraction(start_date: datetime.date, end_date: datetime.date, convention: str, frequency: Optional[int] = None) -> float:
     """
@@ -70,7 +72,20 @@ def calculate_time_passed(date1:datetime.date, date2:datetime.date):
 
     return (years, months, days)
 
-
+def generate_forward_schedule(trade_date, maturity_date, freq):
+    """
+    Generates a schedule of payment dates working backward from maturity to the trade date.
+    """
+    months_step = int(12 / freq)
+    schedule = []
+    current_date = maturity_date
+    
+    while current_date > trade_date:
+        schedule.append(current_date)
+        current_date -= relativedelta(months=months_step)
+        
+    schedule.reverse()
+    return schedule
 
 if __name__ == "__main__":
     date_start = datetime.date(2024, 2, 15)

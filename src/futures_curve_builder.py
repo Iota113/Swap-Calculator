@@ -1,6 +1,7 @@
 from quant.day_counter import calculate_year_fraction
 from dateutil.relativedelta import relativedelta
 from cubic_spline import CubicSplineCurve 
+from quant.day_counter import calculate_year_fraction, generate_forward_schedule
 
 import matplotlib.pyplot as plt
 import datetime
@@ -126,7 +127,7 @@ class FuturesCurveBuilder:
 
             par_rate = item['Quote'] / 100.0
             
-            schedule = self._generate_forward_schedule(mat_date)
+            schedule = generate_forward_schedule(self.trade_date, mat_date, self.freq)            
             running_coupon_pv = 0.0
             prev_date = self.trade_date
             
@@ -161,15 +162,6 @@ class FuturesCurveBuilder:
         interpolated_zero = float(np.interp(t, known_times, zero_rates))
         return np.exp(-interpolated_zero * t)
 
-    def _generate_forward_schedule(self, maturity_date):
-        months_step = int(12 / self.freq)
-        schedule = []
-        current_date = maturity_date
-        while current_date > self.trade_date:
-            schedule.append(current_date)
-            current_date -= relativedelta(months=months_step)
-        schedule.reverse()
-        return schedule
         
     def plot_curve(self, plot_type='zero_rate'):
         """Plots the yield curve using CubicSplineCurve over verified knots."""
