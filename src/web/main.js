@@ -555,13 +555,24 @@ showDfBtn.addEventListener('click', () => {
 const portfolioTableBody = document.getElementById('portfolio-table-body');
 const addPortfolioRowBtn = document.getElementById('add-portfolio-row');
 
-function addPortfolioRow(notional = 10000000, rate = 3.50, tenor = 5, freq = 2, position = 'payer') {
-    if (!portfolioTableBody) return; // Safety check if the table isn't on the page
+function formatWithCommas(value) {
+    let num = value.replace(/[^0-9.]/g, ''); // Strip everything except numbers and periods
+    if (!num) return '';
+    let parts = num.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+}
+
+function addPortfolioRow(notional = 10000000, rate = "3.50", tenor = 5, freq = 2, position = 'payer') {
+    if (!portfolioTableBody) return; 
     
+    const formattedNotional = formatWithCommas(notional.toString());
     const tr = document.createElement('tr');
+    
+    // Changed inputs to type="text" to allow commas and words like "SOFR"
     tr.innerHTML = `
-        <td><input type="number" class="port-notional" value="${notional}" step="100000"></td>
-        <td><input type="number" class="port-rate" value="${rate}" step="0.01"></td>
+        <td><input type="text" class="port-notional" value="${formattedNotional}" placeholder="10,000,000"></td>
+        <td><input type="text" class="port-rate" value="${rate}" placeholder="3.5 or SOFR + 0.5"></td>
         <td><input type="number" class="port-tenor" value="${tenor}" step="1"></td>
         <td>
             <select class="port-frequency">
@@ -577,11 +588,27 @@ function addPortfolioRow(notional = 10000000, rate = 3.50, tenor = 5, freq = 2, 
                 <option value="receiver" ${position === 'receiver' ? 'selected' : ''}>Receiver</option>
             </select>
         </td>
-        <td><button class="btn btn-danger btn-sm del-port-row" title="Delete Swap"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td style="text-align: center;">
+            <button class="btn btn-danger btn-sm del-port-row" title="Delete Swap"><i class="fa-solid fa-trash-can"></i></button>
+        </td>
     `;
     
+    // Live comma formatting as the user types
+    const notionalInput = tr.querySelector('.port-notional');
+    notionalInput.addEventListener('input', (e) => {
+        e.target.value = formatWithCommas(e.target.value);
+    });
+
     tr.querySelector('.del-port-row').addEventListener('click', () => tr.remove());
     portfolioTableBody.appendChild(tr);
+}
+
+const clearPortfolioBtn = document.getElementById('clear-portfolio');
+if (clearPortfolioBtn) {
+    clearPortfolioBtn.addEventListener('click', () => {
+        portfolioTableBody.innerHTML = '';
+        addPortfolioRow(0, "", 0, 2, 'payer'); // Leave one empty row
+    });
 }
 
 // Seed one default row if the table exists
@@ -608,16 +635,33 @@ function gatherPortfolioData() {
             const positionSelect = row.querySelector('.port-position');
 
             if (notionalInput && rateInput && tenorInput && positionSelect) {
+                // Strip commas before sending to Python
+                const cleanNotional = parseFloat(notionalInput.value.replace(/,/g, '')) || 0;
+                
+                // NLP Rate Parsing: Detect "SOFR" or "FLOAT"
+                const rateRaw = rateInput.value.toUpperCase();
+                let rateType = 'fixed';
+                let parsedRate = 0;
+
+                if (rateRaw.includes('SOFR') || rateRaw.includes('FLOAT')) {
+                    rateType = 'floating';
+                    // Extract the spread number (e.g., "SOFR + 0.5" -> 0.5)
+                    const match = rateRaw.match(/[-+]?[0-9]*\.?[0-9]+/);
+                    parsedRate = match ? parseFloat(match[0]) : 0;
+                } else {
+                    parsedRate = parseFloat(rateRaw) || 0;
+                }
+
                 portfolio.push({
-                    notional: parseFloat(notionalInput.value) || 0,
-                    fixed_rate: parseFloat(rateInput.value) || 0,
+                    notional: cleanNotional,
+                    rate_type: rateType,
+                    fixed_rate: parsedRate, // This acts as the "Spread" if rate_type is floating
                     tenor_years: parseInt(tenorInput.value) || 0,
-                    frequency: parseInt(freqSelect && freqSelect.value) || 2,
+                    frequency: parseInt(freqSelect.value) || 2,
                     position: positionSelect.value
                 });
             }
         });
-        console.log('Portfolio payload sent to backend:', portfolio);
         return portfolio;
     } catch (error) {
         console.error("Error gathering portfolio data:", error);

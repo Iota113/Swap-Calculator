@@ -138,20 +138,41 @@
                     <div class="card-header">
                         <i class="fa-solid fa-briefcase"></i>
                         <h2>Swap Portfolio</h2>
-                        <button id="add-portfolio-row" class="btn btn-secondary btn-sm" title="Add Swap Position">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
+                        <div class="card-actions">
+                            <button id="add-portfolio-row" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-plus"></i> Add Swap
+                            </button>
+                            <button id="clear-portfolio" class="btn btn-danger btn-sm">
+                                <i class="fa-solid fa-trash-can"></i> Clear All
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body scroll-container table-wrapper" style="max-height: 250px;">
                         <table id="portfolio-table" class="interactive-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 24%">Notional</th>
-                                    <th style="width: 16%">Rate (%)</th>
-                                    <th style="width: 16%">Tenor (Y)</th>
-                                    <th style="width: 16%">Freq</th>
-                                    <th style="width: 16%">Position</th>
-                                    <th style="width: 12%">Actions</th>
+                                    <th style="width: 22%">Notional</th>
+                                    <th style="width: 20%">
+                                        Rate (%)
+                                        <div class="header-tooltip">
+                                            <i class="fa-solid fa-circle-info"></i>
+                                            <span class="tooltip-text">
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong style="color: #3b82f6;">Fixed Rate:</strong> Enter a static percentage (e.g., <b>3.5</b>).
+                                                </div>
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong style="color: #10b981;">Floating Rate:</strong> Type <b>SOFR</b> or <b>FLOAT</b> to use dynamic curve rates.
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #f59e0b;">Floating + Spread:</strong> Add a risk premium to the rate (e.g., <b>SOFR + 0.5</b>).
+                                                </div>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th style="width: 14%">Tenor (Y)</th>
+                                    <th style="width: 14%">Frequency</th>
+                                    <th style="width: 20%">Position</th>
+                                    <th style="width: 10%">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="portfolio-table-body">

@@ -28,20 +28,37 @@ class CashflowEngine:
             prev_date = self.trade_date
             
             for current_date in schedule:
+                # 1. Calculate the time fractions (The missing lines!)
                 t_prev = calculate_year_fraction(self.trade_date, prev_date, self.convention)
                 t_curr = calculate_year_fraction(self.trade_date, current_date, self.convention)
                 tau = calculate_year_fraction(prev_date, current_date, self.convention)
 
+                # 2. Grab the discount factors using the newly defined time fractions
                 df_prev = self.curve_builder._get_discount_factor(t_prev)
                 df_curr = self.curve_builder._get_discount_factor(t_curr)
 
-                fixed_cf = notional * fixed_rate * tau
+                # 3. Standard Implied Floating Cashflow
                 float_cf = notional * ((df_prev / df_curr) - 1.0) if df_curr > 0 else 0.0
 
-                if is_payer:
-                    net_cf = float_cf - fixed_cf
+                # 4. Check if user typed SOFR/FLOAT (Basis Swap) or a Standard Fixed Rate
+                rate_type = pos.get('rate_type', 'fixed')
+                
+                if rate_type == 'floating':
+                    # Leg 1 is Float + Spread. Leg 2 is pure Float.
+                    spread_cf = notional * fixed_rate * tau
+                    custom_leg_cf = float_cf + spread_cf
+                    
+                    if is_payer:
+                        net_cf = float_cf - custom_leg_cf # Receive pure Float, Pay Float + Spread
+                    else:
+                        net_cf = custom_leg_cf - float_cf # Receive Float + Spread, Pay pure Float
                 else:
-                    net_cf = fixed_cf - float_cf
+                    # Standard Fixed vs Float
+                    fixed_cf = notional * fixed_rate * tau
+                    if is_payer:
+                        net_cf = float_cf - fixed_cf
+                    else:
+                        net_cf = fixed_cf - float_cf
 
                 master_cashflows[current_date] += net_cf
                 prev_date = current_date

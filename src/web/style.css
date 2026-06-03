@@ -860,3 +860,101 @@ select:focus {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* --- PORTFOLIO TABLE UI OVERHAUL --- */
+
+/* 1. Kill the up/down arrows on number inputs */
+.interactive-table input[type="number"]::-webkit-inner-spin-button,
+.interactive-table input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none; /* Adds standard property for Chrome/Safari */
+    margin: 0;
+}
+.interactive-table input[type="number"] {
+    -moz-appearance: textfield; 
+    appearance: textfield; /* Adds standard property for Firefox */
+}
+
+/* 2. Center column titles and align text */
+.interactive-table th {
+    text-align: center !important;
+    padding: 10px 15px;
+}
+
+/* 3. Create uniform spacing between input boxes */
+.interactive-table td {
+    padding: 8px 15px; /* The 15px creates the gap between columns */
+}
+
+/* 4. Ensure inputs fill their columns and center their text */
+.interactive-table input, 
+.interactive-table select {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center; /* Centers the numbers inside the box */
+    background: rgba(255, 255, 255, 0.05); /* Solidifies the box fill */
+}
+/* --- PREMIUM HEADER TOOLTIP --- */
+.header-tooltip {
+    position: relative;
+    display: inline-block;
+    margin-left: 6px;
+    cursor: help;
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+
+.header-tooltip:hover {
+    color: var(--accent);
+}
+
+.header-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 280px; 
+    background-color: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(8px);
+    color: var(--text-primary);
+    text-align: left;
+    border-radius: 8px;
+    padding: 12px;
+    position: absolute;
+    z-index: 100;
+    
+    /* Forces it to render downwards so it doesn't clip */
+    top: 150%; 
+    left: 50%;
+    margin-left: -140px; 
+    
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.5;
+    text-transform: none; 
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform: translateY(5px);
+}
+
+/* The triangle pointer sitting on top of the tooltip */
+.header-tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    bottom: 100%; 
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent rgba(15, 23, 42, 0.95) transparent;
+}
+
+/* Your original hover states left completely alone */
+.header-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.header-tooltip:hover {
+    color: var(--accent);
+}
