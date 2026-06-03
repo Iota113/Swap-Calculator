@@ -1,2 +1,4 @@
 # Interest-Rate-Calculator
-Used for calcualtions using swaps and stuff... yea...
+Builds yield curves for zero coupon bonds! 
+
+Real purpose: try out web GUI and deployment using Google Antigravity.
