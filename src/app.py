@@ -1,20 +1,20 @@
+import datetime
 import os
 import sys
-import datetime
-import numpy as np
 import traceback
-from flask import Flask, request, jsonify, send_from_directory
-from quant.swap_pricer import SwapPricer
-import datetime
+import numpy as np
+from flask import Flask, jsonify, request, send_from_directory
 
-# Ensure that the 'src' directory (or current directory) is in the python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.append(current_dir)
 
-from futures_curve_builder import FuturesCurveBuilder
 from cubic_spline import CubicSplineCurve
+from futures_curve_builder import FuturesCurveBuilder
 from quant.day_counter import calculate_year_fraction
+from quant.swap_pricer import SwapPricer
 
 app = Flask(__name__, static_folder='web', static_url_path='')
 
