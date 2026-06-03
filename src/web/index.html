@@ -44,9 +44,26 @@
             <p class="hero-subtitle">Bootstrap discount factors, continuous zero rates, and cubic-spline smoothed yield curves from cash rates, IMM futures, and swaps.</p>
         </section>
 
-        <div class="dashboard-grid">
-            
+        <div class="dashboard-grid">    
             <div class="left-column">
+                
+                <div class="quickstart-panel card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <h3>Quickstart</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="quickstart-intro">
+                            Welcome to the Yield Curve & Pricing Engine. Follow these quick steps to generate your curves:
+                        </p>
+                        <ul class="quickstart-list">
+                            <li>Configure your global parameters (Trade Date, Day Count, etc.).</li>
+                            <li>Upload your market instruments using the CSV template or use sample data.</li>
+                            <li>Add your swap positions on the right to price them against the generated curve.</li>
+                        </ul>
+                    </div>
+                </div>
+
                 <div class="control-panel card">
                     <div class="card-header">
                         <i class="fa-solid fa-sliders"></i>
@@ -113,7 +130,9 @@
                         </div>
                     </div>
                 </div>
-            </div> <div class="right-column">
+            </div> 
+
+            <div class="right-column">
                 
                 <div class="portfolio-panel card">
                     <div class="card-header">
@@ -175,7 +194,11 @@
                     </div>
                 </div>
 
-            </div> </div> <div id="alert-container" class="alert-container"></div>
+            </div> 
+            
+            <div id="alert-container" class="alert-container"></div>
+
+        </div>
 
         <div id="results-container" class="results-grid" style="display: none;">
             
