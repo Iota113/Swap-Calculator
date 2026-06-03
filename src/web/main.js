@@ -146,7 +146,7 @@ function renderTable() {
                 <input type="number" class="row-quote" value="${quote.Quote}" step="0.001" data-index="${idx}">
             </td>
             <td style="text-align: center;">
-                <button class="delete-row-btn" data-index="${idx}" title="Delete Quote">
+                <button class="btn btn-danger btn-sm del-port-row" data-index="${idx}" title="Delete Quote">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
             </td>
@@ -193,10 +193,10 @@ function renderTable() {
         });
     });
     
-    document.querySelectorAll('.delete-row-btn').forEach(el => {
+    document.querySelectorAll('.del-port-row').forEach(el => {
         el.addEventListener('click', (e) => {
             // Find parent button if icon was clicked
-            const btn = e.target.closest('.delete-row-btn');
+            const btn = e.target.closest('.del-port-row');
             const idx = parseInt(btn.dataset.index);
             marketQuotes.splice(idx, 1);
             renderTable();
@@ -844,6 +844,16 @@ function drawCashflowChart(cashflowData) {
     const netFlows = cashflowData.map(d => d.net_cashflow);
     const cumulativeFlows = cashflowData.map(d => d.cumulative);
 
+    // --- Dynamic Symmetric Axis Calculation ---
+    // Find the absolute peak value for Cumulative to create equal bounds around 0
+    const maxCumulative = Math.max(...cumulativeFlows.map(Math.abs), 0);
+    const cumulativeBound = maxCumulative === 0 ? 100 : maxCumulative * 1.15; // 15% padding
+
+    // Find the absolute peak value for Net Flows to create equal bounds around 0
+    const maxNet = Math.max(...netFlows.map(Math.abs), 0);
+    const netBound = maxNet === 0 ? 100 : maxNet * 1.15; // 15% padding
+    // ------------------------------------------
+
     cashflowChart = new Chart(ctx, {
         type: 'bar', // Base type
         data: {
@@ -864,6 +874,7 @@ function drawCashflowChart(cashflowData) {
                     type: 'bar',
                     label: 'Net Period Cashflow',
                     data: netFlows,
+                    // Dynamic map inside render loop works, but since it's hardcoded on init, we pass the array
                     backgroundColor: netFlows.map(val => val >= 0 ? '#10b981' : '#ef4444'), // Green if positive, Red if negative
                     barThickness: 4, // Keeps the bars thin like a lollipop chart
                     yAxisID: 'y1'
@@ -886,15 +897,26 @@ function drawCashflowChart(cashflowData) {
                     position: 'left',
                     title: { display: true, text: 'Cumulative ($)', color: '#94a3b8' },
                     grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#94a3b8' }
+                    ticks: { color: '#94a3b8' },
+                    // Force symmetric bounds around 0
+                    min: -cumulativeBound,
+                    max: cumulativeBound
                 },
                 y1: {
                     type: 'linear',
                     display: true,
                     position: 'right',
                     title: { display: true, text: 'Net Cashflow ($)', color: '#94a3b8' },
-                    grid: { drawOnChartArea: false }, // Prevent gridline overlap
-                    ticks: { color: '#94a3b8' }
+                    grid: { 
+                        drawOnChartArea: true,
+                        // Highlighting the zero baseline explicitly
+                        color: (context) => context.tick.value === 0 ? 'rgba(255, 255, 255, 0.25)' : 'transparent',
+                        lineWidth: (context) => context.tick.value === 0 ? 2 : 1
+                    }, 
+                    ticks: { color: '#94a3b8' },
+                    // Force symmetric bounds around 0
+                    min: -netBound,
+                    max: netBound
                 }
             }
         }
