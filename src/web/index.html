@@ -5,25 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YieldCurve | Premium Interest Rate & Swap Curve Builder</title>
     
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Chart.js and plugins -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- SheetJS (XLSX Reader) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
-    <!-- Custom Style -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Grid Overlay Background -->
     <div class="grid-overlay"></div>
     
     <header class="app-header">
@@ -45,131 +39,146 @@
     </header>
 
     <main class="app-container">
-        <!-- Hero Section -->
         <section class="hero-section">
             <h1 class="hero-title">Yield Curve <span class="highlight">Builder</span></h1>
             <p class="hero-subtitle">Bootstrap discount factors, continuous zero rates, and cubic-spline smoothed yield curves from cash rates, IMM futures, and swaps.</p>
         </section>
 
-        <!-- Main Dashboard Grid -->
         <div class="dashboard-grid">
             
-            <!-- Left Panel: Configuration & File Drop -->
-            <div class="control-panel card">
-                <div class="card-header">
-                    <i class="fa-solid fa-sliders"></i>
-                    <h2>Curve Configuration</h2>
+            <div class="left-column">
+                <div class="control-panel card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-sliders"></i>
+                        <h2>Curve Configuration</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="trade-date">Trade Date (DD-MM-YYYY)</label>
+                            <input type="text" id="trade-date" value="28-05-2026" placeholder="DD-MM-YYYY">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="day-count">Day Count</label>
+                                <select id="day-count">
+                                    <option value="ACT/365">ACT/365 (Default)</option>
+                                    <option value="ACT/360">ACT/360</option>
+                                    <option value="30/360">30/360</option>
+                                    <option value="EQUAL">EQUAL</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="payment-freq">Payment Freq (Swaps)</label>
+                                <select id="payment-freq">
+                                    <option value="1">Annual (1)</option>
+                                    <option value="2" selected>Semi-Annual (2)</option>
+                                    <option value="4">Quarterly (4)</option>
+                                    <option value="12">Monthly (12)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="interpolation">Interpolation</label>
+                                <select id="interpolation">
+                                    <option value="Cubic Spline" selected>Cubic Spline</option>
+                                    <option value="Linear">Linear Zero Rates</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="cutoff-years">Futures Cutoff (Years)</label>
+                                <input type="number" id="cutoff-years" value="2.0" step="0.25" min="0">
+                            </div>
+                        </div>
+
+                        <div class="dropzone-container">
+                            <label>Import Market Data</label>
+                            <div id="dropzone" class="dropzone">
+                                <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                                <p class="dropzone-text">Drag & Drop CSV / Excel or <span class="browse-link">browse</span></p>
+                                <p class="dropzone-subtext">Supports columns: Instrument, Tenor, QuoteType, Quote</p>
+                                <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="config-actions">
+                            <button id="download-template" class="btn btn-secondary">
+                                <i class="fa-solid fa-download"></i> Template CSV
+                            </button>
+                            <button id="load-sample" class="btn btn-secondary">
+                                <i class="fa-solid fa-folder-open"></i> Sample Data
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <!-- Config Inputs -->
-                    <div class="form-group">
-                        <label for="trade-date">Trade Date (DD-MM-YYYY)</label>
-                        <input type="text" id="trade-date" value="28-05-2026" placeholder="DD-MM-YYYY">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="day-count">Day Count</label>
-                            <select id="day-count">
-                                <option value="ACT/365">ACT/365 (Default)</option>
-                                <option value="ACT/360">ACT/360</option>
-                                <option value="30/360">30/360</option>
-                                <option value="EQUAL">EQUAL</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="payment-freq">Payment Freq (Swaps)</label>
-                            <select id="payment-freq">
-                                <option value="1">Annual (1)</option>
-                                <option value="2" selected>Semi-Annual (2)</option>
-                                <option value="4">Quarterly (4)</option>
-                                <option value="12">Monthly (12)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="interpolation">Interpolation</label>
-                            <select id="interpolation">
-                                <option value="Cubic Spline" selected>Cubic Spline</option>
-                                <option value="Linear">Linear Zero Rates</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="cutoff-years">Futures Cutoff (Years)</label>
-                            <input type="number" id="cutoff-years" value="2.0" step="0.25" min="0">
-                        </div>
-                    </div>
-
-                    <!-- File Dropzone -->
-                    <div class="dropzone-container">
-                        <label>Import Market Data</label>
-                        <div id="dropzone" class="dropzone">
-                            <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
-                            <p class="dropzone-text">Drag & Drop CSV / Excel or <span class="browse-link">browse</span></p>
-                            <p class="dropzone-subtext">Supports columns: Instrument, Tenor, QuoteType, Quote</p>
-                            <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display: none;">
-                        </div>
-                    </div>
-
-                    <div class="config-actions">
-                        <button id="download-template" class="btn btn-secondary">
-                            <i class="fa-solid fa-download"></i> Template CSV
-                        </button>
-                        <button id="load-sample" class="btn btn-secondary">
-                            <i class="fa-solid fa-folder-open"></i> Sample Data
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Panel: Market Data Editor Table -->
-            <div class="data-panel card">
-                <div class="card-header">
-                    <i class="fa-solid fa-list-ol"></i>
-                    <h2>Active Market Quotes</h2>
-                    <div class="card-actions">
-                        <button id="add-row" class="btn btn-secondary btn-sm">
-                            <i class="fa-solid fa-plus"></i> Add Quote
-                        </button>
-                        <button id="clear-table" class="btn btn-danger btn-sm">
-                            <i class="fa-solid fa-trash-can"></i> Clear All
+            </div> <div class="right-column">
+                
+                <div class="portfolio-panel card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-briefcase"></i>
+                        <h2>Swap Portfolio</h2>
+                        <button id="add-portfolio-row" class="btn btn-secondary btn-sm" title="Add Swap Position">
+                            <i class="fa-solid fa-plus"></i>
                         </button>
                     </div>
+                    <div class="card-body scroll-container table-wrapper" style="max-height: 250px;">
+                        <table id="portfolio-table" class="interactive-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30%">Notional</th>
+                                    <th style="width: 20%">Rate (%)</th>
+                                    <th style="width: 20%">Tenor (Y)</th>
+                                    <th style="width: 20%">Position</th>
+                                    <th style="width: 10%"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="portfolio-table-body">
+                                </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="card-body scroll-container table-wrapper">
-                    <table id="market-table" class="interactive-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 25%">Instrument</th>
-                                <th style="width: 20%">Tenor</th>
-                                <th style="width: 25%">Quote Type</th>
-                                <th style="width: 20%">Quote</th>
-                                <th style="width: 10%">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="market-table-body">
-                            <!-- Populated dynamically via javascript -->
-                        </tbody>
-                    </table>
+
+                <div class="data-panel card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-list-ol"></i>
+                        <h2>Active Market Quotes</h2>
+                        <div class="card-actions">
+                            <button id="add-row" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-plus"></i> Add Quote
+                            </button>
+                            <button id="clear-table" class="btn btn-danger btn-sm">
+                                <i class="fa-solid fa-trash-can"></i> Clear All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body scroll-container table-wrapper">
+                        <table id="market-table" class="interactive-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%">Instrument</th>
+                                    <th style="width: 20%">Tenor</th>
+                                    <th style="width: 25%">Quote Type</th>
+                                    <th style="width: 20%">Quote</th>
+                                    <th style="width: 10%">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="market-table-body">
+                                </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer">
+                        <button id="calculate-btn" class="btn btn-primary btn-lg btn-block">
+                            <i class="fa-solid fa-bolt"></i> Generate Curves & Pricing
+                        </button>
+                    </div>
                 </div>
-                <div class="card-footer">
-                    <button id="calculate-btn" class="btn btn-primary btn-lg btn-block">
-                        <i class="fa-solid fa-bolt"></i> Generate Curves
-                    </button>
-                </div>
-            </div>
 
-        </div> <!-- End of Dashboard Grid -->
+            </div> </div> <div id="alert-container" class="alert-container"></div>
 
-        <!-- Alert Container -->
-        <div id="alert-container" class="alert-container"></div>
-
-        <!-- Calculations Outputs & Visualizations (Hidden by default or loaded blank) -->
         <div id="results-container" class="results-grid" style="display: none;">
             
-            <!-- Curves Plot Panel -->
             <div class="charts-card card">
                 <div class="card-header">
                     <i class="fa-solid fa-chart-line"></i>
@@ -180,11 +189,30 @@
                     </div>
                 </div>
                 <div class="card-body chart-wrapper">
-                    <canvas id="yield-chart"></canvas>
+                    
+                    <div id="portfolio-results" style="display: none; background: rgba(76, 175, 80, 0.08); padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #4CAF50; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 style="margin: 0 0 5px 0; font-size: 14px; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px;">Portfolio Risk Metrics</h3>
+                            <span style="font-size: 13px; opacity: 0.7;">Parallel Shift PVBP (DV01)</span>
+                        </div>
+                        <div style="text-align: right; display: flex; gap: 30px;">
+                            <div>
+                                <span style="display: block; font-size: 12px; opacity: 0.7; margin-bottom: 2px;">Base NPV</span>
+                                <span id="out-npv" style="font-family: monospace; font-size: 16px; font-weight: 600;">$0.00</span>
+                            </div>
+                            <div>
+                                <span style="display: block; font-size: 12px; opacity: 0.7; margin-bottom: 2px;">Swap Delta (PVBP)</span>
+                                <span id="out-pvbp" style="font-family: monospace; font-size: 16px; color: #4CAF50; font-weight: 700;">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-canvas-holder">
+                        <canvas id="yield-chart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <!-- Calculated Outputs Table -->
             <div class="outputs-card card">
                 <div class="card-header">
                     <i class="fa-solid fa-table"></i>
@@ -208,21 +236,17 @@
                             </tr>
                         </thead>
                         <tbody id="output-table-body">
-                            <!-- Populated dynamically -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
             </div>
 
-        </div> <!-- End of Results Grid -->
-
-    </main>
+        </div> </main>
 
     <footer class="app-footer">
         <p>&copy; 2026 YieldCurve. Built for institutional-grade fixed income analytics. Styled with inspiration from AnimeStats.</p>
     </footer>
 
-    <!-- Scripts -->
     <script src="main.js"></script>
 </body>
 </html>

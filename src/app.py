@@ -4,6 +4,8 @@ import datetime
 import numpy as np
 import traceback
 from flask import Flask, request, jsonify, send_from_directory
+from quant.swap_pricer import SwapPricer
+import datetime
 
 # Ensure that the 'src' directory (or current directory) is in the python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -95,6 +97,79 @@ def calculate():
         builder = FuturesCurveBuilder(market_data=market_data_records, config=config)
         discount_factors = builder.build_curve()
         
+        # --- MULTI-SWAP PORTFOLIO PRICING LOGIC ---
+        portfolio_data = req_data.get('portfolio', [])
+
+        # DEBUG: see exactly what the frontend sent in your terminal
+        print("RAW PORTFOLIO PAYLOAD:", portfolio_data)
+
+        # Accept either a list of swaps (current frontend) or a single swap object
+        # (older single-input frontend) so a stale main.js can't silently break pricing.
+        if isinstance(portfolio_data, dict):
+            portfolio_data = [portfolio_data]
+        if not isinstance(portfolio_data, list):
+            portfolio_data = []
+
+        portfolio_results = None
+
+        if portfolio_data:
+            pricer = SwapPricer(builder)
+
+            total_base_npv = 0.0
+            total_bumped_npv = 0.0
+            priced_count = 0  # how many valid swaps we actually priced
+
+            # Loop through every swap the user added
+            for idx, pos in enumerate(portfolio_data):
+                # Robust type conversion: tolerate strings, None, or missing keys
+                try:
+                    notional = float(pos.get('notional', 0) or 0)
+                    fixed_rate = float(pos.get('fixed_rate', 0) or 0) / 100.0
+                    tenor_years = int(float(pos.get('tenor_years', 0) or 0))
+                    position = str(pos.get('position', 'payer')).strip().lower()
+                except (ValueError, TypeError) as conv_err:
+                    print(f"Portfolio row {idx + 1}: skipped (bad values) -> {conv_err}")
+                    continue
+
+                # Skip genuinely empty rows (e.g. a blank row added with '+')
+                if notional <= 0 or tenor_years <= 0:
+                    print(f"Portfolio row {idx + 1}: skipped (notional={notional}, tenor={tenor_years})")
+                    continue
+
+                is_payer = (position == 'payer')
+                maturity_date = builder.trade_date + datetime.timedelta(days=tenor_years * 365)
+
+                # Guard each swap so one bad position can't 500 the whole request
+                try:
+                    results = pricer.calculate_dv01(
+                        notional, fixed_rate, maturity_date,
+                        payment_frequency, is_payer=is_payer
+                    )
+                except Exception as price_err:
+                    print(f"Portfolio row {idx + 1}: pricing failed -> {price_err}")
+                    continue
+
+                # Accumulate across positions (do NOT overwrite previous iterations)
+                total_base_npv += float(results['base_npv'])
+                total_bumped_npv += float(results['bumped_npv'])
+                priced_count += 1
+
+            # Portfolio PVBP is the absolute net change of the entire portfolio
+            # (Payer and Receiver swaps naturally offset each other's risk)
+            net_pvbp = abs(total_bumped_npv - total_base_npv)
+
+            # Return results whenever we priced at least one swap, even if the
+            # net NPV happens to be ~0 (so the UI updates instead of showing the default).
+            if priced_count > 0:
+                portfolio_results = {
+                    "base_npv": round(total_base_npv, 2),
+                    "bumped_npv": round(total_bumped_npv, 2),
+                    "pvbp": round(net_pvbp, 2),
+                    "positions_priced": priced_count
+                }
+
+        print("COMPUTED PORTFOLIO RESULTS:", portfolio_results)
+
         # 4. Generate results for the input instruments (knots)
         knots = []
         for item in market_data_records:
@@ -147,9 +222,17 @@ def calculate():
         valid_knots = [k for k in knots if 'error' not in k and not k.get('skipped', False) and k.get('t', 0.0) > 0]
         if len(valid_knots) < 1:
             return jsonify({
-                'success': False,
-                'error': 'No active instruments remaining after applying filters and cutoff rules.'
-            }), 400
+                        'success': True,
+                        'config': config,
+                        'knots': knots,
+                        'portfolio_results': portfolio_results,
+                        'curves': {
+                            'times': [],
+                            'zero_rates': [],
+                            'discount_factors': [],
+                            'method': interpolation_method
+                        }
+                    })
             
         times = np.array([k['t'] for k in valid_knots])
         dfs = np.array([k['df'] for k in valid_knots])
@@ -191,6 +274,7 @@ def calculate():
             'success': True,
             'config': config,
             'knots': knots,
+            'portfolio_results': portfolio_results,
             'curves': {
                 'times': times_smooth.tolist(),
                 'zero_rates': zero_rates_smooth,

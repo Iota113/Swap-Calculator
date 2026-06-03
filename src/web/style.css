@@ -127,10 +127,10 @@ body {
 }
 
 .logo-accent {
-    color: var(--accent);
-    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: transparent;
+    background-image: var(--accent-gradient);
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    background-clip: text; /* Add this line to satisfy the linter */
 }
 
 .nav-links {
@@ -205,8 +205,15 @@ body {
 
 .hero-title .highlight {
     background: linear-gradient(135deg, var(--primary), var(--accent));
+    
+    /* The webkit prefixed properties for Safari/Chrome */
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    
+    /* The standard properties for universal compatibility */
+    background-clip: text;
+    color: transparent;
+    
     position: relative;
     display: inline-block;
 }
@@ -282,9 +289,20 @@ body {
 /* Dashboard Layout */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 24px;
-    margin-bottom: 32px;
+    /* 1.2fr for the left, 0.8fr for the right. This perfectly shrinks the right side by 20% */
+    grid-template-columns: 1.2fr 0.8fr; 
+    gap: 20px;
+    align-items: start; /* Prevents the columns from stretching vertically to match each other */
+}
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+.left-column {
+    width: 100%;
 }
 
 @media (max-width: 992px) {
@@ -480,6 +498,41 @@ select:focus {
     background: rgba(255, 255, 255, 0.25);
 }
 
+/* Force the chart container to a strict height so Chart.js stops expanding */
+.chart-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 450px;
+    max-height: 450px;
+    width: 100%;
+    overflow: hidden; /* hard stop against any flex-grow feedback */
+}
+
+/* The canvas lives in its own bounded box so Chart.js measures a stable size
+   (the portfolio banner above it no longer affects the canvas height). */
+.chart-canvas-holder {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0; /* critical: lets the flex child shrink instead of growing */
+    width: 100%;
+}
+
+.chart-canvas-holder > canvas {
+    display: block;
+}
+
+/* Slim down the input fields in the interactive tables */
+.interactive-table input, .interactive-table select {
+    width: 100%;
+    padding: 4px;
+    font-size: 13px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #1a1a1a;
+    color: #fff;
+}
+
 /* Interactive Table Wrapper */
 .table-wrapper {
     max-height: 380px;
@@ -629,10 +682,7 @@ select:focus {
     color: white;
 }
 
-.chart-wrapper {
-    height: 350px;
-    position: relative;
-}
+/* (chart-wrapper sizing is defined once, above) */
 
 /* Output Table */
 .output-table-wrapper {

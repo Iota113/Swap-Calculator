@@ -447,7 +447,8 @@ calculateBtn.addEventListener('click', async () => {
                     interpolation_method: interpolation,
                     futures_cutoff_years: cutoffYears
                 },
-                market_data: marketQuotes
+                market_data: marketQuotes,
+                portfolio: gatherPortfolioData() // Array of swaps from the portfolio table
             })
         });
         
@@ -465,6 +466,19 @@ calculateBtn.addEventListener('click', async () => {
             resultsContainer.style.display = 'grid';
             renderOutputTable();
             renderCharts();
+            
+            // Portfolio (interest rate swap) valuation results
+            if (data.portfolio_results) {
+                const resultsDiv = document.getElementById('portfolio-results');
+                const npvSpan = document.getElementById('out-npv');
+                const pvbpSpan = document.getElementById('out-pvbp');
+                
+                // Format numbers with commas for readability
+                npvSpan.textContent = "$" + data.portfolio_results.base_npv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                pvbpSpan.textContent = "$" + data.portfolio_results.pvbp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                
+                resultsDiv.style.display = 'flex'; // Make the div visible
+            }
             
             // Scroll to results
             resultsContainer.scrollIntoView({ behavior: 'smooth' });
@@ -531,6 +545,72 @@ showDfBtn.addEventListener('click', () => {
     showZeroRateBtn.classList.remove('active');
     renderCharts();
 });
+
+// ==========================================
+// DYNAMIC PORTFOLIO TABLE LOGIC
+// ==========================================
+const portfolioTableBody = document.getElementById('portfolio-table-body');
+const addPortfolioRowBtn = document.getElementById('add-portfolio-row');
+
+function addPortfolioRow(notional = 10000000, rate = 3.50, tenor = 5, position = 'payer') {
+    if (!portfolioTableBody) return; // Safety check if the table isn't on the page
+    
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="number" class="port-notional" value="${notional}" step="100000"></td>
+        <td><input type="number" class="port-rate" value="${rate}" step="0.01"></td>
+        <td><input type="number" class="port-tenor" value="${tenor}" step="1"></td>
+        <td>
+            <select class="port-position">
+                <option value="payer" ${position === 'payer' ? 'selected' : ''}>Payer</option>
+                <option value="receiver" ${position === 'receiver' ? 'selected' : ''}>Receiver</option>
+            </select>
+        </td>
+        <td><button class="btn btn-danger btn-sm del-port-row" title="Delete Swap"><i class="fa-solid fa-trash-can"></i></button></td>
+    `;
+    
+    tr.querySelector('.del-port-row').addEventListener('click', () => tr.remove());
+    portfolioTableBody.appendChild(tr);
+}
+
+// Seed one default row if the table exists
+if (portfolioTableBody) {
+    addPortfolioRow();
+}
+
+// Add an empty row on '+' button click
+if (addPortfolioRowBtn) {
+    addPortfolioRowBtn.addEventListener('click', () => addPortfolioRow(0, 0, 0, 'payer'));
+}
+
+// Collect all swaps from the portfolio table into an array for the backend
+function gatherPortfolioData() {
+    if (!portfolioTableBody) return [];
+    try {
+        const rows = portfolioTableBody.querySelectorAll('tr');
+        const portfolio = [];
+        rows.forEach(row => {
+            const notionalInput = row.querySelector('.port-notional');
+            const rateInput = row.querySelector('.port-rate');
+            const tenorInput = row.querySelector('.port-tenor');
+            const positionSelect = row.querySelector('.port-position');
+
+            if (notionalInput && rateInput && tenorInput && positionSelect) {
+                portfolio.push({
+                    notional: parseFloat(notionalInput.value) || 0,
+                    fixed_rate: parseFloat(rateInput.value) || 0,
+                    tenor_years: parseInt(tenorInput.value) || 0,
+                    position: positionSelect.value
+                });
+            }
+        });
+        console.log('Portfolio payload sent to backend:', portfolio);
+        return portfolio;
+    } catch (error) {
+        console.error("Error gathering portfolio data:", error);
+        return [];
+    }
+}
 
 // Draw Chart via Chart.js
 function renderCharts() {
@@ -618,7 +698,8 @@ function renderCharts() {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: false, // size follows the bounded .chart-canvas-holder
+            resizeDelay: 200,           // throttle resize handling to avoid layout jitter
             interaction: {
                 mode: 'nearest',
                 intersect: false
