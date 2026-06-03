@@ -147,14 +147,18 @@ body {
     align-items: center;
     gap: 8px;
     transition: var(--transition);
-    padding: 8px 12px;
+    padding: 8px 16px; /* Added more balanced breathing room */
     border-radius: 8px;
+    border: 1px solid transparent;
 }
 
-.nav-links a:hover, .nav-links a.active {
+.nav-links a:hover, 
+.nav-links a.active {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-color);
 }
+
 [data-theme="light"] .nav-links a:hover, [data-theme="light"] .nav-links a.active {
     background: rgba(0, 0, 0, 0.04);
 }
@@ -238,21 +242,39 @@ body {
     line-height: 1.6;
 }
 
+/* Quickstart text theming */
+.quickstart-intro {
+    margin-bottom: 8px; 
+    font-size: 0.95rem; 
+    color: var(--text-secondary);
+}
+
+.quickstart-list {
+    padding-left: 20px; 
+    font-size: 0.9rem; 
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
 /* Cards (Glassmorphism) */
 .card {
     background: var(--bg-card);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px); /* Boosted blur slightly for a more premium glass effect */
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    /* Added a compound shadow: one sharp close shadow, one soft ambient shadow */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 30px -3px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
-    transition: var(--transition);
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.14);
+    /* Subtle 2px lift away from the screen when hovered */
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.4), 0 4px 12px -2px rgba(0, 0, 0, 0.2);
 }
 
 .card-header {
@@ -290,10 +312,11 @@ body {
 .dashboard-grid {
     display: grid;
     /* 1.2fr for the left, 0.8fr for the right. This perfectly shrinks the right side by 20% */
-    grid-template-columns: 1.2fr 0.8fr; 
+    grid-template-columns: 0.95fr 1.05fr; 
     gap: 20px;
     align-items: start; /* Prevents the columns from stretching vertically to match each other */
 }
+
 .right-column {
     display: flex;
     flex-direction: column;
@@ -303,6 +326,10 @@ body {
 
 .left-column {
     width: 100%;
+}
+
+.left-column .card:not(:last-child) {
+    margin-bottom: 20px;
 }
 
 @media (max-width: 992px) {
@@ -336,7 +363,7 @@ label {
 input[type="text"],
 input[type="number"],
 select {
-    background: rgba(0, 0, 0, 0.25);
+    background: rgba(4, 6, 15, 0.4); /* Darkened slightly to contrast against glass cards */
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     padding: 12px 16px;
@@ -344,6 +371,8 @@ select {
     font-family: var(--font-body);
     font-size: 14px;
     outline: none;
+    /* Inset shadow creates the "carved/sunken" physical effect */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
     transition: var(--transition);
 }
 
@@ -351,8 +380,9 @@ input[type="text"]:focus,
 input[type="number"]:focus,
 select:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px var(--primary-glow);
-    background: rgba(0, 0, 0, 0.4);
+    /* Soft glowing rings make focus transitions look buttery smooth */
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 0 3px var(--primary-glow);
+    background: rgba(4, 6, 15, 0.6);
 }
 
 /* Buttons */
@@ -498,6 +528,33 @@ select:focus {
     background: rgba(255, 255, 255, 0.25);
 }
 
+.interactive-table thead th {
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-dark); 
+    color: var(--text-primary);
+    z-index: 2;
+}
+
+.interactive-table thead th {
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Highlight table rows dynamically when hovering or interacting */
+.interactive-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.interactive-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Make inputs inside a hovered row subtly illuminate */
+.interactive-table tbody tr:hover td input,
+.interactive-table tbody tr:hover td select {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
 /* Force the chart container to a strict height so Chart.js stops expanding */
 .chart-wrapper {
     position: relative;
@@ -537,6 +594,7 @@ select:focus {
 /* Interactive Table Wrapper */
 .table-wrapper {
     max-height: 380px;
+    position: relative;
     overflow-y: auto;
 }
 
@@ -562,22 +620,59 @@ select:focus {
     z-index: 2;
 }
 
-.interactive-table td input, .interactive-table td select {
+.interactive-table td input, 
+.interactive-table td select {
     width: 100%;
-    box-sizing: border-box;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.05);
+
+    padding: 8px 12px; /* Amplified padding to let values breathe */
+    background: rgba(4, 6, 15, 0.3);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 6px;
+
     color: var(--text-primary);
     font-family: var(--font-body);
     font-size: 13px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition: var(--transition);
 }
 
-.interactive-table td input:focus, .interactive-table td select:focus {
+.interactive-table td input:focus, 
+.interactive-table td select:focus {
     border-color: var(--accent);
-    background: rgba(255, 255, 255, 0.08);
-    outline: none;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.1), 0 0 0 3px var(--accent-glow);
+    background: rgba(4, 6, 15, 0.5);
+}
+
+/* Light Mode specific fixes for Table Inputs & Dropdowns */
+[data-theme="light"] .interactive-table td input, 
+[data-theme="light"] .interactive-table td select,
+[data-theme="light"] .form-group input,
+[data-theme="light"] .form-group select {
+    background-color: #ffffff;
+    color: var(--text-primary);
+    /* Soften the harsh outline with a crisp, subtle border */
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    /* Remove the heavy dark inset shadow and replace with a soft light one */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Light Mode Hover States - makes them feel responsive when mouse is over */
+[data-theme="light"] .interactive-table td input:hover, 
+[data-theme="light"] .interactive-table td select:hover,
+[data-theme="light"] .form-group input:hover,
+[data-theme="light"] .form-group select:hover {
+    border-color: rgba(0, 0, 0, 0.24);
+    background-color: #ffffff;
+}
+
+/* Light Mode Focus States - when clicked into */
+[data-theme="light"] .interactive-table td input:focus, 
+[data-theme="light"] .interactive-table td select:focus,
+[data-theme="light"] .form-group input:focus,
+[data-theme="light"] .form-group select:focus {
+    background-color: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 .delete-row-btn {
