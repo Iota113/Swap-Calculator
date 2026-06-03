@@ -15,6 +15,7 @@ from cubic_spline import CubicSplineCurve
 from futures_curve_builder import FuturesCurveBuilder
 from quant.day_counter import calculate_year_fraction
 from quant.swap_pricer import SwapPricer
+from quant.cashflow_engine import CashflowEngine
 
 app = Flask(__name__, static_folder='web', static_url_path='')
 
@@ -170,6 +171,16 @@ def calculate():
 
         print("COMPUTED PORTFOLIO RESULTS:", portfolio_results)
 
+        # --- PORTFOLIO CASHFLOW TIMESERIES (for the cashflow projection chart) ---
+        # Guarded so a problem in the engine can't break the curve/PVBP response.
+        cashflow_timeseries = []
+        try:
+            engine = CashflowEngine(builder)
+            cashflow_timeseries = engine.generate_portfolio_cashflows(portfolio_data)
+        except Exception as cf_err:
+            print(f"Cashflow engine failed: {cf_err}")
+            cashflow_timeseries = []
+
         # 4. Generate results for the input instruments (knots)
         knots = []
         for item in market_data_records:
@@ -226,6 +237,7 @@ def calculate():
                         'config': config,
                         'knots': knots,
                         'portfolio_results': portfolio_results,
+                        'cashflows': cashflow_timeseries,
                         'curves': {
                             'times': [],
                             'zero_rates': [],
@@ -275,6 +287,7 @@ def calculate():
             'config': config,
             'knots': knots,
             'portfolio_results': portfolio_results,
+            'cashflows': cashflow_timeseries,
             'curves': {
                 'times': times_smooth.tolist(),
                 'zero_rates': zero_rates_smooth,

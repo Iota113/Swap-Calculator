@@ -127,11 +127,12 @@
                         <table id="portfolio-table" class="interactive-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 30%">Notional</th>
-                                    <th style="width: 20%">Rate (%)</th>
-                                    <th style="width: 20%">Tenor (Y)</th>
-                                    <th style="width: 20%">Position</th>
-                                    <th style="width: 10%"></th>
+                                    <th style="width: 24%">Notional</th>
+                                    <th style="width: 16%">Rate (%)</th>
+                                    <th style="width: 16%">Tenor (Y)</th>
+                                    <th style="width: 16%">Freq</th>
+                                    <th style="width: 16%">Position</th>
+                                    <th style="width: 12%">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="portfolio-table-body">
@@ -238,6 +239,18 @@
                         <tbody id="output-table-body">
                             </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div class="charts-card card" style="grid-column: 1 / -1; margin-top: 20px;">
+                <div class="card-header">
+                    <i class="fa-solid fa-water"></i>
+                    <h2>Portfolio Cashflow Projection</h2>
+                </div>
+                <div class="card-body chart-wrapper" style="height: 400px; max-height: 400px; width: 100%;">
+                    <div class="chart-canvas-holder">
+                        <canvas id="cashflow-chart"></canvas>
+                    </div>
                 </div>
             </div>
 

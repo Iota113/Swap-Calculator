@@ -480,6 +480,9 @@ calculateBtn.addEventListener('click', async () => {
                 resultsDiv.style.display = 'flex'; // Make the div visible
             }
             
+            // Portfolio cashflow projection chart
+            drawCashflowChart(data.cashflows);
+            
             // Scroll to results
             resultsContainer.scrollIntoView({ behavior: 'smooth' });
         }
@@ -552,7 +555,7 @@ showDfBtn.addEventListener('click', () => {
 const portfolioTableBody = document.getElementById('portfolio-table-body');
 const addPortfolioRowBtn = document.getElementById('add-portfolio-row');
 
-function addPortfolioRow(notional = 10000000, rate = 3.50, tenor = 5, position = 'payer') {
+function addPortfolioRow(notional = 10000000, rate = 3.50, tenor = 5, freq = 2, position = 'payer') {
     if (!portfolioTableBody) return; // Safety check if the table isn't on the page
     
     const tr = document.createElement('tr');
@@ -560,6 +563,14 @@ function addPortfolioRow(notional = 10000000, rate = 3.50, tenor = 5, position =
         <td><input type="number" class="port-notional" value="${notional}" step="100000"></td>
         <td><input type="number" class="port-rate" value="${rate}" step="0.01"></td>
         <td><input type="number" class="port-tenor" value="${tenor}" step="1"></td>
+        <td>
+            <select class="port-frequency">
+                <option value="1" ${freq === 1 ? 'selected' : ''}>1x</option>
+                <option value="2" ${freq === 2 ? 'selected' : ''}>2x</option>
+                <option value="4" ${freq === 4 ? 'selected' : ''}>4x</option>
+                <option value="12" ${freq === 12 ? 'selected' : ''}>12x</option>
+            </select>
+        </td>
         <td>
             <select class="port-position">
                 <option value="payer" ${position === 'payer' ? 'selected' : ''}>Payer</option>
@@ -580,7 +591,7 @@ if (portfolioTableBody) {
 
 // Add an empty row on '+' button click
 if (addPortfolioRowBtn) {
-    addPortfolioRowBtn.addEventListener('click', () => addPortfolioRow(0, 0, 0, 'payer'));
+    addPortfolioRowBtn.addEventListener('click', () => addPortfolioRow(0, 0, 0, 2, 'payer'));
 }
 
 // Collect all swaps from the portfolio table into an array for the backend
@@ -593,6 +604,7 @@ function gatherPortfolioData() {
             const notionalInput = row.querySelector('.port-notional');
             const rateInput = row.querySelector('.port-rate');
             const tenorInput = row.querySelector('.port-tenor');
+            const freqSelect = row.querySelector('.port-frequency');
             const positionSelect = row.querySelector('.port-position');
 
             if (notionalInput && rateInput && tenorInput && positionSelect) {
@@ -600,6 +612,7 @@ function gatherPortfolioData() {
                     notional: parseFloat(notionalInput.value) || 0,
                     fixed_rate: parseFloat(rateInput.value) || 0,
                     tenor_years: parseInt(tenorInput.value) || 0,
+                    frequency: parseInt(freqSelect && freqSelect.value) || 2,
                     position: positionSelect.value
                 });
             }
@@ -806,3 +819,84 @@ exportResultsBtn.addEventListener('click', () => {
     link.click();
     document.body.removeChild(link);
 });
+// ==========================================
+// PORTFOLIO CASHFLOW PROJECTION CHART
+// ==========================================
+let cashflowChart = null;
+
+function drawCashflowChart(cashflowData) {
+    const canvas = document.getElementById('cashflow-chart');
+    if (!canvas) return;
+
+    // Nothing to show: clear any prior chart and bail out
+    if (!cashflowData || cashflowData.length === 0) {
+        if (cashflowChart) {
+            cashflowChart.destroy();
+            cashflowChart = null;
+        }
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (cashflowChart) cashflowChart.destroy();
+
+    const labels = cashflowData.map(d => d.date);
+    const netFlows = cashflowData.map(d => d.net_cashflow);
+    const cumulativeFlows = cashflowData.map(d => d.cumulative);
+
+    cashflowChart = new Chart(ctx, {
+        type: 'bar', // Base type
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    type: 'line',
+                    label: 'Cumulative Equity',
+                    data: cumulativeFlows,
+                    borderColor: '#3b82f6', // Primary blue
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    type: 'bar',
+                    label: 'Net Period Cashflow',
+                    data: netFlows,
+                    backgroundColor: netFlows.map(val => val >= 0 ? '#10b981' : '#ef4444'), // Green if positive, Red if negative
+                    barThickness: 4, // Keeps the bars thin like a lollipop chart
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            resizeDelay: 200,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#94a3b8' }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: { display: true, text: 'Cumulative ($)', color: '#94a3b8' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#94a3b8' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: { display: true, text: 'Net Cashflow ($)', color: '#94a3b8' },
+                    grid: { drawOnChartArea: false }, // Prevent gridline overlap
+                    ticks: { color: '#94a3b8' }
+                }
+            }
+        }
+    });
+}
