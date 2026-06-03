@@ -304,7 +304,7 @@ body {
 
 .card-footer {
     padding: 16px 24px;
-    background: rgba(0, 0, 0, 0.15);
+    background-color: var(--bg-dark); 
     border-top: 1px solid var(--border-color);
 }
 
@@ -467,6 +467,7 @@ select:focus {
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    margin-top: 10px;
 }
 
 .dropzone:hover, .dropzone.dragover {
@@ -534,9 +535,6 @@ select:focus {
     background-color: var(--bg-dark); 
     color: var(--text-primary);
     z-index: 2;
-}
-
-.interactive-table thead th {
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -560,8 +558,8 @@ select:focus {
     position: relative;
     display: flex;
     flex-direction: column;
-    height: 450px;
-    max-height: 450px;
+    height: 900px;
+    max-height: 900px;
     width: 100%;
     overflow: hidden; /* hard stop against any flex-grow feedback */
 }
@@ -734,8 +732,8 @@ select:focus {
 /* Results Grid */
 .results-grid {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
-    gap: 24px;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
     animation: fadeIn 0.4s ease;
 }
 
@@ -784,14 +782,14 @@ select:focus {
 
 /* Output Table */
 .output-table-wrapper {
-    max-height: 350px;
+    max-height: 360px;
     overflow-y: auto;
 }
 
 .results-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: 12px;
     text-align: left;
 }
 
@@ -802,9 +800,9 @@ select:focus {
 
 .results-table th {
     font-family: var(--font-heading);
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text-secondary);
-    background: rgba(0, 0, 0, 0.15);
+    background-color: var(--bg-dark); 
     position: sticky;
     top: 0;
     z-index: 2;
