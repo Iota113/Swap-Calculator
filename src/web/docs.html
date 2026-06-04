@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YieldCurve | Documentation & Mathematical Guide</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        .docs-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 40px;
+            margin-top: 20px;
+            align-items: start;
+        }
+        
+        .docs-sidebar {
+            position: sticky;
+            top: 100px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 24px;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+        
+        .docs-sidebar h3 {
+            font-family: var(--font-heading);
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+        
+        .docs-nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .docs-nav-list a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+        
+        .docs-nav-list a:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        [data-theme="light"] .docs-nav-list a:hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+        
+        .docs-nav-list a.active {
+            color: var(--text-primary);
+            background: var(--primary-glow);
+            border-left: 3px solid var(--primary);
+            font-weight: 600;
+        }
+        
+        .docs-content {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            max-width: 900px;
+        }
+        
+        .docs-section {
+            scroll-margin-top: 100px;
+        }
+        
+        .docs-section h2 {
+            font-family: var(--font-heading);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .docs-section h2 i {
+            color: var(--primary);
+        }
+        
+        .docs-section p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+        
+        .docs-section h3 {
+            font-family: var(--font-heading);
+            font-size: 18px;
+            font-weight: 600;
+            margin: 24px 0 12px 0;
+            color: var(--text-primary);
+        }
+        
+        /* Math/Equation Styling */
+        .equation-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(4, 6, 15, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        [data-theme="light"] .equation-block {
+            background: rgba(255, 255, 255, 0.5);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .equation {
+            display: flex;
+            align-items: center;
+            font-family: 'Outfit', 'Inter', sans-serif;
+            font-size: 1.15rem;
+            color: var(--text-primary);
+            text-align: center;
+        }
+        
+        .equation-label {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        
+        .math-frac {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 8px;
+            vertical-align: middle;
+        }
+        
+        .math-num {
+            border-bottom: 1.5px solid var(--text-primary);
+            padding: 0 4px 2px 4px;
+            text-align: center;
+        }
+        
+        .math-den {
+            padding: 2px 4px 0 4px;
+            text-align: center;
+        }
+        
+        .math-sum {
+            font-size: 1.5rem;
+            margin: 0 4px;
+            vertical-align: middle;
+        }
+        
+        .math-sub {
+            font-size: 0.75rem;
+            vertical-align: sub;
+        }
+        
+        .math-sup {
+            font-size: 0.75rem;
+            vertical-align: super;
+        }
+        
+        code.inline-code {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--accent);
+        }
+        
+        [data-theme="light"] code.inline-code {
+            background: rgba(0, 0, 0, 0.04);
+        }
+        
+        .code-snippet {
+            background: rgba(4, 6, 15, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #e2e8f0;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        
+        [data-theme="light"] .code-snippet {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+        
+        .highlight-card {
+            background: rgba(6, 182, 212, 0.04);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 16px 20px;
+            margin: 20px 0;
+        }
+        
+        .highlight-card h4 {
+            font-family: var(--font-heading);
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        
+        .highlight-card p {
+            margin: 0;
+            font-size: 13.5px;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 992px) {
+            .docs-layout {
+                grid-template-columns: 1fr;
+            }
+            .docs-sidebar {
+                position: static;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-overlay"></div>
+    
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo">
+                <i class="fa-solid fa-chart-line-up logo-icon"></i>
+                <span>Yield<span class="logo-accent">Curve</span></span>
+            </div>
+            <nav class="nav-links">
+                <a href="index.html"><i class="fa-solid fa-calculator"></i> Curve Builder</a>
+                <a href="docs.html" class="active"><i class="fa-solid fa-book-open"></i> Docs & Guide</a>
+                <a href="https://www.animestats.tf/" target="_blank"><i class="fa-solid fa-wand-magic-sparkles"></i> Inspiration</a>
+            </nav>
+            <div class="header-actions">
+                <button id="theme-toggle" class="icon-btn" title="Toggle Theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <section class="hero-section">
+            <h1 class="hero-title">Mathematical <span class="highlight">Reference</span></h1>
+            <p class="hero-subtitle">Learn how yield curve bootstrapping, liquidity selection, cubic spline smoothing, and swap portfolio pricing work under the hood.</p>
+        </section>
+
+        <div class="docs-layout">
+            <aside class="docs-sidebar">
+                <h3>Table of Contents</h3>
+                <ul class="docs-nav-list">
+                    <li><a href="#yield-curves-intro" class="active"><i class="fa-solid fa-compass"></i> Core Concepts</a></li>
+                    <li><a href="#curve-inputs"><i class="fa-solid fa-list"></i> Market Instruments</a></li>
+                    <li><a href="#bootstrapping-engine"><i class="fa-solid fa-stairs"></i> Curve Bootstrapping</a></li>
+                    <li><a href="#liquidity-selector"><i class="fa-solid fa-filter"></i> Liquidity Selection</a></li>
+                    <li><a href="#cubic-spline"><i class="fa-solid fa-wave-square"></i> Cubic Splines</a></li>
+                    <li><a href="#swap-valuation"><i class="fa-solid fa-file-invoice-dollar"></i> Swap Valuation & Risk</a></li>
+                </ul>
+            </aside>
+
+            <div class="docs-content">
+                
+                <!-- Section 1 -->
+                <section id="yield-curves-intro" class="docs-section">
+                    <h2><i class="fa-solid fa-circle-nodes"></i> Core Concepts</h2>
+                    <p>
+                        A <strong>Yield Curve</strong> represents the relationship between interest rates and different maturities (tenors) for a given currency and credit quality. In quantitative finance, a yield curve is never represented simply as a set of par yields. Instead, it is resolved into a continuous function of <strong>Discount Factors</strong> or <strong>Zero-Coupon Yields</strong>.
+                    </p>
+                    
+                    <h3>Discount Factors (DF)</h3>
+                    <p>
+                        The discount factor <code class="inline-code">D(0, T)</code> is the present value of $1 to be received at time <code class="inline-code">T</code> in the future. It represents the ultimate building block of asset pricing. Discount factors are monotonically decreasing with respect to maturity time:
+                    </p>
+                    <div class="equation-block">
+                        <div class="equation">
+                            D(0, T) = e<span class="math-sup">-z(T) &times; T</span>
+                        </div>
+                        <div class="equation-label">Relationship between Discount Factor D(0,T) and Zero-Coupon Rate z(T)</div>
+                    </div>
+                    
+                    <h3>Zero Rates</h3>
+                    <p>
+                        The <strong>Zero-Coupon Rate</strong> <code class="inline-code">z(T)</code> is the annualized interest rate earned on a single cash flow maturing at time <code class="inline-code">T</code>, assuming continuous compounding. If we bootstrap the discount factors, we can extract the continuous zero rate at any point via:
+                    </p>
+                    <div class="equation-block">
+                        <div class="equation">
+                            z(T) = - <div class="math-frac">
+                                <span class="math-num">ln( D(0, T) )</span>
+                                <span class="math-den">T</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 2 -->
+                <section id="curve-inputs" class="docs-section">
+                    <h2><i class="fa-solid fa-list-check"></i> Market Instruments</h2>
+                    <p>
+                        Interest rate curves are built using various highly liquid, standard market instruments. Because different tenors have different liquid vehicles, we use different instrument types across the maturity spectrum.
+                    </p>
+                    
+                    <h3>1. Short-Term: Cash Deposits / O/N Rates</h3>
+                    <p>
+                        For maturities from overnight (O/N) up to 3 months, we use simple cash deposit rates. The discount factor is computed directly using the day-count fraction <code class="inline-code">&tau;</code> (e.g. ACT/360):
+                    </p>
+                    <div class="equation-block">
+                        <div class="equation">
+                            D(0, T) = <div class="math-frac">
+                                <span class="math-num">1</span>
+                                <span class="math-den">1 + Rate &times; &tau;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>2. Medium-Term: Interest Rate Futures</h3>
+                    <p>
+                        For tenors between 3 months and 2 years, quarterly interest rate futures (like SOFR Futures) are the most liquid instruments. 
+                        A future is quoted as a price index <code class="inline-code">P</code>. The implied forward interest rate is:
+                    </p>
+                    <div class="equation-block">
+                        <div class="equation">
+                            Rate = 100 - P
+                        </div>
+                    </div>
+                    <p>
+                        Discount factors are linked sequentially across future maturity dates:
+                    </p>
+                    <div class="equation-block">
+                        <div class="equation">
+                            D(0, T<sub>end</sub>) = <div class="math-frac">
+                                <span class="math-num">D(0, T<sub>start</sub>)</span>
+                                <span class="math-den">1 + Rate &times; &tau;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>3. Long-Term: Interest Rate Swaps (IRS)</h3>
+                    <p>
+                        Beyond 2 years, par Swaps are the standard. A swap is an agreement to exchange a fixed coupon rate for a floating rate (e.g., SOFR). At inception, the swap rate is set so that the Net Present Value (NPV) of the swap is exactly zero.
+                    </p>
+                </section>
+
+                <!-- Section 3 -->
+                <section id="bootstrapping-engine" class="docs-section">
+                    <h2><i class="fa-solid fa-stairs"></i> Curve Bootstrapping</h2>
+                    <p>
+                        <strong>Bootstrapping</strong> is the process of sequentially solving for discount factors starting from today (T=0) and moving outward in time. Because long-term swaps pay periodic coupons that depend on intermediate discount factors, we must solve them in chronological order.
+                    </p>
+                    
+                    <h3>OIS Curve Bootstrapping</h3>
+                    <p>
+                        For OIS (Overnight Indexed Swap) curves, we use cash rates up to the futures cutoff, then transition to futures contracts, and finally swap par rates.
+                    </p>
+
+                    <h3>US Treasury Curve Bootstrapping</h3>
+                    <p>
+                        For US Government bonds, the curve builder uses a different dual approach:
+                    </p>
+                    <ol style="margin-left: 20px; color: var(--text-secondary); line-height: 1.7; font-size: 15px; margin-bottom: 16px;">
+                        <li><strong>Treasury Bills (T-Bills)</strong>: These are zero-coupon instruments. The discount factor is computed directly from the price:
+                            <div class="equation-block">
+                                <div class="equation">
+                                    D(0, T) = <div class="math-frac">
+                                        <span class="math-num">Price</span>
+                                        <span class="math-den">100</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li><strong>Treasury Notes & Bonds</strong>: These pay semi-annual coupons. We bootstrap the final discount factor at the bond's maturity <code class="inline-code">T<sub>N</sub></code> by subtracting the present value of all intermediate coupon payments from the bond price:
+                            <div class="equation-block">
+                                <div class="equation">
+                                    D(0, T<sub>N</sub>) = <div class="math-frac">
+                                        <span class="math-num">Price - <div class="math-frac"><span class="math-num">C</span><span class="math-den">2</span></div> <span class="math-sum">&sum;</span><span class="math-sub">i=1</span><span class="math-sup">N-1</span> D(0, t<sub>i</sub>)</span>
+                                        <span class="math-den">1 + <div class="math-frac"><span class="math-num">C</span><span class="math-den">2</span></div></span>
+                                    </div>
+                                </div>
+                                <div class="equation-label">Treasury Bootstrap Formula (Price is divided by 100, C is coupon rate decimal)</div>
+                            </div>
+                            Since intermediate coupon payment dates <code class="inline-code">t<sub>i</sub></code> do not always align with known bond maturities, we use <strong>linear zero-rate interpolation</strong> to find those intermediate discount factors <code class="inline-code">D(0, t<sub>i</sub>)</code>.
+                        </li>
+                    </ol>
+                </section>
+
+                <!-- Section 4 -->
+                <section id="liquidity-selector" class="docs-section">
+                    <h2><i class="fa-solid fa-filter"></i> Liquidity Selection</h2>
+                    <p>
+                        In real markets, different instruments can mature at the exact same time. For example, a 2-Year Swap and a 2-Year Future contract will expire within days of each other. Putting both into a bootstrapping engine causes numerical instability and "noise" in the curve.
+                    </p>
+                    
+                    <div class="highlight-card">
+                        <h4>The 0.05-Year (18 Days) Overlap Rule</h4>
+                        <p>
+                            The Liquidity Auto-Selection Engine scans the list of market inputs. If any two instruments mature within <strong>0.05 years</strong> (~18 days) of each other, they are flagged as overlapping.
+                        </p>
+                    </div>
+                    
+                    <h3>Spread-Based Selection</h3>
+                    <p>
+                        To choose the best node automatically, the engine evaluates the user-supplied <strong>Spread (bps)</strong> (bid-ask spread, which is the direct proxy for liquidity).
+                    </p>
+                    <ul style="margin-left: 20px; color: var(--text-secondary); line-height: 1.7; font-size: 15px;">
+                        <li>The instrument with the <strong>narrowest spread</strong> (most liquid) is flagged as <strong>Active</strong> and used to build the curve.</li>
+                        <li>The other instrument is marked as <strong>Skipped</strong> and excluded from the bootstrap grid.</li>
+                    </ul>
+                    
+                    <h3>Pricing Skipped Instruments</h3>
+                    <p>
+                        Even though skipped instruments do not construct the curve, the engine still prices them using the finished curve. This allows traders to immediately see the <strong>valuation discrepancy</strong> between a highly liquid instrument and an illiquid overlapping one.
+                    </p>
+                </section>
+
+                <!-- Section 5 -->
+                <section id="cubic-spline" class="docs-section">
+                    <h2><i class="fa-solid fa-wave-square"></i> Cubic Splines</h2>
+                    <p>
+                        A bootstrapped curve only yields interest rates at the specific maturity dates (knots) of the input instruments. To price a swap that matures at an intermediate date, we must interpolate.
+                    </p>
+                    
+                    <h3>Why Cubic Splines?</h3>
+                    <p>
+                        Linear interpolation creates "kinks" in the yield curve, meaning the first derivative is discontinuous. This causes severe spikes in the forward rates. 
+                        A <strong>Natural Cubic Spline</strong> fits piecewise cubic polynomials between each knot:
+                    </p>
+                    <div class="equation-block">
+                        <div class="equation">
+                            S<sub>i</sub>(t) = a<sub>i</sub> + b<sub>i</sub>(t - t<sub>i</sub>) + c<sub>i</sub>(t - t<sub>i</sub>)<sup>2</sup> + d<sub>i</sub>(t - t<sub>i</sub>)<sup>3</sup>
+                        </div>
+                    </div>
+                    <p>
+                        It guarantees that the zero rate curve is completely smooth, meaning:
+                    </p>
+                    <ul style="margin-left: 20px; color: var(--text-secondary); line-height: 1.7; font-size: 15px;">
+                        <li>The zero curve is continuous: <code class="inline-code">S<sub>i</sub>(t<sub>i+1</sub>) = S<sub>i+1</sub>(t<sub>i+1</sub>)</code></li>
+                        <li>The slope (first derivative) is continuous: <code class="inline-code">S'<sub>i</sub>(t<sub>i+1</sub>) = S'<sub>i+1</sub>(t<sub>i+1</sub>)</code></li>
+                        <li>The curvature (second derivative) is continuous: <code class="inline-code">S''<sub>i</sub>(t<sub>i+1</sub>) = S''<sub>i+1</sub>(t<sub>i+1</sub>)</code></li>
+                    </ul>
+                </section>
+
+                <!-- Section 6 -->
+                <section id="swap-valuation" class="docs-section">
+                    <h2><i class="fa-solid fa-file-invoice-dollar"></i> Swap Valuation & Risk</h2>
+                    <p>
+                        Once the curve is built, we can value any interest rate swap portfolio.
+                    </p>
+                    
+                    <h3>Swap Net Present Value (NPV)</h3>
+                    <p>
+                        The NPV of a swap is the difference between the Present Value (PV) of its floating leg and the PV of its fixed leg:
+                    </p>
+                    <div class="equation-block">
+                        <div class="equation">
+                            NPV<sub>Payer</sub> = PV(Floating Leg) - PV(Fixed Leg)
+                        </div>
+                    </div>
+                    
+                    <h3>Leg Calculations</h3>
+                    <ul style="margin-left: 20px; color: var(--text-secondary); line-height: 1.7; font-size: 15px; margin-bottom: 20px;">
+                        <li><strong>Fixed Leg PV</strong>:
+                            <div class="equation-block">
+                                <div class="equation">
+                                    PV(Fixed) = Notional &times; R<sub>fixed</sub> &times; <span class="math-sum">&sum;</span> &tau;<sub>i</sub> &times; D(0, t<sub>i</sub>)
+                                </div>
+                            </div>
+                        </li>
+                        <li><strong>Floating Leg PV</strong>: 
+                            For a standard OIS swap, the floating leg present value simplifies to the difference in discount factors between start and end (due to no-arbitrage):
+                            <div class="equation-block">
+                                <div class="equation">
+                                    PV(Floating) = Notional &times; [ D(0, T<sub>start</sub>) - D(0, T<sub>end</sub>) ]
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <h3>Swap Delta / PVBP (Price Value of a Basis Point)</h3>
+                    <p>
+                        The <strong>PVBP</strong> (also known as <strong>DV01</strong>) measures the portfolio's interest rate sensitivity. It is the dollar change in NPV if the entire yield curve shifts parallelly by <strong>1 basis point (0.01% or 0.0001)</strong>.
+                    </p>
+                    <p>
+                        The pricer accomplishes this by:
+                    </p>
+                    <ol style="margin-left: 20px; color: var(--text-secondary); line-height: 1.7; font-size: 15px;">
+                        <li>Shifting all zero rates up by 1 basis point: <code class="inline-code">z<sub>bumped</sub>(t) = z(t) + 0.0001</code></li>
+                        <li>Recalculating the bumped discount factors: <code class="inline-code">D<sub>bumped</sub>(t) = e<sup>-z<sub>bumped</sub>(t) &times; t</sup></code></li>
+                        <li>Re-valuing the swap portfolio to get <code class="inline-code">NPV<sub>bumped</sub></code>.</li>
+                        <li>PVBP is the net change: <code class="inline-code">PVBP = | NPV<sub>bumped</sub> - NPV<sub>base</sub> |</code></li>
+                    </ol>
+                </section>
+                
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2026 YieldCurve. Built for institutional-grade fixed income analytics.</p>
+    </footer>
+
+    <script>
+        // Sync Theme with main website
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        });
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+
+        function updateThemeIcon(theme) {
+            const icon = themeToggleBtn.querySelector('i');
+            if (theme === 'dark') {
+                icon.className = 'fa-solid fa-sun';
+            } else {
+                icon.className = 'fa-solid fa-moon';
+            }
+        }
+
+        // Active link highlighting on scroll
+        const sections = document.querySelectorAll('.docs-section');
+        const navLinks = document.querySelectorAll('.docs-nav-list a');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 120) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

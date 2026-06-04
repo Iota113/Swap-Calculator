@@ -27,7 +27,8 @@
                 <span>Yield<span class="logo-accent">Curve</span></span>
             </div>
             <nav class="nav-links">
-                <a href="#" class="active"><i class="fa-solid fa-calculator"></i> Curve Builder</a>
+                <a href="index.html" class="active"><i class="fa-solid fa-calculator"></i> Curve Builder</a>
+                <a href="docs.html"><i class="fa-solid fa-book-open"></i> Docs & Guide</a>
                 <a href="https://www.animestats.tf/" target="_blank"><i class="fa-solid fa-wand-magic-sparkles"></i> Inspiration</a>
             </nav>
             <div class="header-actions">
@@ -70,6 +71,13 @@
                         <h2>Curve Configuration</h2>
                     </div>
                     <div class="card-body">
+                        <div class="form-group">
+                            <label for="curve-type">Curve Type</label>
+                            <select id="curve-type">
+                                <option value="OIS" selected>OIS / Swap Curve</option>
+                                <option value="Treasury">US Treasury Curve</option>
+                            </select>
+                        </div>
                         <div class="form-group">
                             <label for="trade-date">Trade Date (DD-MM-YYYY)</label>
                             <input type="text" id="trade-date" value="28-05-2026" placeholder="DD-MM-YYYY">
@@ -134,7 +142,7 @@
 
             <div class="right-column">
                 
-                <div class="portfolio-panel card">
+                <div class="card">
                     <div class="card-header">
                         <i class="fa-solid fa-briefcase"></i>
                         <h2>Swap Portfolio</h2>
@@ -196,14 +204,8 @@
                     </div>
                     <div class="card-body scroll-container table-wrapper">
                         <table id="market-table" class="interactive-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 20%">Instrument</th>
-                                    <th style="width: 20%">Tenor</th>
-                                    <th style="width: 30%">Quote Type</th>
-                                    <th style="width: 20%">Quote</th>
-                                    <th style="width: 10%">Actions</th>
-                                </tr>
+                            <thead id="market-table-head">
+                                <!-- Populated dynamically -->
                             </thead>
                             <tbody id="market-table-body">
                                 </tbody>
@@ -268,17 +270,8 @@
                 </div>
                 <div class="card-body scroll-container output-table-wrapper">
                     <table id="output-table" class="results-table">
-                        <thead>
-                            <tr>
-                                <th>Instrument</th>
-                                <th>Tenor</th>
-                                <th>Quote</th>
-                                <th>Maturity</th>
-                                <th>t (Years)</th>
-                                <th>Discount Factor</th>
-                                <th>Zero Rate</th>
-                                <th>Status</th>
-                            </tr>
+                        <thead id="output-table-head">
+                            <!-- Populated dynamically -->
                         </thead>
                         <tbody id="output-table-body">
                             </tbody>
