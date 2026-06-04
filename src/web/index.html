@@ -54,7 +54,7 @@
                     </div>
                     <div class="card-body">
                         <p class="quickstart-intro">
-                            Welcome to the Yield Curve & Pricing Engine. Follow these quick steps to generate your curves:
+                            Welcome to the Yield Curve & Pricing Engine :) Follow these steps to generate your results:
                         </p>
                         <ul class="quickstart-list">
                             <li>Configure your global parameters (Trade Date, Day Count, etc.).</li>
@@ -198,9 +198,9 @@
                         <table id="market-table" class="interactive-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 25%">Instrument</th>
+                                    <th style="width: 20%">Instrument</th>
                                     <th style="width: 20%">Tenor</th>
-                                    <th style="width: 25%">Quote Type</th>
+                                    <th style="width: 30%">Quote Type</th>
                                     <th style="width: 20%">Quote</th>
                                     <th style="width: 10%">Actions</th>
                                 </tr>
@@ -210,7 +210,7 @@
                         </table>
                     </div>
                     <div class="card-footer">
-                        <button id="calculate-btn" class="btn btn-primary btn-lg btn-block">
+                        <button id="calculate-btn" class="btn btn-primary btn-lg">
                             <i class="fa-solid fa-bolt"></i> Generate Curves & Pricing
                         </button>
                     </div>
@@ -286,10 +286,20 @@
                 </div>
             </div>
 
-            <div class="charts-card card" style="grid-column: 1 / -1; margin-top: 20px; height: auto;">
-                <div class="card-header">
-                    <i class="fa-solid fa-water"></i>
-                    <h2>Portfolio Cashflow Projection</h2>
+            <div class="charts-card card" style="grid-column: 1 / -1; margin-top: 20px; height: 45vh;">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-water"></i>
+                        <h2>Portfolio Cashflow Projection</h2>
+                    </div>
+                    <div class="toggle-container" style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #94a3b8; font-size: 0.85rem;">Split Axes</span>
+                        <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
+                            <input type="checkbox" id="axis-toggle" onchange="handleAxisToggle()" style="opacity: 0; width: 0; height: 0;">
+                            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .3s; border-radius: 34px;"></span>
+                        </label>
+                        <span style="color: #94a3b8; font-size: 0.85rem;">Combined Axis</span>
+                    </div>
                 </div>
                 <div class="card-body chart-wrapper">
                     <div class="chart-canvas-holder">

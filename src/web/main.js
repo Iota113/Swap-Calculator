@@ -735,7 +735,7 @@ function renderCharts() {
                     showLine: true,
                     borderColor: lineColor,
                     borderWidth: 2.5,
-                    pointRadius: 0, // Hide points for the smooth line
+                    pointRadius: 0,
                     pointHitRadius: 0,
                     fill: false,
                     tension: 0.1
@@ -866,11 +866,16 @@ exportResultsBtn.addEventListener('click', () => {
 // ==========================================
 // PORTFOLIO CASHFLOW PROJECTION CHART
 // ==========================================
+// Global or module-scoped variables to track chart state
 let cashflowChart = null;
+let currentCashflowData = null; 
 
 function drawCashflowChart(cashflowData) {
     const canvas = document.getElementById('cashflow-chart');
     if (!canvas) return;
+
+    // Cache data for toggle use
+    currentCashflowData = cashflowData; 
 
     // Nothing to show: clear any prior chart and bail out
     if (!cashflowData || cashflowData.length === 0) {
@@ -888,18 +893,65 @@ function drawCashflowChart(cashflowData) {
     const netFlows = cashflowData.map(d => d.net_cashflow);
     const cumulativeFlows = cashflowData.map(d => d.cumulative);
 
-    // --- Dynamic Symmetric Axis Calculation ---
-    // Find the absolute peak value for Cumulative to create equal bounds around 0
-    const maxCumulative = Math.max(...cumulativeFlows.map(Math.abs), 0);
-    const cumulativeBound = maxCumulative === 0 ? 100 : maxCumulative * 1.15; // 15% padding
+    // Read the current state of the toggle (checked = combined)
+    const isCombined = document.getElementById('axis-toggle')?.checked || false;
 
-    // Find the absolute peak value for Net Flows to create equal bounds around 0
+    // --- Dynamic Symmetric Axis Calculation ---
+    const maxCumulative = Math.max(...cumulativeFlows.map(Math.abs), 0);
     const maxNet = Math.max(...netFlows.map(Math.abs), 0);
-    const netBound = maxNet === 0 ? 100 : maxNet * 1.15; // 15% padding
-    // ------------------------------------------
+    
+    let cumulativeBound = maxCumulative === 0 ? 100 : maxCumulative * 1.15;
+    let netBound = maxNet === 0 ? 100 : maxNet * 1.15;
+
+    // If combined, use a universal scale calculated from both bounds
+    if (isCombined) {
+        const unifiedBound = Math.max(cumulativeBound, netBound);
+        cumulativeBound = unifiedBound;
+        netBound = unifiedBound;
+    }
+
+    // Build scales object based on selection
+    const chartScales = {
+        x: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#94a3b8' }
+        },
+        y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            title: { 
+                display: true, 
+                text: isCombined ? 'Financial Value ($)' : 'Cumulative ($)', 
+                color: '#94a3b8' 
+            },
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#94a3b8' },
+            min: -cumulativeBound,
+            max: cumulativeBound
+        }
+    };
+
+    // Append separate y1 right-side scale axis only if split mode is chosen
+    if (!isCombined) {
+        chartScales.y1 = {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            title: { display: true, text: 'Net Cashflow ($)', color: '#94a3b8' },
+            grid: { 
+                drawOnChartArea: true,
+                color: (context) => context.tick.value === 0 ? 'rgba(255, 255, 255, 0.25)' : 'transparent',
+                lineWidth: (context) => context.tick.value === 0 ? 2 : 1
+            }, 
+            ticks: { color: '#94a3b8' },
+            min: -netBound,
+            max: netBound
+        };
+    }
 
     cashflowChart = new Chart(ctx, {
-        type: 'bar', // Base type
+        type: 'bar',
         data: {
             labels: labels,
             datasets: [
@@ -907,21 +959,20 @@ function drawCashflowChart(cashflowData) {
                     type: 'line',
                     label: 'Cumulative Equity',
                     data: cumulativeFlows,
-                    borderColor: '#3b82f6', // Primary blue
+                    borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderWidth: 3,
                     tension: 0.3,
                     fill: true,
-                    yAxisID: 'y'
+                    yAxisID: 'y' // Always targets primary left axis
                 },
                 {
                     type: 'bar',
                     label: 'Net Period Cashflow',
                     data: netFlows,
-                    // Dynamic map inside render loop works, but since it's hardcoded on init, we pass the array
-                    backgroundColor: netFlows.map(val => val >= 0 ? '#10b981' : '#ef4444'), // Green if positive, Red if negative
-                    barThickness: 4, // Keeps the bars thin like a lollipop chart
-                    yAxisID: 'y1'
+                    backgroundColor: netFlows.map(val => val >= 0 ? '#10b981' : '#ef4444'),
+                    barThickness: 4,
+                    yAxisID: isCombined ? 'y' : 'y1' // Re-route dataset to matching axis
                 }
             ]
         },
@@ -930,39 +981,14 @@ function drawCashflowChart(cashflowData) {
             maintainAspectRatio: false,
             resizeDelay: 200,
             interaction: { mode: 'index', intersect: false },
-            scales: {
-                x: {
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#94a3b8' }
-                },
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: { display: true, text: 'Cumulative ($)', color: '#94a3b8' },
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#94a3b8' },
-                    // Force symmetric bounds around 0
-                    min: -cumulativeBound,
-                    max: cumulativeBound
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: { display: true, text: 'Net Cashflow ($)', color: '#94a3b8' },
-                    grid: { 
-                        drawOnChartArea: true,
-                        // Highlighting the zero baseline explicitly
-                        color: (context) => context.tick.value === 0 ? 'rgba(255, 255, 255, 0.25)' : 'transparent',
-                        lineWidth: (context) => context.tick.value === 0 ? 2 : 1
-                    }, 
-                    ticks: { color: '#94a3b8' },
-                    // Force symmetric bounds around 0
-                    min: -netBound,
-                    max: netBound
-                }
-            }
+            scales: chartScales
         }
     });
+}
+
+// Event handler bound to the toggle interface
+function handleAxisToggle() {
+    if (currentCashflowData) {
+        drawCashflowChart(currentCashflowData);
+    }
 }
