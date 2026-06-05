@@ -8,6 +8,8 @@ let yieldChart = null;
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('file-input');
 const marketTableBody = document.getElementById('market-table-body');
+const marketTableHead = document.getElementById('market-table-head');
+const outputTableHead = document.getElementById('output-table-head');
 const addRowBtn = document.getElementById('add-row');
 const clearTableBtn = document.getElementById('clear-table');
 const calculateBtn = document.getElementById('calculate-btn');
@@ -20,6 +22,7 @@ const loadSampleBtn = document.getElementById('load-sample');
 const showZeroRateBtn = document.getElementById('show-zero-rate');
 const showDfBtn = document.getElementById('show-df');
 const exportResultsBtn = document.getElementById('export-results');
+const curveTypeSelect = document.getElementById('curve-type');
 
 // Initial setup
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,6 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeIcon(savedTheme);
+    
+    // Draw initial table headers
+    updateTableHeaders();
     
     // Load default sample data to make the page look complete at first sight
     loadSampleData();
@@ -55,52 +61,145 @@ function updateThemeIcon(theme) {
     }
 }
 
+// Curve Type Change Event
+if (curveTypeSelect) {
+    curveTypeSelect.addEventListener('change', () => {
+        updateTableHeaders();
+        loadSampleData(); // Auto load respective sample data when toggling curve types
+    });
+}
+
+function updateTableHeaders() {
+    if (!curveTypeSelect) return;
+    const curveType = curveTypeSelect.value;
+    
+    if (curveType === 'Treasury') {
+        marketTableHead.innerHTML = `
+            <tr>
+                <th style="width: 25%">Instrument</th>
+                <th style="width: 15%">Tenor</th>
+                <th style="width: 20%">Coupon (%)</th>
+                <th style="width: 20%">Price</th>
+                <th style="width: 15%">Spread (bps)</th>
+                <th style="width: 5%">Actions</th>
+            </tr>
+        `;
+        outputTableHead.innerHTML = `
+            <tr>
+                <th>Instrument</th>
+                <th>Tenor</th>
+                <th>Coupon</th>
+                <th>Price</th>
+                <th>Maturity</th>
+                <th>t (Years)</th>
+                <th>Discount Factor</th>
+                <th>Zero Rate</th>
+                <th>Status</th>
+            </tr>
+        `;
+    } else {
+        marketTableHead.innerHTML = `
+            <tr>
+                <th style="width: 20%">Instrument</th>
+                <th style="width: 15%">Tenor</th>
+                <th style="width: 25%">Quote Type</th>
+                <th style="width: 20%">Quote</th>
+                <th style="width: 15%">Spread (bps)</th>
+                <th style="width: 5%">Actions</th>
+            </tr>
+        `;
+        outputTableHead.innerHTML = `
+            <tr>
+                <th>Instrument</th>
+                <th>Tenor</th>
+                <th>Quote Type</th>
+                <th>Quote</th>
+                <th>Maturity</th>
+                <th>t (Years)</th>
+                <th>Discount Factor</th>
+                <th>Zero Rate</th>
+                <th>Status</th>
+            </tr>
+        `;
+    }
+}
+
 // Sample Data Loading
 const sampleData = [
-    { Instrument: 'Cash', Tenor: 'O/N', QuoteType: 'RATE', Quote: 3.550 },
-    { Instrument: 'Cash', Tenor: '1M', QuoteType: 'RATE', Quote: 3.608 },
-    { Instrument: 'Cash', Tenor: '3M', QuoteType: 'RATE', Quote: 3.649 },
-    { Instrument: 'Future', Tenor: 'SR3M6', QuoteType: 'PRICE', Quote: 96.330 },
-    { Instrument: 'Future', Tenor: 'SR3U6', QuoteType: 'PRICE', Quote: 96.250 },
-    { Instrument: 'Future', Tenor: 'SR3Z6', QuoteType: 'PRICE', Quote: 96.155 },
-    { Instrument: 'Future', Tenor: 'SR3H7', QuoteType: 'PRICE', Quote: 96.080 },
-    { Instrument: 'Future', Tenor: 'SR3M7', QuoteType: 'PRICE', Quote: 96.065 },
-    { Instrument: 'Future', Tenor: 'SR3U7', QuoteType: 'PRICE', Quote: 96.095 },
-    { Instrument: 'Future', Tenor: 'SR3Z7', QuoteType: 'PRICE', Quote: 96.140 },
-    { Instrument: 'Future', Tenor: 'SR3H8', QuoteType: 'PRICE', Quote: 96.170 },
-    { Instrument: 'Future', Tenor: 'SR3M8', QuoteType: 'PRICE', Quote: 96.180 },
-    { Instrument: 'Swap', Tenor: '1Y', QuoteType: 'RATE', Quote: 3.849 },
-    { Instrument: 'Swap', Tenor: '2Y', QuoteType: 'RATE', Quote: 3.899 },
-    { Instrument: 'Swap', Tenor: '3Y', QuoteType: 'RATE', Quote: 3.889 },
-    { Instrument: 'Swap', Tenor: '5Y', QuoteType: 'RATE', Quote: 3.906 },
-    { Instrument: 'Swap', Tenor: '7Y', QuoteType: 'RATE', Quote: 3.975 },
-    { Instrument: 'Swap', Tenor: '10Y', QuoteType: 'RATE', Quote: 4.089 },
-    { Instrument: 'Swap', Tenor: '15Y', QuoteType: 'RATE', Quote: 4.264 },
-    { Instrument: 'Swap', Tenor: '30Y', QuoteType: 'RATE', Quote: 4.308 }
+    { Instrument: 'Cash', Tenor: 'O/N', QuoteType: 'RATE', Quote: 3.550, Spread: 1.0 },
+    { Instrument: 'Cash', Tenor: '1M', QuoteType: 'RATE', Quote: 3.608, Spread: 1.2 },
+    { Instrument: 'Cash', Tenor: '3M', QuoteType: 'RATE', Quote: 3.649, Spread: 1.5 },
+    { Instrument: 'Future', Tenor: 'SR3M6', QuoteType: 'PRICE', Quote: 96.330, Spread: 0.5 },
+    { Instrument: 'Future', Tenor: 'SR3U6', QuoteType: 'PRICE', Quote: 96.250, Spread: 0.6 },
+    { Instrument: 'Future', Tenor: 'SR3Z6', QuoteType: 'PRICE', Quote: 96.155, Spread: 0.5 },
+    { Instrument: 'Future', Tenor: 'SR3H7', QuoteType: 'PRICE', Quote: 96.080, Spread: 0.8 },
+    { Instrument: 'Future', Tenor: 'SR3M7', QuoteType: 'PRICE', Quote: 96.065, Spread: 0.7 },
+    { Instrument: 'Future', Tenor: 'SR3U7', QuoteType: 'PRICE', Quote: 96.095, Spread: 0.9 },
+    { Instrument: 'Future', Tenor: 'SR3Z7', QuoteType: 'PRICE', Quote: 96.140, Spread: 0.8 },
+    { Instrument: 'Future', Tenor: 'SR3H8', QuoteType: 'PRICE', Quote: 96.170, Spread: 1.1 },
+    { Instrument: 'Future', Tenor: 'SR3M8', QuoteType: 'PRICE', Quote: 96.180, Spread: 1.0 },
+    { Instrument: 'Swap', Tenor: '1Y', QuoteType: 'RATE', Quote: 3.849, Spread: 2.0 },
+    { Instrument: 'Swap', Tenor: '2Y', QuoteType: 'RATE', Quote: 3.899, Spread: 2.2 },
+    { Instrument: 'Swap', Tenor: '3Y', QuoteType: 'RATE', Quote: 3.889, Spread: 2.5 },
+    { Instrument: 'Swap', Tenor: '5Y', QuoteType: 'RATE', Quote: 3.906, Spread: 2.8 },
+    { Instrument: 'Swap', Tenor: '7Y', QuoteType: 'RATE', Quote: 3.975, Spread: 3.2 },
+    { Instrument: 'Swap', Tenor: '10Y', QuoteType: 'RATE', Quote: 4.089, Spread: 3.5 },
+    { Instrument: 'Swap', Tenor: '15Y', QuoteType: 'RATE', Quote: 4.264, Spread: 4.0 },
+    { Instrument: 'Swap', Tenor: '30Y', QuoteType: 'RATE', Quote: 4.308, Spread: 5.0 }
+];
+
+const treasurySampleData = [
+    { Instrument: 'Bill', Tenor: '1M', Coupon: 0.0, Price: 99.560, Spread: 1.0 },
+    { Instrument: 'Bill', Tenor: '3M', Coupon: 0.0, Price: 98.710, Spread: 1.2 },
+    { Instrument: 'Bill', Tenor: '6M', Coupon: 0.0, Price: 97.450, Spread: 1.5 },
+    { Instrument: 'Bill', Tenor: '1Y', Coupon: 0.0, Price: 95.120, Spread: 2.0 },
+    { Instrument: 'Note', Tenor: '2Y', Coupon: 4.250, Price: 99.300, Spread: 1.8 },
+    { Instrument: 'Note', Tenor: '3Y', Coupon: 4.125, Price: 98.900, Spread: 2.2 },
+    { Instrument: 'Note', Tenor: '5Y', Coupon: 4.000, Price: 98.500, Spread: 2.5 },
+    { Instrument: 'Note', Tenor: '7Y', Coupon: 4.125, Price: 99.100, Spread: 2.8 },
+    { Instrument: 'Bond', Tenor: '10Y', Coupon: 4.250, Price: 100.250, Spread: 1.5 },
+    { Instrument: 'Bond', Tenor: '20Y', Coupon: 4.500, Price: 101.500, Spread: 3.0 },
+    { Instrument: 'Bond', Tenor: '30Y', Coupon: 4.375, Price: 99.800, Spread: 3.5 }
 ];
 
 function loadSampleData() {
-    marketQuotes = JSON.parse(JSON.stringify(sampleData));
+    const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
+    if (curveType === 'Treasury') {
+        marketQuotes = JSON.parse(JSON.stringify(treasurySampleData));
+    } else {
+        marketQuotes = JSON.parse(JSON.stringify(sampleData));
+    }
     renderTable();
-    showAlert('Sample market data loaded successfully!', 'success');
+    showAlert(`Sample ${curveType} market data loaded successfully!`, 'success');
 }
 
 loadSampleBtn.addEventListener('click', loadSampleData);
 
 // CSV Template Download
 downloadTemplateBtn.addEventListener('click', () => {
-    const csvContent = "Instrument,Tenor,QuoteType,Quote\n" +
-        "Cash,O/N,RATE,3.55\n" +
-        "Cash,1M,RATE,3.608\n" +
-        "Future,SR3M6,PRICE,96.33\n" +
-        "Swap,1Y,RATE,3.849\n" +
-        "Swap,5Y,RATE,3.906";
+    const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
+    let csvContent = "";
+    
+    if (curveType === 'Treasury') {
+        csvContent = "Instrument,Tenor,Coupon,Price,Spread\n" +
+            "Bill,3M,0,98.71,1.2\n" +
+            "Bill,6M,0,97.45,1.5\n" +
+            "Note,2Y,4.25,99.30,1.8\n" +
+            "Bond,10Y,4.25,100.25,1.5";
+    } else {
+        csvContent = "Instrument,Tenor,QuoteType,Quote,Spread\n" +
+            "Cash,O/N,RATE,3.55,1.0\n" +
+            "Cash,1M,RATE,3.608,1.2\n" +
+            "Future,SR3M6,PRICE,96.33,0.5\n" +
+            "Swap,1Y,RATE,3.849,2.0\n" +
+            "Swap,5Y,RATE,3.906,2.8";
+    }
         
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", "yieldcurve_template.csv");
+    link.setAttribute("download", `yieldcurve_${curveType.toLowerCase()}_template.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -114,7 +213,7 @@ function renderTable() {
     if (marketQuotes.length === 0) {
         marketTableBody.innerHTML = `
             <tr>
-                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
                     No market quotes loaded. Drag & drop a file or click 'Add Quote' to get started.
                 </td>
             </tr>
@@ -122,35 +221,69 @@ function renderTable() {
         return;
     }
     
+    const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
+    
     marketQuotes.forEach((quote, idx) => {
         const tr = document.createElement('tr');
         
-        tr.innerHTML = `
-            <td>
-                <select class="row-instrument" data-index="${idx}">
-                    <option value="Cash" ${quote.Instrument === 'Cash' ? 'selected' : ''}>Cash</option>
-                    <option value="Future" ${quote.Instrument === 'Future' ? 'selected' : ''}>Future</option>
-                    <option value="Swap" ${quote.Instrument === 'Swap' ? 'selected' : ''}>Swap</option>
-                </select>
-            </td>
-            <td>
-                <input type="text" class="row-tenor" value="${quote.Tenor}" data-index="${idx}" placeholder="e.g. 3M">
-            </td>
-            <td>
-                <select class="row-quotetype" data-index="${idx}">
-                    <option value="RATE" ${quote.QuoteType === 'RATE' ? 'selected' : ''}>RATE (yield %)</option>
-                    <option value="PRICE" ${quote.QuoteType === 'PRICE' ? 'selected' : ''}>PRICE (futures)</option>
-                </select>
-            </td>
-            <td>
-                <input type="number" class="row-quote" value="${quote.Quote}" step="0.001" data-index="${idx}">
-            </td>
-            <td style="text-align: center;">
-                <button class="btn btn-danger btn-sm del-port-row" data-index="${idx}" title="Delete Quote">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            </td>
-        `;
+        if (curveType === 'Treasury') {
+            tr.innerHTML = `
+                <td>
+                    <select class="row-instrument" data-index="${idx}">
+                        <option value="Bill" ${quote.Instrument === 'Bill' ? 'selected' : ''}>Bill</option>
+                        <option value="Note" ${quote.Instrument === 'Note' ? 'selected' : ''}>Note</option>
+                        <option value="Bond" ${quote.Instrument === 'Bond' ? 'selected' : ''}>Bond</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" class="row-tenor" value="${quote.Tenor || ''}" data-index="${idx}" placeholder="e.g. 10Y">
+                </td>
+                <td>
+                    <input type="number" class="row-coupon" value="${quote.Coupon !== undefined ? quote.Coupon : 0.0}" step="0.001" data-index="${idx}" placeholder="0.0">
+                </td>
+                <td>
+                    <input type="number" class="row-price" value="${quote.Price !== undefined ? quote.Price : 100.0}" step="0.001" data-index="${idx}" placeholder="100.0">
+                </td>
+                <td>
+                    <input type="number" class="row-spread" value="${quote.Spread !== undefined && quote.Spread !== null ? quote.Spread : ''}" step="0.1" data-index="${idx}" placeholder="bps">
+                </td>
+                <td style="text-align: center;">
+                    <button class="btn btn-danger btn-sm del-port-row" data-index="${idx}" title="Delete Quote">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>
+            `;
+        } else {
+            tr.innerHTML = `
+                <td>
+                    <select class="row-instrument" data-index="${idx}">
+                        <option value="Cash" ${quote.Instrument === 'Cash' ? 'selected' : ''}>Cash</option>
+                        <option value="Future" ${quote.Instrument === 'Future' ? 'selected' : ''}>Future</option>
+                        <option value="Swap" ${quote.Instrument === 'Swap' ? 'selected' : ''}>Swap</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" class="row-tenor" value="${quote.Tenor || ''}" data-index="${idx}" placeholder="e.g. 3M">
+                </td>
+                <td>
+                    <select class="row-quotetype" data-index="${idx}">
+                        <option value="RATE" ${quote.QuoteType === 'RATE' ? 'selected' : ''}>RATE (yield %)</option>
+                        <option value="PRICE" ${quote.QuoteType === 'PRICE' ? 'selected' : ''}>PRICE (futures)</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="row-quote" value="${quote.Quote !== undefined ? quote.Quote : 0.0}" step="0.001" data-index="${idx}">
+                </td>
+                <td>
+                    <input type="number" class="row-spread" value="${quote.Spread !== undefined && quote.Spread !== null ? quote.Spread : ''}" step="0.1" data-index="${idx}" placeholder="bps">
+                </td>
+                <td style="text-align: center;">
+                    <button class="btn btn-danger btn-sm del-port-row" data-index="${idx}" title="Delete Quote">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>
+            `;
+        }
         
         marketTableBody.appendChild(tr);
     });
@@ -160,14 +293,17 @@ function renderTable() {
         el.addEventListener('change', (e) => {
             const idx = parseInt(e.target.dataset.index);
             marketQuotes[idx].Instrument = e.target.value;
-            // Autofill QuoteType
-            const typeSelect = document.querySelector(`.row-quotetype[data-index="${idx}"]`);
-            if (e.target.value === 'Future') {
-                marketQuotes[idx].QuoteType = 'PRICE';
-                typeSelect.value = 'PRICE';
-            } else {
-                marketQuotes[idx].QuoteType = 'RATE';
-                typeSelect.value = 'RATE';
+            
+            // OIS-specific auto-quotetype logic
+            if (curveType === 'OIS') {
+                const typeSelect = document.querySelector(`.row-quotetype[data-index="${idx}"]`);
+                if (e.target.value === 'Future') {
+                    marketQuotes[idx].QuoteType = 'PRICE';
+                    if (typeSelect) typeSelect.value = 'PRICE';
+                } else {
+                    marketQuotes[idx].QuoteType = 'RATE';
+                    if (typeSelect) typeSelect.value = 'RATE';
+                }
             }
         });
     });
@@ -176,6 +312,20 @@ function renderTable() {
         el.addEventListener('input', (e) => {
             const idx = parseInt(e.target.dataset.index);
             marketQuotes[idx].Tenor = e.target.value.trim().toUpperCase();
+        });
+    });
+
+    document.querySelectorAll('.row-coupon').forEach(el => {
+        el.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            marketQuotes[idx].Coupon = parseFloat(e.target.value) || 0.0;
+        });
+    });
+
+    document.querySelectorAll('.row-price').forEach(el => {
+        el.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            marketQuotes[idx].Price = parseFloat(e.target.value) || 0.0;
         });
     });
     
@@ -189,13 +339,20 @@ function renderTable() {
     document.querySelectorAll('.row-quote').forEach(el => {
         el.addEventListener('input', (e) => {
             const idx = parseInt(e.target.dataset.index);
-            marketQuotes[idx].Quote = parseFloat(e.target.value) || 0;
+            marketQuotes[idx].Quote = parseFloat(e.target.value) || 0.0;
+        });
+    });
+
+    document.querySelectorAll('.row-spread').forEach(el => {
+        el.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            const val = e.target.value.trim();
+            marketQuotes[idx].Spread = val !== '' ? parseFloat(val) : null;
         });
     });
     
     document.querySelectorAll('.del-port-row').forEach(el => {
         el.addEventListener('click', (e) => {
-            // Find parent button if icon was clicked
             const btn = e.target.closest('.del-port-row');
             const idx = parseInt(btn.dataset.index);
             marketQuotes.splice(idx, 1);
@@ -206,16 +363,28 @@ function renderTable() {
 
 // Table Editing Actions
 addRowBtn.addEventListener('click', () => {
-    // Default new row matching the last item type, or Cash
-    const defaultInst = marketQuotes.length > 0 ? marketQuotes[marketQuotes.length - 1].Instrument : 'Cash';
-    const defaultType = defaultInst === 'Future' ? 'PRICE' : 'RATE';
+    const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
     
-    marketQuotes.push({
-        Instrument: defaultInst,
-        Tenor: '',
-        QuoteType: defaultType,
-        Quote: 0.0
-    });
+    if (curveType === 'Treasury') {
+        const defaultInst = marketQuotes.length > 0 ? marketQuotes[marketQuotes.length - 1].Instrument : 'Bill';
+        marketQuotes.push({
+            Instrument: defaultInst,
+            Tenor: '',
+            Coupon: 0.0,
+            Price: 100.0,
+            Spread: null
+        });
+    } else {
+        const defaultInst = marketQuotes.length > 0 ? marketQuotes[marketQuotes.length - 1].Instrument : 'Cash';
+        const defaultType = defaultInst === 'Future' ? 'PRICE' : 'RATE';
+        marketQuotes.push({
+            Instrument: defaultInst,
+            Tenor: '',
+            QuoteType: defaultType,
+            Quote: 0.0,
+            Spread: null
+        });
+    }
     
     renderTable();
     
@@ -288,6 +457,15 @@ function handleFile(file) {
                 const sheet = workbook.Sheets[sheetName];
                 const json = XLSX.utils.sheet_to_json(sheet);
                 
+                if (json.length === 0) {
+                    showAlert('Excel sheet was empty.', 'danger');
+                    return;
+                }
+                
+                // Auto-detect OIS vs Treasury based on columns
+                const firstRowKeys = Object.keys(json[0]).map(k => k.toLowerCase());
+                const isTreasury = firstRowKeys.includes('price');
+                
                 const parsed = json.map((row, idx) => {
                     const findVal = (name) => {
                         const key = Object.keys(row).find(k => k.toLowerCase() === name.toLowerCase());
@@ -296,23 +474,41 @@ function handleFile(file) {
                     
                     const inst = String(findVal('instrument')).trim();
                     const tenor = String(findVal('tenor')).trim();
-                    const quoteType = String(findVal('quotetype')).trim().toUpperCase();
-                    const quote = parseFloat(findVal('quote'));
                     
-                    if (!inst || !tenor || isNaN(quote)) {
-                        throw new Error(`Row ${idx + 2} is missing critical fields (Instrument, Tenor, or Quote)`);
+                    if (!inst || !tenor) {
+                        throw new Error(`Row ${idx + 2} is missing critical fields (Instrument or Tenor)`);
                     }
                     
-                    return {
+                    const spreadVal = findVal('spread');
+                    const spread = spreadVal !== '' && !isNaN(parseFloat(spreadVal)) ? parseFloat(spreadVal) : null;
+                    
+                    const record = {
                         Instrument: inst.charAt(0).toUpperCase() + inst.slice(1).toLowerCase(),
                         Tenor: tenor.toUpperCase(),
-                        QuoteType: quoteType || (inst.toLowerCase() === 'future' ? 'PRICE' : 'RATE'),
-                        Quote: quote
+                        Spread: spread
                     };
+                    
+                    if (isTreasury) {
+                        const priceVal = parseFloat(findVal('price'));
+                        if (isNaN(priceVal)) throw new Error(`Row ${idx + 2} is missing Price.`);
+                        record.Price = priceVal;
+                        record.Coupon = parseFloat(findVal('coupon')) || 0.0;
+                    } else {
+                        const quoteVal = parseFloat(findVal('quote'));
+                        if (isNaN(quoteVal)) throw new Error(`Row ${idx + 2} is missing Quote.`);
+                        record.Quote = quoteVal;
+                        record.QuoteType = String(findVal('quotetype')).trim().toUpperCase() || (inst.toLowerCase() === 'future' ? 'PRICE' : 'RATE');
+                    }
+                    
+                    return record;
                 });
                 
                 if (parsed.length > 0) {
                     marketQuotes = parsed;
+                    if (curveTypeSelect) {
+                        curveTypeSelect.value = isTreasury ? 'Treasury' : 'OIS';
+                        updateTableHeaders();
+                    }
                     renderTable();
                     showAlert(`Successfully imported ${parsed.length} quotes from ${file.name}!`, 'success');
                 } else {
@@ -328,7 +524,7 @@ function handleFile(file) {
     }
 }
 
-// Custom simple CSV parser
+// Custom simple CSV parser with OIS / Treasury auto-detection
 function parseCSV(text) {
     const lines = text.split(/\r?\n/);
     if (lines.length === 0) return [];
@@ -337,11 +533,24 @@ function parseCSV(text) {
     
     const instIdx = headers.findIndex(h => h.toLowerCase() === 'instrument');
     const tenorIdx = headers.findIndex(h => h.toLowerCase() === 'tenor');
-    const typeIdx = headers.findIndex(h => h.toLowerCase() === 'quotetype');
-    const quoteIdx = headers.findIndex(h => h.toLowerCase() === 'quote');
+    const spreadIdx = headers.findIndex(h => h.toLowerCase() === 'spread');
     
-    if (instIdx === -1 || tenorIdx === -1 || typeIdx === -1 || quoteIdx === -1) {
-        throw new Error('CSV headers must include: Instrument, Tenor, QuoteType, Quote');
+    if (instIdx === -1 || tenorIdx === -1) {
+        throw new Error('CSV headers must include at least: Instrument, Tenor');
+    }
+    
+    // Auto-detect mode based on column headers
+    const isTreasury = headers.some(h => h.toLowerCase() === 'price');
+    
+    let quoteIdx, typeIdx, priceIdx, couponIdx;
+    if (isTreasury) {
+        priceIdx = headers.findIndex(h => h.toLowerCase() === 'price');
+        couponIdx = headers.findIndex(h => h.toLowerCase() === 'coupon');
+        if (priceIdx === -1) throw new Error('Treasury CSV headers must include: Price');
+    } else {
+        quoteIdx = headers.findIndex(h => h.toLowerCase() === 'quote');
+        typeIdx = headers.findIndex(h => h.toLowerCase() === 'quotetype');
+        if (quoteIdx === -1 || typeIdx === -1) throw new Error('OIS CSV headers must include: Quote, QuoteType');
     }
     
     const records = [];
@@ -350,18 +559,36 @@ function parseCSV(text) {
         if (!line) continue;
         
         const cols = line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
-        if (cols.length <= Math.max(instIdx, tenorIdx, typeIdx, quoteIdx)) continue;
+        if (cols.length <= Math.max(instIdx, tenorIdx)) continue;
         
         const instRaw = cols[instIdx];
         const inst = instRaw.charAt(0).toUpperCase() + instRaw.slice(1).toLowerCase();
         
-        records.push({
+        const spreadVal = spreadIdx !== -1 ? cols[spreadIdx] : '';
+        const spread = spreadVal !== '' && !isNaN(parseFloat(spreadVal)) ? parseFloat(spreadVal) : null;
+        
+        const record = {
             Instrument: inst,
             Tenor: cols[tenorIdx].toUpperCase(),
-            QuoteType: cols[typeIdx].toUpperCase(),
-            Quote: parseFloat(cols[quoteIdx]) || 0.0
-        });
+            Spread: spread
+        };
+        
+        if (isTreasury) {
+            record.Price = parseFloat(cols[priceIdx]) || 0.0;
+            record.Coupon = couponIdx !== -1 && cols[couponIdx] !== '' ? parseFloat(cols[couponIdx]) : 0.0;
+        } else {
+            record.Quote = parseFloat(cols[quoteIdx]) || 0.0;
+            record.QuoteType = cols[typeIdx].toUpperCase();
+        }
+        
+        records.push(record);
     }
+    
+    if (curveTypeSelect) {
+        curveTypeSelect.value = isTreasury ? 'Treasury' : 'OIS';
+        updateTableHeaders();
+    }
+    
     return records;
 }
 
@@ -383,7 +610,6 @@ function showAlert(message, type = 'info') {
     alertContainer.innerHTML = '';
     alertContainer.appendChild(alertDiv);
     
-    // Auto remove alerts after 8 seconds (except error logs)
     if (type !== 'danger') {
         setTimeout(() => {
             alertDiv.style.opacity = '0';
@@ -396,22 +622,35 @@ function showAlert(message, type = 'info') {
 
 // API Calculation Trigger
 calculateBtn.addEventListener('click', async () => {
-    // Basic frontend checks
     if (marketQuotes.length === 0) {
         showAlert('Cannot build curve: market quotes table is empty.', 'danger');
         return;
     }
     
+    const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
+    
     // Validate rows
     for (let i = 0; i < marketQuotes.length; i++) {
         const row = marketQuotes[i];
         if (!row.Tenor) {
-            showAlert(`Row ${i + 1}: Tenor is required (e.g. O/N, 3M, 10Y).`, 'danger');
+            showAlert(`Row ${i + 1}: Tenor is required (e.g. 3M, 10Y).`, 'danger');
             return;
         }
-        if (isNaN(row.Quote) || row.Quote === null) {
-            showAlert(`Row ${i + 1} (${row.Tenor}): Quote must be a valid number.`, 'danger');
-            return;
+        
+        if (curveType === 'Treasury') {
+            if (isNaN(row.Price) || row.Price === null) {
+                showAlert(`Row ${i + 1} (${row.Tenor}): Price must be a valid number.`, 'danger');
+                return;
+            }
+            if (isNaN(row.Coupon) || row.Coupon === null) {
+                showAlert(`Row ${i + 1} (${row.Tenor}): Coupon must be a valid number.`, 'danger');
+                return;
+            }
+        } else {
+            if (isNaN(row.Quote) || row.Quote === null) {
+                showAlert(`Row ${i + 1} (${row.Tenor}): Quote must be a valid number.`, 'danger');
+                return;
+            }
         }
     }
     
@@ -422,14 +661,12 @@ calculateBtn.addEventListener('click', async () => {
     const interpolation = document.getElementById('interpolation').value;
     const cutoffYears = parseFloat(document.getElementById('cutoff-years').value);
     
-    // Validation for date format DD-MM-YYYY
     const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
     if (!dateRegex.test(tradeDate)) {
         showAlert('Trade Date must match format DD-MM-YYYY (e.g., 28-05-2026).', 'danger');
         return;
     }
     
-    // Show spinner
     calculateBtn.disabled = true;
     calculateBtn.innerHTML = `<span class="spinner"></span> Computing Curve...`;
     
@@ -441,6 +678,7 @@ calculateBtn.addEventListener('click', async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 config: {
+                    curve_type: curveType,
                     trade_date: tradeDate,
                     day_count_convention: dayCount,
                     payment_frequency: paymentFreq,
@@ -448,7 +686,7 @@ calculateBtn.addEventListener('click', async () => {
                     futures_cutoff_years: cutoffYears
                 },
                 market_data: marketQuotes,
-                portfolio: gatherPortfolioData() // Array of swaps from the portfolio table
+                portfolio: typeof gatherPortfolioData === 'function' ? gatherPortfolioData() : []
             })
         });
         
@@ -462,35 +700,33 @@ calculateBtn.addEventListener('click', async () => {
             const elapsed = Math.round(performance.now() - startTime);
             showAlert(`Yield curve calculated successfully in ${elapsed}ms! Method used: ${data.curves.method}`, 'success');
             
-            // Show container and render UI components
             resultsContainer.style.display = 'grid';
             renderOutputTable();
             renderCharts();
             
-            // Portfolio (interest rate swap) valuation results
             if (data.portfolio_results) {
                 const resultsDiv = document.getElementById('portfolio-results');
                 const npvSpan = document.getElementById('out-npv');
                 const pvbpSpan = document.getElementById('out-pvbp');
                 
-                // Format numbers with commas for readability
-                npvSpan.textContent = "$" + data.portfolio_results.base_npv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                pvbpSpan.textContent = "$" + data.portfolio_results.pvbp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                
-                resultsDiv.style.display = 'flex'; // Make the div visible
+                if (resultsDiv && npvSpan && pvbpSpan) {
+                    npvSpan.textContent = "$" + data.portfolio_results.base_npv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    pvbpSpan.textContent = "$" + data.portfolio_results.pvbp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    resultsDiv.style.display = 'flex';
+                }
             }
             
-            // Portfolio cashflow projection chart
-            drawCashflowChart(data.cashflows);
+            if (typeof drawCashflowChart === 'function') {
+                drawCashflowChart(data.cashflows);
+            }
             
-            // Scroll to results
             resultsContainer.scrollIntoView({ behavior: 'smooth' });
         }
     } catch (err) {
         showAlert(`Network error: ${err.message}. Make sure the Flask server is running.`, 'danger');
     } finally {
         calculateBtn.disabled = false;
-        calculateBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Generate Curves`;
+        calculateBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Generate Curves & Pricing`;
     }
 });
 
@@ -500,6 +736,8 @@ function renderOutputTable() {
     
     if (!calculationResults || !calculationResults.knots) return;
     
+    const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
+    
     calculationResults.knots.forEach(knot => {
         const tr = document.createElement('tr');
         
@@ -507,7 +745,8 @@ function renderOutputTable() {
         if (knot.error) {
             statusBadge = `<span class="status-badge error">Error</span>`;
         } else if (knot.skipped) {
-            statusBadge = `<span class="status-badge skipped">Skipped</span>`;
+            const reason = knot.skipped_reason || 'Skipped';
+            statusBadge = `<span class="status-badge skipped" title="${reason}">Skipped</span>`;
         } else {
             statusBadge = `<span class="status-badge active">Active</span>`;
         }
@@ -517,22 +756,39 @@ function renderOutputTable() {
         const zeroVal = knot.zero_rate !== undefined ? knot.zero_rate.toFixed(4) + '%' : '-';
         const matVal = knot.maturity_date || '-';
         
-        tr.innerHTML = `
-            <td><strong>${knot.instrument}</strong></td>
-            <td>${knot.tenor}</td>
-            <td>${knot.quote.toFixed(3)}</td>
-            <td>${matVal}</td>
-            <td>${tVal}</td>
-            <td>${dfVal}</td>
-            <td>${zeroVal}</td>
-            <td>${statusBadge}</td>
-        `;
+        if (curveType === 'Treasury') {
+            const couponVal = knot.coupon !== undefined ? knot.coupon.toFixed(3) + '%' : '-';
+            const priceVal = knot.price !== undefined ? knot.price.toFixed(3) : '-';
+            tr.innerHTML = `
+                <td><strong>${knot.instrument}</strong></td>
+                <td>${knot.tenor}</td>
+                <td>${couponVal}</td>
+                <td>${priceVal}</td>
+                <td>${matVal}</td>
+                <td>${tVal}</td>
+                <td>${dfVal}</td>
+                <td>${zeroVal}</td>
+                <td>${statusBadge}</td>
+            `;
+        } else {
+            const quoteVal = knot.quote !== undefined ? knot.quote.toFixed(3) : '-';
+            tr.innerHTML = `
+                <td><strong>${knot.instrument}</strong></td>
+                <td>${knot.tenor}</td>
+                <td>${knot.quote_type || '-'}</td>
+                <td>${quoteVal}</td>
+                <td>${matVal}</td>
+                <td>${tVal}</td>
+                <td>${dfVal}</td>
+                <td>${zeroVal}</td>
+                <td>${statusBadge}</td>
+            `;
+        }
         
         outputTableBody.appendChild(tr);
     });
 }
 
-// Chart Toggle Tabs
 showZeroRateBtn.addEventListener('click', () => {
     if (currentChartType === 'zero_rate') return;
     currentChartType = 'zero_rate';

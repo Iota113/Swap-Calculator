@@ -263,7 +263,6 @@ body {
     display: flex;
     flex-direction: column;
     transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s ease, box-shadow 0.3s ease;
-    padding-bottom: 5vh;
 }
 
 .card:hover {
@@ -298,7 +297,7 @@ body {
 }
 
 .card-footer {
-    padding: 16px 16px;
+    padding: 12px 12px;
     background-color: var(--bg-dark); 
     border-top: 1px solid var(--border-color);
 
@@ -847,8 +846,6 @@ select:focus {
     to { transform: rotate(360deg); }
 }
 
-/* --- PORTFOLIO TABLE UI OVERHAUL --- */
-
 /* 1. Kill the up/down arrows on number inputs */
 .interactive-table input[type="number"]::-webkit-inner-spin-button,
 .interactive-table input[type="number"]::-webkit-outer-spin-button {
@@ -877,10 +874,10 @@ select:focus {
 .interactive-table select {
     width: 100%;
     box-sizing: border-box;
-    text-align: center; /* Centers the numbers inside the box */
-    background: rgba(255, 255, 255, 0.05); /* Solidifies the box fill */
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
 }
-/* --- PREMIUM HEADER TOOLTIP --- */
+
 .header-tooltip {
     position: relative;
     display: inline-block;

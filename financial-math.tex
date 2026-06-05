@@ -1,0 +1,200 @@
+\documentclass{article}
+\usepackage{graphicx} 
+\usepackage{amssymb,amsmath,amsthm,mathtools}
+\usepackage{centernot}
+\usepackage{booktabs}
+
+\title{Mathematical Framework for Pricing and Hedging Interest Rate Swaps}
+\author{Henry Tse}
+\date{May 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Foundations: Time Value of Money and Day Count Conventions}
+
+The present value ($PV$) of a future cash flow $C$ received at time $n$ is dictated by the discount factor $F_n$. In discrete compounding terms, the fundamental relationship is given by:
+\begin{equation}
+    PV = \frac{C}{(1 + R)^n} = C \cdot F_n
+\end{equation}
+Where the discount factor is defined as:
+\begin{equation}
+    F_n = \frac{1}{(1 + R)^n}
+\end{equation}
+
+\subsection{Day Count Fractions and Rate Conversion}
+Let $\alpha_{i-1,i}$ denote the day count fraction between two dates $D_{i-1}$ and $D_i$. Based on market conventions, these fractions are calculated as:
+\begin{itemize}
+    \item \textbf{Actual/365 (Fixed / Bond Basis):} 
+    \begin{equation}
+        \alpha = \frac{D_i - D_{i-1}}{365}
+    \end{equation}
+    \item \textbf{Actual/360 (Money Market Basis - US):} 
+    \begin{equation}
+        \alpha = \frac{D_i - D_{i-1}}{360}
+    \end{equation}
+    \item \textbf{30/360 Basis:} Assumes 30 days per month and 360 days per year.
+\end{itemize}
+
+When converting an interest rate $r_1$ with compounding frequency $n_1$ to an equivalent rate $r_2$ with frequency $n_2$, we apply:
+\begin{equation}
+    \left(1 + \frac{r_1}{n_1}\right)^{n_1} = \left(1 + \frac{r_2}{n_2}\right)^{n_2} \implies r_2 = n_2 \left[ \left(1 + \frac{r_1}{n_1}\right)^{\frac{n_1}{n_2}} - 1 \right]
+\end{equation}
+
+\subsection{Annuity Concept}
+For an equal payment basis (annuity stream) yielding regular cash flows $C$ over $n$ periods at rate $i$, the present value is given by:
+\begin{equation}
+    PV = C \cdot \left[ \frac{1 - (1+i)^{-n}}{i} \right]
+\end{equation}
+
+\section{Zero-Coupon Pricing and Yield Curve Bootstrapping}
+
+\subsection{Deriving Discount Factors from the Par Swap Curve}
+Consider an $n$-year interest rate swap with a fixed par swap rate $R_{n}$ and principal $P$. Setting the initialization point discount factor $F_0 = 1$, the present value of the swap $PV(S_n)$ is the net of the fixed leg payments and the final principal exchange:
+\begin{align}
+    PV(S_n) &= -PF_0 + P\left(\sum_{i=1}^n R_n \cdot \alpha_{i-1,i} \cdot F_i \right) +  PF_n \nonumber \\
+    &= -P + PR_n \left(\sum_{i=1}^n \alpha_{i-1,i} F_i\right) + PF_{n}
+\end{align}
+At inception, a market swap trades at par ($PV(S_{nY}) = 0$).
+\begin{equation}
+    F_n = \frac{1 - R_n \sum_{i=1}^{n-1} \alpha_{i-1,i} F_i}{1 + R_n \alpha_{n-1,n}}
+\end{equation}
+
+We can calculate zero rate $r$ (assuming continuous compounding) \[F(0,t)=e^{-rT}\]
+
+We can also get par rate (or yield) $R_n$ with \[R_n=\frac{1-F_n}{\sum_{i=1}^nF_n}\]
+
+For money market instruments or simple short-term single-period structures expiring at time $m$:
+\begin{equation}
+    F_m = \frac{1}{1 + F_m \alpha_{0,m}}
+\end{equation}
+Similarly, we get implied rate (e.g., $R_{6M}$) via:
+\begin{equation}
+    R_{6M} = \frac{1}{\alpha_{0,6M}} \left( \frac{1}{F_{6M}} - 1 \right)
+\end{equation}
+
+\subsection{Yield Curve Interpolation Methods}
+When a valuation date $D_a$ falls between two liquid benchmark grid points $D_1$ and $D_2$, interpolation is required. 
+
+\subsubsection{Continuous/Exponential Rate Interpolation}
+Assuming a continuously compounded rate $\mathcal{R}_a$:
+\begin{equation}
+    F_a = e^{-\mathcal{R}_a(D_a - D_0)}
+\end{equation}
+Using the weight parameter $\lambda = \frac{D_a - D_1}{D_2 - D_1}$, the discount factor $F_a$ can be determined geometrically via:
+\begin{equation}
+    F_a = F_1^{(1-\lambda)\frac{D_a-D_0}{D_1-D_0}} \cdot F_2^{\lambda\frac{D_a-D_0}{D_2-D_0}}
+\end{equation}
+
+
+\section{Swap Leg Valuation Frameworks}
+
+\subsection{The Fixed Leg}
+The present value of a standard fixed leg receiving or paying a fixed rate $R_{\text{fixed}}$ is:
+\begin{equation}
+    PV_{\text{fixed}} = P \cdot R_{\text{fixed}} \cdot \alpha \cdot F
+\end{equation}
+
+\subsection{The Standard Floating Leg}
+Let $\mathbb{E}[R_{\text{floating}}]$ be the forward-looking expectation of the floating index rate, denoted as the forward rate $\Phi_{a,b}$ spanning period $D_a$ to $D_b$:
+\begin{equation}
+    \Phi_{a,b} = \frac{1}{\alpha_{a,b}} \left( \frac{F_a}{F_b} - 1 \right)
+\end{equation}
+Valuing a single standard floating cash flow payment at payment point $F_b$:
+\begin{align}
+    PV_{\text{floating}} &= P \cdot \Phi_{a,b} \cdot \alpha_{a,b} \cdot F_b \nonumber \\
+    &= P \cdot \left[ \frac{1}{\alpha_{a,b}} \left( \frac{F_a}{F_b} - 1 \right) \right] \cdot \alpha_{a,b} \cdot F_b \nonumber \\
+    &= P(F_a - F_b)
+\end{align}
+For a multi-period standard floating leg, the intermediate discount factors collapse telescopically:
+\begin{equation}
+    PV_{\text{total\_floating}} = \sum_{i=1}^n P(F_{i-1} - F_i) = P(F_{\text{start}} - F_{\text{end}})
+\end{equation}
+
+\subsection{Multi-Period Futures Chain Bootstrapping}
+When constructing a sequential discount curve strictly from a serial chain of liquid short-term interest rate futures prices, the forward discount asset pricing step can be defined recursively. Let $P_{i-1}$ be the quoted futures contract price for the upcoming period, and let $\alpha_{(i-1)F, iF}$ represent the explicit money market day count fraction. The subsequent boundary discount factor $F_{iF}$ is modeled as:
+\begin{equation}
+    F_{iF} = \frac{F_{(i-1)F}}{1 + (100 - P_{i-1})\alpha_{(i-1)F,iF}} \tag{8.31}
+\end{equation}
+
+\subsection{The Mismatched / Basis Swap Floating Leg}
+When the rate reset index period ($\alpha_{b,c}$) differs from the actual accrual payment period fraction ($\alpha_{a,b}$), the clean boundary cancellation breaks down:
+\begin{align}
+    PV_{\text{mismatched}} &= P \cdot \Phi_{b,c} \cdot \alpha_{a,b} \cdot F_b \nonumber \\
+    &= P \left( \frac{F_b}{F_c} - 1 \right) \frac{\alpha_{a,b}}{\alpha_{b,c}} F_b
+\end{align}
+
+\subsection{Floating Leg with Changing/Amortizing Principal}
+If the principal $P_i$ changes over time (amortizing or accreting structures), the telescoping sum expands explicitly into:
+\begin{align}
+    PV_{\text{amortizing}} &= P_1(F_1 - F_2) + P_2(F_2 - F_3) + \dots + P_{n-1}(F_{n-1} - F_n) \nonumber \\
+    &= F_1P_1 + \sum_{i=2}^{n-1}F_{i}(P_{i}-P_{i-1}) - F_n P_{n-1}
+\end{align}
+
+\subsection{Forward Swap Rate Expression}
+The forward swap rate $R$ can be viewed as the rate that sets the net present value of a newly initialized forward swap to 0:
+\begin{align}
+    & R\times PV(\text{fixed leg with fixed rate = 1\%}) - PV(\text{floating leg})=0 \nonumber \\
+    & \implies R \cdot \sum_i \alpha_{i-1,i} F_i - (F_{\text{start}} - F_{\text{end}}) = 0 \nonumber \\
+    & \implies R = \frac{F_{\text{start}} - F_{\text{end}}}{\sum_i \alpha_{i-1,i} F_i} 
+\end{align}
+
+Expanding this relation telescopically from the baseline index settlement point ($F_{1F}$), the arbitrary terminal discount factor at grid boundary $i$ can be evaluated explicitly in terms of the underlying compound futures product path:
+\begin{equation}
+    F_{iF} = F_{1F} \prod_{j=1}^{i-1} \frac{1}{1 + (100 - P_j)\alpha_{jF,(j+1)F}} \tag{8.32}
+\end{equation}
+
+
+\section{Risk Management: Delta Vectors and Hedging Frameworks}
+
+Let $R'$ be the observed market rates,
+\[\text{Delta}(\mathcal{P})=\frac{1}{100}\times \frac{\partial PV(\mathcal{P})}{\partial \textbf{F}} \times \frac{\partial \textbf{F}}{\partial \textbf{R}'}\]
+Some literature seems to look at the change w.r.t price $P$. This is not a big issue as $R=100-P$.
+
+Consider an isolated off-grid cash flow $C$ occurring at date $D_a$, which sits between key grid maturities $D_1$ and $D_2$. Its valuation is sensitive to movements at both boundaries:
+\begin{equation}
+    PV(C) = F_a \cdot C \implies \frac{\partial PV(C)}{\partial F_i} = \frac{\partial F_a}{\partial F_i} \cdot C
+\end{equation}
+Because $F_a$ is structurally interpolating strictly off $F_1$ and $F_2$, the partial sensitivities $\frac{\partial PV(C)}{\partial F_i} = 0$ for all other independent curve grid points $D_i$.
+
+To risk-hedge this cash flow, we construct a replication portfolio (a ``Pair'') using liquid contract cash flows $C_1$ and $C_2$ settled directly on $D_1$ and $D_2$:
+\begin{equation}
+    PV(\text{Pair}) = C_1 F_1 + C_2 F_2 \implies \frac{\partial PV(\text{Pair})}{\partial F_i} = C_i
+\end{equation}
+Matching sensitivities exactly to nullify the delta risks yields:
+\begin{equation}
+    C_i = \frac{\partial PV(C)}{\partial F_i} = \frac{\partial F_a}{\partial F_i} C
+\end{equation}
+
+\subsection{The Mathematical Bias of Non-Linear Interpolation}
+While a linear interpolation methodology guarantees matching present values, an exponential curve construction method generates an exact hedging friction. Due to non-linear tracking errors:
+\begin{equation}
+    \frac{\partial F_a}{\partial F_1} F_1 + \frac{\partial F_a}{\partial F_2} F_2 \centernot= F_a
+\end{equation}
+Consequently, maintaining an identical delta risk posture over an exponentially interpolated curve introduces a subtle accounting value mismatch:
+\begin{equation}
+    PV(\text{Pair}) \centernot= PV(C)
+\end{equation}
+
+\subsection{PVBP / DV01 Risk Formulation}
+The Present Value of a Basis Point ($PVBP$), synonymous with $DV01$ (Dollar Value of an 01), records the absolute variation in an interest rate instrument or leg valuation caused by a $1$ basis point ($0.01\% = 0.0001$) parallel shift across the underlying term structure:
+\begin{equation}
+    PVBP = \left| \frac{PV(R + 1\,\text{bp}) - PV(R - 1\,\text{bp})}{2} \right| \approx \frac{\partial PV}{\partial R} \times 0.0001
+\end{equation}
+For a standard fixed swap leg, the $PVBP$ aggregates into a direct measurement of the underlying annuity string metric:
+\begin{equation}
+    PVBP_{\text{fixed}} = P \cdot \alpha \cdot \sum_{i=1}^n F_i \times 0.0001
+\end{equation}
+
+\subsection{Calculating Optimal Hedge Ratios}
+To neutralize the directional interest rate exposure of a specific swap portfolio using a liquid benchmark hedging contract (e.g., a vanilla par swap or interest rate future), the risk-weighted position requirement $W_{\text{hedge}}$ is evaluated by matching absolute structural sensitivities:
+\begin{equation}
+    W_{\text{hedge}} = - \frac{PVBP_{\text{portfolio}}}{PVBP_{\text{hedging\_instrument}}}
+\end{equation}
+This enforces risk balance across the target tenor bracket:
+\begin{equation}
+    PVBP_{\text{portfolio}} + W_{\text{hedge}} \times PVBP_{\text{hedging\_instrument}} = 0
+\end{equation}
+
+\end{document}
