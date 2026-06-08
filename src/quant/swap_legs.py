@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict
 from quant.day_counter import calculate_year_fraction, generate_forward_schedule
 
 class SwapLeg(ABC):
@@ -12,7 +12,7 @@ class SwapLeg(ABC):
 class InterestRateLeg(SwapLeg):
     def __init__(self, notional: float, rate_type: str, frequency: int, fixed_rate: float = 0.0):
         self.notional = notional
-        self.rate_type = rate_type.lower() # 'fixed' or 'floating'
+        self.rate_type = rate_type.strip().lower() # Strips accidental spaces, forces lowercase
         self.frequency = frequency
         self.fixed_rate = fixed_rate
 
@@ -22,17 +22,24 @@ class InterestRateLeg(SwapLeg):
         prev_date = trade_date
 
         for current_date in schedule:
+            # 1. Initialize amount so it always exists, preventing UnboundLocalError
+            amount = 0.0 
             tau = calculate_year_fraction(prev_date, current_date, curve_builder.convention)
             
             if self.rate_type == 'fixed':
                 amount = self.notional * self.fixed_rate * tau
-            elif self.rate_type == 'floating':
+                
+            elif self.rate_type in ['float', 'floating']: # Catch both variations safely
                 t_prev = calculate_year_fraction(trade_date, prev_date, curve_builder.convention)
                 t_curr = calculate_year_fraction(trade_date, current_date, curve_builder.convention)
                 df_prev = curve_builder._get_discount_factor(t_prev)
                 df_curr = curve_builder._get_discount_factor(t_curr)
                 # Standard Implied Floating Cashflow
                 amount = self.notional * ((df_prev / df_curr) - 1.0) if df_curr > 0 else 0.0
+                
+            else:
+                # 2. The Safety Net: If the string is completely wrong, fail loudly and clearly.
+                raise ValueError(f"CRITICAL ERROR: Unknown rate_type '{self.rate_type}'. Must be 'fixed' or 'float'.")
             
             # Payer cash outflows are negative
             direction = -1 if is_payer else 1
