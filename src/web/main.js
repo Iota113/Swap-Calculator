@@ -80,7 +80,7 @@ function updateTableHeaders() {
                 <th style="width: 15%">Tenor</th>
                 <th style="width: 20%">Coupon (%)</th>
                 <th style="width: 20%">Price</th>
-                <th style="width: 15%">Spread (bps)</th>
+                <th style="width: 15%" title="Bid-Ask Spread in basis points (used as a proxy for transaction costs & liquidity; not yield spread)">Spread (bps)</th>
                 <th style="width: 5%">Actions</th>
             </tr>
         `;
@@ -104,7 +104,7 @@ function updateTableHeaders() {
                 <th style="width: 15%">Tenor</th>
                 <th style="width: 25%">Quote Type</th>
                 <th style="width: 20%">Quote</th>
-                <th style="width: 15%">Spread (bps)</th>
+                <th style="width: 15%" title="Bid-Ask Spread in basis points (used as a proxy for transaction costs & liquidity; not yield spread)">Spread (bps)</th>
                 <th style="width: 5%">Actions</th>
             </tr>
         `;
