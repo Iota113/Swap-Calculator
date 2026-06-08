@@ -14,24 +14,24 @@ class AssetPriceOracle:
         except Exception:
             return 0.0
 
-    @staticmethod
+    @staticmethod 
     def get_latest_price(ticker: str) -> float:
-        """Fetches the most recent closing price."""
         stock = yf.Ticker(ticker.strip().upper())
-        hist = stock.history(period="1d")
+        hist = stock.history(period="5d")
         if hist.empty:
             raise ValueError(f"Could not fetch live data for ticker: {ticker}")
-        return float(hist['Close'].iloc[0])
+        return float(hist['Close'].iloc[-1])  # iloc[-1] = most recent close
 
-    @staticmethod
+    @staticmethod 
     def get_historical_price(ticker: str, date_str: str) -> float:
         """
         Fetches the closing price on or after a specific date.
+        Starts one day earlier to handle pre-market / market-closed scenarios.
         date_str format: 'YYYY-MM-DD'
-        Fetches forward from date_str to handle weekends/holidays.
         """
         stock = yf.Ticker(ticker.strip().upper())
-        hist = stock.history(start=date_str)
+        start = (datetime.date.fromisoformat(date_str) - datetime.timedelta(days=1)).isoformat()
+        hist = stock.history(start=start)
         if hist.empty:
             raise ValueError(f"No price data found for {ticker} around {date_str}")
         return float(hist['Close'].iloc[0])

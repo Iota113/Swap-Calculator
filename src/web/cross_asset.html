@@ -58,22 +58,21 @@
                     <h2><i class="fa-solid fa-chart-line"></i> Valuation Engine Output</h2>
                 </div>
                 <div class="card-body dynamic-display">
-                    <div id="results-panel" style="display: none;">
-                        <div class="metric-row">
-                            <span class="metric-label">Live Market Price:</span>
-                            <span id="res-live-price" class="metric-value">--</span>
-                        </div>
-                        <div class="metric-row">
-                            <span class="metric-label">Calculated Asset Return:</span>
-                            <span id="res-return" class="metric-value text-success">--</span>
-                        </div>
-                        <hr class="divider">
-                        <div class="npv-display text-center">
-                            <h3>Net Present Value (NPV)</h3>
-                            <h2 id="res-npv" class="npv-highlight">$0.00</h2>
-                        </div>
+                <div id="results-panel" style="display: none;">
+                    <div class="metric-row">
+                        <span class="metric-label">Swap NPV:</span>
+                        <span id="res-npv" class="metric-value">--</span>
                     </div>
-                    
+                    <div class="metric-row">
+                        <span class="metric-label">DV01 (PVBP):</span>
+                        <span id="res-pvbp" class="metric-value">--</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Positions Priced:</span>
+                        <span id="res-live-price" class="metric-value">--</span>
+                    </div>
+                </div>
+
                     <div id="placeholder-message" class="text-muted text-center py-5">
                         <i class="fa-solid fa-wand-magic-sparkles fa-2x mb-3"></i>
                         <p>Enter your trade parameters and run the valuation engine to generate cashflows.</p>
