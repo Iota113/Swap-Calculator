@@ -10,6 +10,9 @@ import datetime
 import numpy as np
 import traceback
 from flask import Flask, request, jsonify, send_from_directory
+from data.market_data import AssetPriceOracle # Pointing to your specific data folder
+from quant.swap_legs import InterestRateLeg, AssetReturnLeg
+
 
 # Ensure that the 'src' directory (or current directory) is in the python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -509,6 +512,57 @@ def calculate():
             'success': False,
             'error': f"Curve building error: {str(e)}"
         }), 500
+
+@app.route('/api/price-cross-asset', methods=['POST'])
+def price_cross_asset():
+    try:
+        payload = request.json
+        
+        # 1. Extract the user's inputs from the frontend
+        notional = float(payload.get('notional', 1000000))
+        fixed_rate = float(payload.get('fixed_rate', 0.05)) # e.g., 0.05 for 5%
+        ticker = payload.get('ticker', 'AAPL').upper()
+        initial_price = float(payload.get('initial_price'))
+        tenor_years = int(payload.get('tenor_years', 1))
+        
+        # Trade date is today, maturity is tenor_years from today
+        trade_date = datetime.date.today()
+        maturity_date = trade_date + datetime.timedelta(days=tenor_years * 365)
+        
+        # 2. Call the Oracle to get the live market price
+        current_price = AssetPriceOracle.get_latest_price(ticker)
+        
+        # 3. Model the Discrete Legs (This is where Step 3 lives!)
+        paying_leg = InterestRateLeg(
+            notional=notional, 
+            rate_type='fixed', 
+            frequency=2, 
+            fixed_rate=fixed_rate
+        )
+        
+        receiving_leg = AssetReturnLeg(
+            notional=notional,
+            initial_price=initial_price,
+            current_price=current_price
+        )
+        
+
+        pricer = SwapPricer(curve_builder=FuturesCurveBuilder)
+        npv = pricer.price_swap(paying_leg, receiving_leg, maturity_date)
+        
+        # 5. Send the math back to the frontend
+        return jsonify({
+            "status": "success",
+            "ticker": ticker,
+            "initial_price": initial_price,
+            "current_price": current_price,
+            "price_return_pct": ((current_price / initial_price) - 1.0) * 100,
+            "swap_npv": round(npv, 2)
+        }), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
