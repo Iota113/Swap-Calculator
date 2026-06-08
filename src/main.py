@@ -1,11 +1,17 @@
 from data.csv_to_py import DataParser
-from futures_curve_builder import FuturesCurveBuilder
+from src.quant.futures_curve_builder import FuturesCurveBuilder
 from quant.swap_pricer import SwapPricer
 import datetime
 
+"""
+main.py
+CLI testing sandbox for the quant library.
+Used to locally verify curve building, swap pricing, and financial logic 
+independently of the web server and frontend UI.
+"""
+
 def main():
-    print("=== SWAP CALCULATOR QUICK-TEST SANDBOX ===\n")
-    # This line ensures the curve builder actually runs when main() is called
+    print("=== SWAP CALCULATOR RUN ===\n")
     run_curve_builder()
 
 def run_curve_builder(plot_type='zero_rate'):

@@ -1,3 +1,9 @@
+"""
+app.py
+The main Flask REST API and web server.
+Acts as the bridge connecting the frontend UI (HTML/JS) to the backend quant engine.
+It serves static web assets and handles the /api/calculate endpoints for curve generation and portfolio pricing.
+"""
 import os
 import sys
 import datetime
@@ -10,12 +16,13 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.append(current_dir)
 
-from futures_curve_builder import FuturesCurveBuilder
-from treasury_curve_builder import TreasuryCurveBuilder
-from cubic_spline import CubicSplineCurve
+from quant.futures_curve_builder import FuturesCurveBuilder
+from quant.treasury_curve_builder import TreasuryCurveBuilder
+from quant.cubic_spline import CubicSplineCurve
 from quant.day_counter import calculate_year_fraction
 from quant.swap_pricer import SwapPricer
 from quant.cashflow_engine import CashflowEngine
+from quant.swap_legs import InterestRateLeg
 
 app = Flask(__name__, static_folder='web', static_url_path='')
 
@@ -280,28 +287,26 @@ def calculate():
         # --- MULTI-SWAP PORTFOLIO PRICING LOGIC ---
         portfolio_data = req_data.get('portfolio', [])
 
-        # DEBUG: see exactly what the frontend sent in your terminal
         print("RAW PORTFOLIO PAYLOAD:", portfolio_data)
 
-        # Accept either a list of swaps (current frontend) or a single swap object
-        # (older single-input frontend) so a stale main.js can't silently break pricing.
         if isinstance(portfolio_data, dict):
             portfolio_data = [portfolio_data]
         if not isinstance(portfolio_data, list):
             portfolio_data = []
 
         portfolio_results = None
+        
+        # NEW: We need a dedicated list to hold the formatted tuples for the CashflowEngine
+        portfolio_tuples_for_engine = []
 
         if portfolio_data:
             pricer = SwapPricer(builder)
 
             total_base_npv = 0.0
             total_bumped_npv = 0.0
-            priced_count = 0  # how many valid swaps we actually priced
+            priced_count = 0 
 
-            # Loop through every swap the user added
             for idx, pos in enumerate(portfolio_data):
-                # Robust type conversion: tolerate strings, None, or missing keys
                 try:
                     notional = float(pos.get('notional', 0) or 0)
                     fixed_rate = float(pos.get('fixed_rate', 0) or 0) / 100.0
@@ -311,35 +316,53 @@ def calculate():
                     print(f"Portfolio row {idx + 1}: skipped (bad values) -> {conv_err}")
                     continue
 
-                # Skip genuinely empty rows (e.g. a blank row added with '+')
                 if notional <= 0 or tenor_years <= 0:
-                    print(f"Portfolio row {idx + 1}: skipped (notional={notional}, tenor={tenor_years})")
                     continue
 
                 is_payer = (position == 'payer')
                 maturity_date = builder.trade_date + datetime.timedelta(days=tenor_years * 365)
 
-                # Guard each swap so one bad position can't 500 the whole request
+                # 1. BUILD THE SWAP LEG OBJECTS
+                fixed_leg = InterestRateLeg(
+                    notional=notional, 
+                    rate_type='fixed', 
+                    frequency=payment_frequency, 
+                    fixed_rate=fixed_rate
+                )
+                
+                float_leg = InterestRateLeg(
+                    notional=notional, 
+                    rate_type='float', 
+                    frequency=payment_frequency
+                )
+
+                # 2. ASSIGN PAYING/RECEIVING BASED ON POSITION
+                if is_payer:
+                    paying_leg = fixed_leg
+                    receiving_leg = float_leg
+                else:
+                    paying_leg = float_leg
+                    receiving_leg = fixed_leg
+
+                # 3. PREP DATA FOR CASHFLOW ENGINE
+                # The engine expects tuples of: (SwapLeg, tenor_years, is_payer)
+                # We package the fixed leg here, as it drives the primary cashflow schedule
+                portfolio_tuples_for_engine.append((fixed_leg, tenor_years, is_payer))
+
+                # 4. PRICE THE SWAP
                 try:
-                    results = pricer.calculate_dv01(
-                        notional, fixed_rate, maturity_date,
-                        payment_frequency, is_payer=is_payer
-                    )
+                    # Pass the OBJECTS to the pricer, not the raw numbers
+                    results = pricer.calculate_dv01(paying_leg, receiving_leg, maturity_date)
                 except Exception as price_err:
                     print(f"Portfolio row {idx + 1}: pricing failed -> {price_err}")
                     continue
 
-                # Accumulate across positions (do NOT overwrite previous iterations)
                 total_base_npv += float(results['base_npv'])
                 total_bumped_npv += float(results['bumped_npv'])
                 priced_count += 1
 
-            # Portfolio PVBP is the absolute net change of the entire portfolio
-            # (Payer and Receiver swaps naturally offset each other's risk)
             net_pvbp = abs(total_bumped_npv - total_base_npv)
 
-            # Return results whenever we priced at least one swap, even if the
-            # net NPV happens to be ~0 (so the UI updates instead of showing the default).
             if priced_count > 0:
                 portfolio_results = {
                     "base_npv": round(total_base_npv, 2),
@@ -350,16 +373,15 @@ def calculate():
 
         print("COMPUTED PORTFOLIO RESULTS:", portfolio_results)
 
-        # --- PORTFOLIO CASHFLOW TIMESERIES (for the cashflow projection chart) ---
-        # Guarded so a problem in the engine can't break the curve/PVBP response.
+        # --- PORTFOLIO CASHFLOW TIMESERIES ---
         cashflow_timeseries = []
         try:
             engine = CashflowEngine(builder)
-            cashflow_timeseries = engine.generate_portfolio_cashflows(portfolio_data)
+            # Pass our nicely formatted list of tuples to the engine, NOT the raw JSON
+            cashflow_timeseries = engine.generate_portfolio_cashflows(portfolio_tuples_for_engine)
         except Exception as cf_err:
             print(f"Cashflow engine failed: {cf_err}")
             cashflow_timeseries = []
-
         # 5. Generate results knots for output display (evaluating both active & skipped)
         knots = []
         for item in market_data_records:

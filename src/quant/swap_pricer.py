@@ -1,6 +1,7 @@
 import numpy as np
 from dateutil.relativedelta import relativedelta
-from quant.day_counter import calculate_year_fraction, generate_forward_schedule
+from quant.day_counter import calculate_year_fraction
+
 class SwapPricer:
     def __init__(self, curve_builder):
         """
@@ -10,63 +11,41 @@ class SwapPricer:
         self.trade_date = curve_builder.trade_date
         self.convention = curve_builder.convention
 
-    def price_swap(self, notional, fixed_rate, maturity_date, freq, is_payer=True, custom_curve=None):
+    def price_swap(self, paying_leg, receiving_leg, maturity_date, custom_curve=None):
         """
-        Calculates the Net Present Value (NPV) of the swap.
-        Allows passing a custom_curve (dictionary of t: DF) for bumped valuations.
+        Calculates the Net Present Value (NPV) of the swap by discounting 
+        the explicitly generated cash flows from each leg object.
         """
-        # Determine which curve to use (base curve or bumped curve)
         curve_to_use = custom_curve if custom_curve else self.curve_builder
-
-        schedule = generate_forward_schedule(self.trade_date, maturity_date, freq)
         
-        fixed_leg_pv = 0.0
-        prev_date = self.trade_date
+        # 1. Generate the cash flows from the discrete objects
+        pay_cfs = paying_leg.generate_cashflows(self.curve_builder, self.trade_date, maturity_date, is_payer=True)
+        rec_cfs = receiving_leg.generate_cashflows(self.curve_builder, self.trade_date, maturity_date, is_payer=False)
         
-        # 1. Calculate Fixed Leg PV using the schedule
-        for current_date in schedule:
-            t_i = calculate_year_fraction(self.trade_date, current_date, self.convention)
-            tau_i = calculate_year_fraction(prev_date, current_date, self.convention)
+        npv = 0.0
+        
+        # 2. Discount every single cash flow dynamically
+        for cf in pay_cfs + rec_cfs:
+            cf_date = cf["date"]
+            amount = cf["amount"]
             
-            # Support both the builder object and a raw dictionary for bumped curves
+            t_i = calculate_year_fraction(self.trade_date, cf_date, self.convention)
+            
             if isinstance(curve_to_use, dict):
-                # Approximation for bumped curve missing exact nodes (forces fallback to linear or nearest)
                 df_i = self._interpolate_dict(curve_to_use, t_i)
             else:
                 df_i = curve_to_use._get_discount_factor(t_i)
             
-            fixed_leg_pv += notional * fixed_rate * tau_i * df_i
-            prev_date = current_date
-
-        # 2. Calculate Floating Leg PV
-        # The PV of a standard floating leg is simply: Notional * (DF_start - DF_end)
-        t_end = calculate_year_fraction(self.trade_date, maturity_date, self.convention)
-        
-        if isinstance(curve_to_use, dict):
-            df_end = self._interpolate_dict(curve_to_use, t_end)
-            df_start = 1.0 # t=0
-        else:
-            df_end = curve_to_use._get_discount_factor(t_end)
-            df_start = curve_to_use._get_discount_factor(0.0)
-            
-        floating_leg_pv = notional * (df_start - df_end)
-
-        # 3. Calculate Final NPV
-        if is_payer:
-            # Payer pays fixed, receives float
-            npv = floating_leg_pv - fixed_leg_pv
-        else:
-            # Receiver receives fixed, pays float
-            npv = fixed_leg_pv - floating_leg_pv
+            npv += amount * df_i
 
         return npv
 
-    def calculate_dv01(self, notional, fixed_rate, maturity_date, freq, is_payer=True):
+    def calculate_dv01(self, paying_leg, receiving_leg, maturity_date):
         """
         Calculates the Swap Delta (DV01) by parallel shifting the yield curve by 1 basis point.
         """
         # 1. Calculate Base NPV
-        base_npv = self.price_swap(notional, fixed_rate, maturity_date, freq, is_payer)
+        base_npv = self.price_swap(paying_leg, receiving_leg, maturity_date)
 
         # 2. Create a Bumped Curve (+1 bp / 0.0001 to zero rates)
         bumped_dfs = {}
@@ -74,12 +53,13 @@ class SwapPricer:
             if t == 0:
                 bumped_dfs[t] = 1.0
             else:
+                # Calculate the original zero rate using continuous compounding
                 zero_rate = -np.log(df) / t
                 bumped_zero = zero_rate + 0.0001 
                 bumped_dfs[t] = np.exp(-bumped_zero * t)
 
         # 3. Calculate Bumped NPV
-        bumped_npv = self.price_swap(notional, fixed_rate, maturity_date, freq, is_payer, custom_curve=bumped_dfs)
+        bumped_npv = self.price_swap(paying_leg, receiving_leg, maturity_date, custom_curve=bumped_dfs)
 
         # DV01 is the absolute change in value
         dv01 = abs(bumped_npv - base_npv)

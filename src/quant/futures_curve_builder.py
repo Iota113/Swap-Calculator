@@ -1,6 +1,6 @@
 from quant.day_counter import calculate_year_fraction
 from dateutil.relativedelta import relativedelta
-from cubic_spline import CubicSplineCurve 
+from quant.cubic_spline import CubicSplineCurve 
 from quant.day_counter import calculate_year_fraction, generate_forward_schedule
 
 import matplotlib.pyplot as plt
