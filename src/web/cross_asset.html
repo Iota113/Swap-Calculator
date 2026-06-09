@@ -2,87 +2,315 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Yield - Cross-Asset Pricing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-Asset Swap | YieldCurve</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- Reuses the exact same stylesheet/classes as the Curve Builder tab -->
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <div class="grid-overlay"></div>
 
-    <div class="dashboard-wrapper"> 
-        
-        <header class="navbar">
-            <div class="brand">Yield</div>
+    <!-- ===== Header: identical structure to index.html ===== -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo">
+                <i class="fa-solid fa-chart-line-up logo-icon"></i>
+                <span>Yield<span class="highlight">Curve</span></span>
+            </div>
             <nav class="nav-links">
+                <!-- FIX (Phase 1.3): the visible page now owns the .active class.
+                     cross_asset.js also re-derives this from the URL on load. -->
                 <a href="index.html"><i class="fa-solid fa-calculator"></i> Curve Builder</a>
-                <a href="docs.html"><i class="fa-solid fa-book-open"></i> Docs & Guide</a>
+                <a href="docs.html"><i class="fa-solid fa-book-open"></i> Docs &amp; Guide</a>
                 <a href="cross_asset.html" class="active"><i class="fa-solid fa-right-left"></i> Cross-Asset Swap</a>
                 <a href="https://www.animestats.tf/" target="_blank"><i class="fa-solid fa-wand-magic-sparkles"></i> Inspiration</a>
             </nav>
-        </header>
+            <div class="header-actions">
+                <button id="theme-toggle" class="icon-btn" title="Toggle Theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
 
-        <main class="dashboard-grid">
-            
-            <div class="card configuration-card">
-                <div class="card-header">
-                    <h2><i class="fa-solid fa-sliders"></i> Swap Parameters</h2>
+    <main class="app-container">
+        <section class="hero-section">
+            <h1 class="hero-title"><span class="highlight">Cross-Asset Swap</span></h1>
+            <p class="hero-subtitle">Price a fixed funding leg against a floating equity / commodity total-price-return leg, discounted on this tab's own independently-bootstrapped curve.</p>
+        </section>
+
+        <div class="dashboard-grid">
+
+            <!-- ===== LEFT: independent Curve Configuration instance ===== -->
+            <div class="left-column">
+
+                <div class="quickstart-panel card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <h3>Quickstart</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="quickstart-intro">Build the discounting curve, then enter the asset swap terms:</p>
+                        <ul class="quickstart-list">
+                            <li>Configure the curve (Trade Date, Day Count, Payment Freq).</li>
+                            <li>Load market quotes (sample, CSV, or manual) for this tab only.</li>
+                            <li>Enter the ticker &amp; swap terms on the right and run the engine.</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label for="notional">Notional Principal ($)</label>
-                        <input type="number" id="notional" value="10000000" class="form-control">
+
+                <div class="control-panel card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-sliders"></i>
+                        <h2>Curve Configuration</h2>
                     </div>
-                    <div class="form-group">
-                        <label for="fixed-rate">Funding Leg Fixed Rate (%)</label>
-                        <input type="number" id="fixed-rate" value="3.50" step="0.01" class="form-control">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="curve-type">Curve Type</label>
+                            <select id="curve-type">
+                                <option value="OIS" selected>OIS / Swap Curve</option>
+                                <option value="Treasury">US Treasury Curve</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="trade-date">Curve / Valuation Date (DD-MM-YYYY)</label>
+                            <input type="text" id="trade-date" value="28-05-2026" placeholder="DD-MM-YYYY">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="day-count">Day Count Basis</label>
+                                <select id="day-count">
+                                    <option value="ACT/365">ACT/365 (Default)</option>
+                                    <option value="ACT/360">ACT/360</option>
+                                    <option value="30/360">30/360</option>
+                                    <option value="EQUAL">EQUAL</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="payment-freq">Payment Frequency</label>
+                                <select id="payment-freq">
+                                    <option value="1">Annual (1)</option>
+                                    <option value="2" selected>Semi-Annual (2)</option>
+                                    <option value="4">Quarterly (4)</option>
+                                    <option value="12">Monthly (12)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="interpolation">Interpolation</label>
+                                <select id="interpolation">
+                                    <option value="Cubic Spline" selected>Cubic Spline</option>
+                                    <option value="Linear">Linear Zero Rates</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="cutoff-years">Futures Cutoff (Years)</label>
+                                <input type="number" id="cutoff-years" value="2.0" step="0.25" min="0">
+                            </div>
+                        </div>
+
+                        <div class="dropzone-container">
+                            <label>Import Market Data</label>
+                            <div id="dropzone" class="dropzone">
+                                <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                                <p class="dropzone-text">Drag &amp; Drop CSV / Excel or <span class="browse-link">browse</span></p>
+                                <p class="dropzone-subtext">Supports columns: Instrument, Tenor, QuoteType, Quote</p>
+                                <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="config-actions">
+                            <button id="download-template" class="btn btn-secondary">
+                                <i class="fa-solid fa-download"></i> Template CSV
+                            </button>
+                            <button id="load-sample" class="btn btn-secondary">
+                                <i class="fa-solid fa-folder-open"></i> Sample Data
+                            </button>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="ticker">Underlying Asset Ticker</label>
-                        <input type="text" id="ticker" placeholder="e.g., MU, GOOGL, CL=F" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="initial-price">Initial Asset Price ($)</label>
-                        <input type="number" id="initial-price" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="tenor">Tenor (Years)</label>
-                        <input type="number" id="tenor" value="1" class="form-control">
-                    </div>
-                    <button id="calculate-btn" class="btn btn-primary w-100 mt-3">
-                        <i class="fa-solid fa-play"></i> Calculate Cross-Asset NPV
-                    </button>
                 </div>
             </div>
 
-            <div class="card results-card">
-                <div class="card-header">
-                    <h2><i class="fa-solid fa-chart-line"></i> Valuation Engine Output</h2>
-                </div>
-                <div class="card-body dynamic-display">
-                <div id="results-panel" style="display: none;">
-                    <div class="metric-row">
-                        <span class="metric-label">Swap NPV:</span>
-                        <span id="res-npv" class="metric-value">--</span>
+            <!-- ===== RIGHT: cross-asset swap terms + market quotes ===== -->
+            <div class="right-column">
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-right-left"></i>
+                        <h2>Cross-Asset Portfolio</h2>
+                        <div class="card-actions">
+                            <button id="add-portfolio-row" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-plus"></i> Add Position
+                            </button>
+                            <button id="clear-portfolio" class="btn btn-danger btn-sm">
+                                <i class="fa-solid fa-trash-can"></i> Clear All
+                            </button>
+                        </div>
                     </div>
-                    <div class="metric-row">
-                        <span class="metric-label">DV01 (PVBP):</span>
-                        <span id="res-pvbp" class="metric-value">--</span>
-                    </div>
-                    <div class="metric-row">
-                        <span class="metric-label">Positions Priced:</span>
-                        <span id="res-live-price" class="metric-value">--</span>
+                    <div class="card-body">
+                        <!-- Global observation dates apply to every position in the book -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ca-trade-date">Asset Trade Date (DD-MM-YYYY)</label>
+                                <input type="text" id="ca-trade-date" placeholder="e.g. 03-09-2025">
+                            </div>
+                            <div class="form-group">
+                                <label for="ca-present-date">Present Date (DD-MM-YYYY)</label>
+                                <input type="text" id="ca-present-date" placeholder="defaults to today">
+                            </div>
+                        </div>
+
+                        <div class="scroll-container table-wrapper" style="max-height: 260px;">
+                            <table id="portfolio-table" class="interactive-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 18%">Notional</th>
+                                        <th style="width: 11%">Rate (%)</th>
+                                        <th style="width: 14%">Ticker</th>
+                                        <th style="width: 16%">Asset Class</th>
+                                        <th style="width: 10%">Tenor (Y)</th>
+                                        <th style="width: 12%">Freq</th>
+                                        <th style="width: 13%">Position</th>
+                                        <th style="width: 6%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="portfolio-table-body"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                    <div id="placeholder-message" class="text-muted text-center py-5">
-                        <i class="fa-solid fa-wand-magic-sparkles fa-2x mb-3"></i>
-                        <p>Enter your trade parameters and run the valuation engine to generate cashflows.</p>
+                <div class="data-panel card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-list-ol"></i>
+                        <h2>Active Market Quotes</h2>
+                        <div class="card-actions">
+                            <button id="add-row" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-plus"></i> Add Quote
+                            </button>
+                            <button id="clear-table" class="btn btn-danger btn-sm">
+                                <i class="fa-solid fa-trash-can"></i> Clear All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body scroll-container table-wrapper">
+                        <table id="market-table" class="interactive-table">
+                            <thead id="market-table-head"></thead>
+                            <tbody id="market-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer">
+                        <button id="calculate-btn" class="btn btn-primary btn-lg">
+                            <i class="fa-solid fa-bolt"></i> Calculate Cross-Asset NPV
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="alert-container" class="alert-container"></div>
+        </div>
+
+        <!-- ===== Results (hidden until first run) ===== -->
+        <div id="results-container" class="results-grid" style="display: none;">
+
+            <div class="charts-card card">
+                <div class="card-header">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <h2>Valuation Engine Output</h2>
+                    <div class="chart-toggles">
+                        <button id="show-zero-rate" class="tab-btn active">Zero Rates</button>
+                        <button id="show-df" class="tab-btn">Discount Factors</button>
+                    </div>
+                </div>
+                <div class="card-body chart-wrapper">
+
+                    <div id="portfolio-results" style="display: none; background: rgba(76, 175, 80, 0.08); padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #4CAF50; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                        <div>
+                            <h3 style="margin: 0 0 5px 0; font-size: 14px; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px;">Cross-Asset Risk Metrics</h3>
+                            <span id="ca-asset-summary" style="font-size: 13px; opacity: 0.75;">--</span>
+                        </div>
+                        <div style="text-align: right; display: flex; gap: 30px; flex-wrap: wrap;">
+                            <div>
+                                <span style="display: block; font-size: 12px; opacity: 0.7;">Initial Price</span>
+                                <span id="ca-initial-price" style="font-family: monospace; font-size: 16px; font-weight: 600;">--</span>
+                            </div>
+                            <div>
+                                <span style="display: block; font-size: 12px; opacity: 0.7;">Current Price</span>
+                                <span id="ca-current-price" style="font-family: monospace; font-size: 16px; font-weight: 600;">--</span>
+                            </div>
+                            <div>
+                                <span style="display: block; font-size: 12px; opacity: 0.7;">Swap NPV</span>
+                                <span id="out-npv" style="font-family: monospace; font-size: 16px; font-weight: 600;">$0.00</span>
+                            </div>
+                            <div>
+                                <span style="display: block; font-size: 12px; opacity: 0.7;">DV01 (PVBP)</span>
+                                <span id="out-pvbp" style="font-family: monospace; font-size: 16px; color: #4CAF50; font-weight: 700;">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-canvas-holder">
+                        <canvas id="yield-chart"></canvas>
                     </div>
                 </div>
             </div>
 
-        </main>
-    </div>
+            <div class="outputs-card card">
+                <div class="card-header">
+                    <i class="fa-solid fa-table"></i>
+                    <h2>Bootstrapped Curve Nodes (Knots)</h2>
+                </div>
+                <div class="card-body scroll-container output-table-wrapper">
+                    <table id="output-table" class="results-table">
+                        <thead id="output-table-head"></thead>
+                        <tbody id="output-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
 
+            <div class="charts-card card" style="grid-column: 1 / -1; margin-top: 20px; height: 45vh;">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-water"></i>
+                        <h2>Cashflow Projection</h2>
+                    </div>
+                    <div class="toggle-container" style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #94a3b8; font-size: 0.85rem;">Split Axes</span>
+                        <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
+                            <input type="checkbox" id="axis-toggle" style="opacity: 0; width: 0; height: 0;">
+                            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .3s; border-radius: 34px;"></span>
+                        </label>
+                        <span style="color: #94a3b8; font-size: 0.85rem;">Combined Axis</span>
+                    </div>
+                </div>
+                <div class="card-body chart-wrapper">
+                    <div class="chart-canvas-holder">
+                        <canvas id="cashflow-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2026 YieldCurve. Built for institutional-grade fixed income analytics. Styled with inspiration from AnimeStats.</p>
+    </footer>
+
+    <!-- Independent controller: never touches main.js state -->
     <script src="cross_asset.js"></script>
 </body>
 </html>

@@ -271,6 +271,7 @@ def calculate():
 
         portfolio_results = None
         portfolio_tuples_for_engine = []
+        asset_details_out = []  # === NEW: per-asset price details (multi-position)
 
         if portfolio_data:
             pricer = SwapPricer(builder)
@@ -296,24 +297,71 @@ def calculate():
                 ticker = str(pos.get('ticker', '')).strip().upper()
 
                 if ticker:
-                    # Cross-asset swap: fixed leg vs asset return leg
+                    # === MODIFIED (Lifetime PnL): resolve per-position dates,
+                    # fetch ONE historical-fixings window, and build the hybrid
+                    # AssetReturnLeg. The no-ticker IR path below is untouched. ==
+                    asset_trade_date = str(pos.get('asset_trade_date', '')).strip()
+                    present_date = str(pos.get('present_date', '')).strip()
+                    asset_class = str(pos.get('asset_class', 'auto')).strip().lower() or 'auto'
+                    pos_freq = int(float(pos.get('frequency', payment_frequency) or payment_frequency))
+
+                    # Parse DD-MM-YYYY (UI) -> datetime.date, with sane fallbacks.
+                    def _to_date(d, fallback):
+                        if not d:
+                            return fallback
+                        try:
+                            return datetime.datetime.strptime(d, "%d-%m-%Y").date()
+                        except ValueError:
+                            try:
+                                return datetime.date.fromisoformat(d)
+                            except ValueError:
+                                return fallback
+
+                    trade_dt = _to_date(asset_trade_date, builder.trade_date)
+                    present_dt = _to_date(present_date, datetime.date.today())
+                    if present_dt < trade_dt:
+                        present_dt = trade_dt  # guard against inverted ranges
+
+                    # Spot snapshots (initial @ inception, current @ present).
                     try:
-                        asset_data = AssetPriceOracle.get_asset_info(ticker, builder.trade_date.strftime("%Y-%m-%d"))
+                        asset_data = AssetPriceOracle.get_asset_info(
+                            ticker, trade_dt.isoformat(), present_dt.isoformat()
+                        )
+                        # One-shot fixings dict spanning inception -> present.
+                        historical_prices = AssetPriceOracle.get_historical_fixings(
+                            ticker, trade_dt, present_dt
+                        )
                     except ValueError as oracle_err:
                         print(f"Portfolio row {idx + 1}: Oracle failed for '{ticker}' -> {oracle_err}")
                         return jsonify({'success': False, 'error': f"Invalid ticker '{ticker}': {oracle_err}"}), 400
 
-                    fixed_leg = InterestRateLeg(notional=notional, rate_type='fixed', frequency=payment_frequency, fixed_rate=fixed_rate)
+                    fixed_leg = InterestRateLeg(notional=notional, rate_type='fixed', frequency=pos_freq, fixed_rate=fixed_rate)
                     asset_leg = AssetReturnLeg(
                         notional=notional,
                         ticker=asset_data["ticker"],
                         initial_price=asset_data["initial_price"],
                         current_price=asset_data["current_price"],
                         dividend_yield=asset_data["dividend_yield"],
+                        asset_trade_date=trade_dt,
+                        present_date=present_dt,
+                        tenor_years=tenor_years,
+                        frequency=pos_freq,
+                        historical_prices=historical_prices,
+                        asset_class=asset_class,
                     )
+                    # === END MODIFIED =========================================
                     paying_leg = fixed_leg
                     receiving_leg = asset_leg
                     portfolio_tuples_for_engine.append((asset_leg, tenor_years, is_payer))
+
+                    # === NEW: per-asset details (list supports multi-position) =
+                    asset_details_out.append({
+                        "ticker": asset_data["ticker"],
+                        "initial_price": round(float(asset_data["initial_price"]), 4),
+                        "current_price": round(float(asset_data["current_price"]), 4),
+                        "dividend_yield": round(float(asset_data["dividend_yield"]), 6),
+                    })
+                    # ==========================================================
                 else:
                     # Standard IR swap: fixed leg vs float leg
                     fixed_leg = InterestRateLeg(notional=notional, rate_type='fixed', frequency=payment_frequency, fixed_rate=fixed_rate)
@@ -344,7 +392,8 @@ def calculate():
                     "base_npv": round(total_base_npv, 2),
                     "bumped_npv": round(total_bumped_npv, 2),
                     "pvbp": round(net_pvbp, 2),
-                    "positions_priced": priced_count
+                    "positions_priced": priced_count,
+                    "asset_details": asset_details_out or None,  # === list, None for pure IR books
                 }
 
         print("COMPUTED PORTFOLIO RESULTS:", portfolio_results)
