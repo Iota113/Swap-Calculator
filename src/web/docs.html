@@ -231,6 +231,8 @@
 
         <nav class="nav-links">
             <a href="index.html"><i class="fa-solid fa-calculator"></i> Curve Builder</a>
+            <a href="currency_swap.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> Currency Swap</a>
+            <a href="cross_asset.html" class="active"><i class="fa-solid fa-right-left"></i> Cross-Asset Swap</a>
             <a class="active" href="docs.html"><i class="fa-solid fa-book-open"></i> Docs &amp; Guide</a>
             <a href="https://www.animestats.tf/" target="_blank"><i class="fa-solid fa-wand-magic-sparkles"></i> Inspiration</a>
         </nav>
@@ -261,6 +263,7 @@
                     <li><a href="#leg-valuation"><i class="fa-solid fa-file-invoice-dollar"></i> 6. Swap Leg Valuation</a></li>
                     <li><a href="#risk-management"><i class="fa-solid fa-shield-halved"></i> 7. Risk &amp; Hedging (DV01)</a></li>
                     <li><a href="#liquidity-engine"><i class="fa-solid fa-filter"></i> 8. Liquidity Selection</a></li>
+                    <li><a href="#currency-swap"><i class="fa-solid fa-circle-question"></i> 9. Currency Swap</a></li>
                 </ul>
             </aside>
 
@@ -638,6 +641,53 @@
                         <li>All other overlapping instruments are marked as <strong>Skipped (Illiquid Overlap)</strong> to protect the curve building matrix.</li>
                         <li><strong>Theoretical Valuation Comparison</strong>: The engine still prices the skipped instruments against the generated curve, showing the valuation gap between actual market quotes and clean curve predictions. This allows traders to evaluate discrepancies.</li>
                     </ul>
+                </section>
+                <!-- Section 9 -->
+                <section class="docs-section" id="currency-swap">
+                    <h2><i class="fa-solid fa-circle-question"></i> 9. Cross-Currency Swap</h2>
+                    <p>
+                        A cross-currency swap involves exchanging cash flows in two different currencies. Here are some key questions resolved for learners:
+                    </p>
+                    
+                    <h3>Why do we need a yield curve for a fixed leg if the coupon rate is fixed?</h3>
+                    <p>
+                        Even though the cashflow payments of a fixed leg are static (e.g., 3.5%), you still require the corresponding currency's yield curve to:
+                    </p>
+                    <ul>
+                        <li><strong>Discount Cashflows</strong>: Find the present value (PV) of the payments today. Each payment must be discounted using the interest rate for its specific payment date.</li>
+                        <li><strong>FX Forward Curve Derivation</strong>: Under Covered Interest Parity (CIP), the forward FX rate at maturity $t$ is calculated as $F(t) = S_0 \times \frac{DF_2(t)}{DF_1(t)}$. Both curves are necessary to find these discount factors.</li>
+                    </ul>
+                    
+                    <h3>What is the difference between the Contract "Fixed" Rate and Market Rates?</h3>
+                    <p>
+                        The <strong>Contract Rate</strong> (or fixed leg coupon) is the agreed-upon interest rate that the counterparties exchange. The <strong>Market Rates</strong> (Cash, Futures, Swaps quotes) are the current rates trading in the open market, which we bootstrap to build the <strong>Yield Curve</strong> (representing the term structure of interest rates).
+                    </p>
+
+                    <h3>How does the Cross-Currency Swap Pricer calculate values?</h3>
+                    <p>
+                        The cross-currency swap pricer values contracts in a structured five-step workflow:
+                    </p>
+                    <ol>
+                        <li><strong>Independent Bootstrapping</strong>: First, the interest rate yield curves for both Leg 1 (Base Currency) and Leg 2 (Foreign Currency) are bootstrapped independently from their respective market quotes (Cash, Futures, Swaps).</li>
+                        <li><strong>FX Forward Curve Derivation</strong>: Using the bootstrapped curves and the user-specified spot FX rate $S_0$, the forward FX rates are derived for all future payment dates under Covered Interest Parity (CIP):
+                            <div class="equation-block">
+                                $$F(t) = S_0 \times \frac{DF_2(t)}{DF_1(t)}$$
+                            </div>
+                            Where $DF_1(t)$ is the discount factor from the Leg 1 curve, and $DF_2(t)$ is the discount factor from the Leg 2 curve.
+                        </li>
+                        <li><strong>Cashflow Generation</strong>: Payment schedules (fixed interest, floating index payments, or basis spreads) are projected for both legs in their native currencies.</li>
+                        <li><strong>Currency Conversion</strong>: All Leg 2 cashflows (interest payments and notional exchanges) are converted to the base Leg 1 currency using the corresponding derived forward FX rates:
+                            <div class="equation-block">
+                                $$\text{Leg 2 Converted Amount}_t = \text{Leg 2 Native Amount}_t \times F(t)$$
+                            </div>
+                        </li>
+                        <li><strong>Discounting &amp; Net NPV</strong>: The net cashflow for each period is calculated as $\text{Leg 1 Amount} + \text{Leg 2 Converted Amount}$. These net cashflows are discounted back to the trade date using the Leg 1 discount curve:
+                            <div class="equation-block">
+                                $$\text{Net Swap NPV} = \sum_{t} \text{Net Cashflow}_t \times DF_1(t)$$
+                            </div>
+                            The pricer also supports final notional exchange at maturity as separate offsetting cashflows.
+                        </li>
+                    </ol>
                 </section>
             </div>
         </div>
