@@ -14,12 +14,12 @@ class SwapLeg(ABC):
 
 
 class InterestRateLeg(SwapLeg):
-    # ---- UNCHANGED ----
-    def __init__(self, notional: float, rate_type: str, frequency: int, fixed_rate: float = 0.0):
+    def __init__(self, notional: float, rate_type: str, frequency: int, fixed_rate: float = 0.0, spread: float = 0.0):
         self.notional = notional
-        self.rate_type = rate_type.strip().lower()
+        self.rate_type = rate_type.strip().lower() # Strips accidental spaces, forces lowercase
         self.frequency = frequency
         self.fixed_rate = fixed_rate
+        self.spread = spread
 
     def generate_cashflows(self, curve_builder, trade_date: datetime.date, maturity_date: datetime.date, is_payer: bool) -> List[Dict]:
         schedule = generate_forward_schedule(trade_date, maturity_date, self.frequency)
@@ -27,18 +27,22 @@ class InterestRateLeg(SwapLeg):
         prev_date = trade_date
 
         for current_date in schedule:
-            amount = 0.0
+            # 1. Initialize amount so it always exists, preventing UnboundLocalError
+            amount = 0.0 
             tau = calculate_year_fraction(prev_date, current_date, curve_builder.convention)
-
+            
             if self.rate_type == 'fixed':
                 amount = self.notional * self.fixed_rate * tau
-
-            elif self.rate_type in ['float', 'floating']:
+                
+            elif self.rate_type in ['float', 'floating']: # Catch both variations safely
                 t_prev = calculate_year_fraction(trade_date, prev_date, curve_builder.convention)
                 t_curr = calculate_year_fraction(trade_date, current_date, curve_builder.convention)
                 df_prev = curve_builder._get_discount_factor(t_prev)
                 df_curr = curve_builder._get_discount_factor(t_curr)
-                amount = self.notional * ((df_prev / df_curr) - 1.0) if df_curr > 0 else 0.0
+                # Standard Implied Floating Cashflow with Spread
+                implied_rate = ((df_prev / df_curr) - 1.0) / tau if df_curr > 0 else 0.0
+                spread_rate = self.spread / 100.0
+                amount = self.notional * (implied_rate + spread_rate) * tau
 
             else:
                 raise ValueError(f"Unknown rate_type '{self.rate_type}'. Must be 'fixed' or 'float'.")

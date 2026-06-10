@@ -2,7 +2,7 @@
 let curve1MarketQuotes = [];
 let curve2MarketQuotes = [];
 let calculationResults = null;
-let currentChartType = 'zero_rate'; // 'zero_rate' or 'discount_factor'
+let currentChartType = 'zero_rate';
 let curvesChart = null;
 let timelineChart = null;
 
@@ -113,11 +113,11 @@ function updateLabelStates() {
     const c2 = leg2Currency.value;
     
     // Label pairs
-    fxPairLabel.textContent = `${c1}/${c2}`;
-    curve1Name.textContent = c1;
-    curve2Name.textContent = c2;
-    curve1NodesTitle.textContent = c1;
-    curve2NodesTitle.textContent = c2;
+    if (fxPairLabel) fxPairLabel.textContent = `${c1}/${c2}`;
+    if (curve1Name) curve1Name.textContent = c1;
+    if (curve2Name) curve2Name.textContent = c2;
+    if (curve1NodesTitle) curve1NodesTitle.textContent = c1;
+    if (curve2NodesTitle) curve2NodesTitle.textContent = c2;
     
     document.querySelectorAll('.leg1-curr-label').forEach(el => el.textContent = c1);
     document.querySelectorAll('.leg2-curr-label').forEach(el => el.textContent = c2);
@@ -126,17 +126,21 @@ function updateLabelStates() {
     if (curve2TabLabel) curve2TabLabel.textContent = `${c2} Nodes`;
     
     // Leg 1 type label
-    if (leg1Type.value === 'fixed') {
-        leg1RateLabel.textContent = 'Fixed Rate (%)';
-    } else {
-        leg1RateLabel.textContent = 'Spread (%)';
+    if (leg1Type && leg1RateLabel) {
+        if (leg1Type.value === 'fixed') {
+            leg1RateLabel.textContent = 'Fixed Rate (%)';
+        } else {
+            leg1RateLabel.textContent = 'Spread (%)';
+        }
     }
     
     // Leg 2 type label
-    if (leg2Type.value === 'fixed') {
-        leg2RateLabel.textContent = 'Fixed Rate (%)';
-    } else {
-        leg2RateLabel.textContent = 'Spread (%)';
+    if (leg2Type && leg2RateLabel) {
+        if (leg2Type.value === 'fixed') {
+            leg2RateLabel.textContent = 'Fixed Rate (%)';
+        } else {
+            leg2RateLabel.textContent = 'Spread (%)';
+        }
     }
 }
 

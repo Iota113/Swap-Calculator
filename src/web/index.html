@@ -1,25 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YieldCurve</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    
+
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="grid-overlay"></div>
-    
+
     <header class="app-header">
         <div class="header-container">
             <div class="logo">
@@ -27,11 +31,12 @@
                 <span>Yield<span class="highlight">Curve</span></span>
             </div>
             <nav class="nav-links">
-                <a href="index.html"><i class="fa-solid fa-calculator"></i> Curve Builder</a>
+                <a href="index.html" class="active"><i class="fa-solid fa-calculator"></i> Curve Builder</a>
                 <a href="currency_swap.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> Currency Swap</a>
-                <a href="cross_asset.html" class="active"><i class="fa-solid fa-right-left"></i> Cross-Asset Swap</a>
+                <a href="cross_asset.html"><i class="fa-solid fa-right-left"></i> Cross-Asset Swap</a>
                 <a href="docs.html"><i class="fa-solid fa-book-open"></i> Docs & Guide</a>
-                <a href="https://www.animestats.tf/" target="_blank"><i class="fa-solid fa-wand-magic-sparkles"></i> Inspiration</a>
+                <a href="https://www.animestats.tf/" target="_blank"><i class="fa-solid fa-wand-magic-sparkles"></i>
+                    Inspiration</a>
             </nav>
             <div class="header-actions">
                 <button id="theme-toggle" class="icon-btn" title="Toggle Theme">
@@ -44,26 +49,24 @@
     <main class="app-container">
         <section class="hero-section">
             <h1 class="hero-title"><span class="highlight"> Yield Curve</span></h1>
-            <p class="hero-subtitle">Bootstrap discount factors, continuous zero rates, and cubic-spline smoothed yield curves from cash rates, IMM futures, and swaps.</p>
+            <p class="hero-subtitle">Bootstrap discount factors, continuous zero rates, and cubic-spline smoothed yield
+                curves from cash rates, IMM futures, and swaps.</p>
         </section>
 
-        <div class="dashboard-grid">    
+        <div class="dashboard-grid">
             <div class="left-column">
-                
+
                 <div class="quickstart-panel card">
                     <div class="card-header">
                         <i class="fa-solid fa-circle-info"></i>
                         <h3>Quickstart</h3>
                     </div>
                     <div class="card-body">
-                        <p class="quickstart-intro">
-                            Welcome to the Yield Curve & Pricing App! Follow these steps to generate your results:
-                        </p>
-                        <ul class="quickstart-list">
+                        <ol class="quickstart-list">
                             <li>Configure your global parameters (Trade Date, Day Count, etc.).</li>
                             <li>Upload your market instruments using the CSV template or use sample data.</li>
                             <li>Add your swap positions on the right to price them against the generated curve.</li>
-                        </ul>
+                        </ol>
                     </div>
                 </div>
 
@@ -84,7 +87,7 @@
                             <label for="trade-date">Trade Date (DD-MM-YYYY)</label>
                             <input type="text" id="trade-date" value="28-05-2026" placeholder="DD-MM-YYYY">
                         </div>
-                        
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="day-count">Day Count</label>
@@ -124,7 +127,8 @@
                             <label>Import Market Data</label>
                             <div id="dropzone" class="dropzone">
                                 <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
-                                <p class="dropzone-text">Drag & Drop CSV / Excel or <span class="browse-link">browse</span></p>
+                                <p class="dropzone-text">Drag & Drop CSV / Excel or <span
+                                        class="browse-link">browse</span></p>
                                 <p class="dropzone-subtext">Supports columns: Instrument, Tenor, QuoteType, Quote</p>
                                 <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display: none;">
                             </div>
@@ -140,10 +144,10 @@
                         </div>
                     </div>
                 </div>
-            </div> 
+            </div>
 
             <div class="right-column">
-                
+
                 <div class="card">
                     <div class="card-header">
                         <i class="fa-solid fa-briefcase"></i>
@@ -161,32 +165,32 @@
                         <table id="portfolio-table" class="interactive-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 22%">Notional</th>
-                                    <th style="width: 20%">
-                                        Rate (%)
+                                    <th style="width: 20%">Notional</th>
+                                    <th style="width: 16%">Type</th>
+                                    <th style="width: 28%">
+                                        Rate / Spread (%)
                                         <div class="header-tooltip">
                                             <i class="fa-solid fa-circle-info"></i>
-                                            <span class="tooltip-text">
+                                            <span class="tooltip-text z-10">
                                                 <div style="margin-bottom: 8px;">
-                                                    <strong style="color: #3b82f6;">Fixed Rate:</strong> Enter a static percentage (e.g., <b>3.5</b>).
-                                                </div>
-                                                <div style="margin-bottom: 8px;">
-                                                    <strong style="color: #10b981;">Floating Rate:</strong> Type <b>SOFR</b> or <b>FLOAT</b> to use dynamic curve rates.
+                                                    <strong style="color: #3b82f6;">Fixed Rate:</strong> Enter the fixed
+                                                    coupon rate (%) (e.g. <b>3.50</b>).
                                                 </div>
                                                 <div>
-                                                    <strong style="color: #f59e0b;">Floating + Spread:</strong> Add a risk premium to the rate (e.g., <b>SOFR + 0.5</b>).
+                                                    <strong style="color: #10b981;">Floating Rate:</strong> Enter the
+                                                    floating leg spread (%) (e.g. <b>0.10</b>) for a basis swap.
                                                 </div>
                                             </span>
                                         </div>
                                     </th>
-                                    <th style="width: 14%">Tenor (Y)</th>
-                                    <th style="width: 14%">Frequency</th>
-                                    <th style="width: 20%">Position</th>
-                                    <th style="width: 10%">Actions</th>
+                                    <th style="width: 16%">Tenor (Y)</th>
+                                    <th style="width: 12%">Frequency</th>
+                                    <th style="width: 14%">Position</th>
+                                    <th style="width: 8%">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="portfolio-table-body">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -210,7 +214,7 @@
                                 <!-- Populated dynamically -->
                             </thead>
                             <tbody id="market-table-body">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                     <div class="card-footer">
@@ -220,14 +224,14 @@
                     </div>
                 </div>
 
-            </div> 
-            
+            </div>
+
             <div id="alert-container" class="alert-container"></div>
 
         </div>
 
         <div id="results-container" class="results-grid" style="display: none;">
-            
+
             <div class="charts-card card">
                 <div class="card-header">
                     <i class="fa-solid fa-chart-line"></i>
@@ -239,20 +243,27 @@
                     </div>
                 </div>
                 <div class="card-body chart-wrapper">
-                    
-                    <div id="portfolio-results" style="display: none; background: rgba(76, 175, 80, 0.08); padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #4CAF50; justify-content: space-between; align-items: center;">
+
+                    <div id="portfolio-results"
+                        style="display: none; background: rgba(76, 175, 80, 0.08); padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #4CAF50; justify-content: space-between; align-items: center;">
                         <div>
-                            <h3 style="margin: 0 0 5px 0; font-size: 14px; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px;">Portfolio Risk Metrics</h3>
+                            <h3
+                                style="margin: 0 0 5px 0; font-size: 14px; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px;">
+                                Portfolio Risk Metrics</h3>
                             <span style="font-size: 13px; opacity: 0.7;">Parallel Shift PVBP (DV01)</span>
                         </div>
                         <div style="text-align: right; display: flex; gap: 30px;">
                             <div>
-                                <span style="display: block; font-size: 12px; opacity: 0.7; margin-bottom: 2px;">Base NPV</span>
-                                <span id="out-npv" style="font-family: monospace; font-size: 16px; font-weight: 600;">$0.00</span>
+                                <span style="display: block; font-size: 12px; opacity: 0.7; margin-bottom: 2px;">Base
+                                    NPV</span>
+                                <span id="out-npv"
+                                    style="font-family: monospace; font-size: 16px; font-weight: 600;">$0.00</span>
                             </div>
                             <div>
-                                <span style="display: block; font-size: 12px; opacity: 0.7; margin-bottom: 2px;">Swap Delta (PVBP)</span>
-                                <span id="out-pvbp" style="font-family: monospace; font-size: 16px; color: #4CAF50; font-weight: 700;">$0.00</span>
+                                <span style="display: block; font-size: 12px; opacity: 0.7; margin-bottom: 2px;">Swap
+                                    Delta (PVBP)</span>
+                                <span id="out-pvbp"
+                                    style="font-family: monospace; font-size: 16px; color: #4CAF50; font-weight: 700;">$0.00</span>
                             </div>
                         </div>
                     </div>
@@ -289,7 +300,8 @@
                         </table>
                     </div>
                     <!-- Implied Forward Rates Table Wrapper -->
-                    <div id="forwards-table-wrapper" class="scroll-container output-table-wrapper" style="display: none; padding: 10px;">
+                    <div id="forwards-table-wrapper" class="scroll-container output-table-wrapper"
+                        style="display: none; padding: 10px;">
                         <table id="forwards-table" class="results-table">
                             <thead>
                                 <tr>
@@ -316,9 +328,12 @@
                     </div>
                     <div class="toggle-container" style="display: flex; align-items: center; gap: 8px;">
                         <span style="color: #94a3b8; font-size: 0.85rem;">Split Axes</span>
-                        <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
-                            <input type="checkbox" id="axis-toggle" onchange="handleAxisToggle()" style="opacity: 0; width: 0; height: 0;">
-                            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .3s; border-radius: 34px;"></span>
+                        <label class="switch"
+                            style="position: relative; display: inline-block; width: 40px; height: 22px;">
+                            <input type="checkbox" id="axis-toggle" onchange="handleAxisToggle()"
+                                style="opacity: 0; width: 0; height: 0;">
+                            <span class="slider"
+                                style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .3s; border-radius: 34px;"></span>
                         </label>
                         <span style="color: #94a3b8; font-size: 0.85rem;">Combined Axis</span>
                     </div>
@@ -330,12 +345,15 @@
                 </div>
             </div>
 
-        </div> </main>
+        </div>
+    </main>
 
     <footer class="app-footer">
-        <p>&copy; 2026 YieldCurve. Built for institutional-grade fixed income analytics. Styled with inspiration from AnimeStats.</p>
+        <p>&copy; 2026 YieldCurve. Built for institutional-grade fixed income analytics. Styled with inspiration from
+            AnimeStats.</p>
     </footer>
 
     <script src="main.js"></script>
 </body>
+
 </html>
