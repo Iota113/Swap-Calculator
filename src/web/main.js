@@ -876,16 +876,21 @@ function formatWithCommas(value) {
     return parts.join('.');
 }
 
-function addPortfolioRow(notional = 10000000, rate = "3.50", tenor = 5, freq = 2, position = 'payer') {
+function addPortfolioRow(notional = 10000000, type = 'fixed', rate = "3.50", tenor = 5, freq = 2, position = 'payer') {
     if (!portfolioTableBody) return; 
     
     const formattedNotional = formatWithCommas(notional.toString());
     const tr = document.createElement('tr');
     
-    // Changed inputs to type="text" to allow commas and words like "SOFR"
     tr.innerHTML = `
         <td><input type="text" class="port-notional" value="${formattedNotional}" placeholder="10,000,000"></td>
-        <td><input type="text" class="port-rate" value="${rate}" placeholder="3.5 or SOFR + 0.5"></td>
+        <td>
+            <select class="port-type">
+                <option value="fixed" ${type === 'fixed' ? 'selected' : ''}>Fixed</option>
+                <option value="floating" ${type === 'floating' ? 'selected' : ''}>Floating</option>
+            </select>
+        </td>
+        <td><input type="number" class="port-rate" value="${rate}" step="0.01" placeholder="3.50"></td>
         <td><input type="number" class="port-tenor" value="${tenor}" step="1"></td>
         <td>
             <select class="port-frequency">
@@ -920,7 +925,7 @@ const clearPortfolioBtn = document.getElementById('clear-portfolio');
 if (clearPortfolioBtn) {
     clearPortfolioBtn.addEventListener('click', () => {
         portfolioTableBody.innerHTML = '';
-        addPortfolioRow(0, "", 0, 2, 'payer'); // Leave one empty row
+        addPortfolioRow(0, 'fixed', "", 0, 2, 'payer'); // Leave one empty row
     });
 }
 
@@ -931,7 +936,7 @@ if (portfolioTableBody) {
 
 // Add an empty row on '+' button click
 if (addPortfolioRowBtn) {
-    addPortfolioRowBtn.addEventListener('click', () => addPortfolioRow(0, 0, 0, 2, 'payer'));
+    addPortfolioRowBtn.addEventListener('click', () => addPortfolioRow(0, 'fixed', 0, 0, 2, 'payer'));
 }
 
 // Collect all swaps from the portfolio table into an array for the backend
@@ -942,33 +947,22 @@ function gatherPortfolioData() {
         const portfolio = [];
         rows.forEach(row => {
             const notionalInput = row.querySelector('.port-notional');
+            const typeSelect = row.querySelector('.port-type');
             const rateInput = row.querySelector('.port-rate');
             const tenorInput = row.querySelector('.port-tenor');
             const freqSelect = row.querySelector('.port-frequency');
             const positionSelect = row.querySelector('.port-position');
 
-            if (notionalInput && rateInput && tenorInput && positionSelect) {
-                // Strip commas before sending to Python
+            if (notionalInput && typeSelect && rateInput && tenorInput && positionSelect) {
                 const cleanNotional = parseFloat(notionalInput.value.replace(/,/g, '')) || 0;
-                
-                // NLP Rate Parsing: Detect "SOFR" or "FLOAT"
-                const rateRaw = rateInput.value.toUpperCase();
-                let rateType = 'fixed';
-                let parsedRate = 0;
-
-                if (rateRaw.includes('SOFR') || rateRaw.includes('FLOAT')) {
-                    rateType = 'floating';
-                    // Extract the spread number (e.g., "SOFR + 0.5" -> 0.5)
-                    const match = rateRaw.match(/[-+]?[0-9]*\.?[0-9]+/);
-                    parsedRate = match ? parseFloat(match[0]) : 0;
-                } else {
-                    parsedRate = parseFloat(rateRaw) || 0;
-                }
+                const rateType = typeSelect.value;
+                const val = parseFloat(rateInput.value) || 0;
 
                 portfolio.push({
                     notional: cleanNotional,
                     rate_type: rateType,
-                    fixed_rate: parsedRate, // This acts as the "Spread" if rate_type is floating
+                    fixed_rate: rateType === 'fixed' ? val : 0.0,
+                    spread: rateType === 'floating' ? val : 0.0,
                     tenor_years: parseInt(tenorInput.value) || 0,
                     frequency: parseInt(freqSelect.value) || 2,
                     position: positionSelect.value

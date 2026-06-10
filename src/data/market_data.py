@@ -2,7 +2,6 @@
 import yfinance as yf
 import datetime
 
-
 class AssetPriceOracle:
 
     @staticmethod

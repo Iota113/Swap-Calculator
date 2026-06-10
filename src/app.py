@@ -286,8 +286,11 @@ def calculate():
                 try:
                     notional = float(pos.get('notional', 0) or 0)
                     fixed_rate = float(pos.get('fixed_rate', 0) or 0) / 100.0
+                    spread = float(pos.get('spread', 0) or 0)
+                    rate_type = str(pos.get('rate_type', 'fixed')).strip().lower()
                     tenor_years = int(float(pos.get('tenor_years', 0) or 0))
                     position = str(pos.get('position', 'payer')).strip().lower()
+                    pos_freq = int(float(pos.get('frequency', payment_frequency) or payment_frequency))
                 except (ValueError, TypeError) as conv_err:
                     print(f"Portfolio row {idx + 1}: skipped (bad values) -> {conv_err}")
                     continue
@@ -306,7 +309,6 @@ def calculate():
                     asset_trade_date = str(pos.get('asset_trade_date', '')).strip()
                     present_date = str(pos.get('present_date', '')).strip()
                     asset_class = str(pos.get('asset_class', 'auto')).strip().lower() or 'auto'
-                    pos_freq = int(float(pos.get('frequency', payment_frequency) or payment_frequency))
 
                     # Parse DD-MM-YYYY (UI) -> datetime.date, with sane fallbacks.
                     def _to_date(d, fallback):
@@ -366,17 +368,32 @@ def calculate():
                     })
                     # ==========================================================
                 else:
-                    # Standard IR swap: fixed leg vs float leg
-                    fixed_leg = InterestRateLeg(notional=notional, rate_type='fixed', frequency=payment_frequency, fixed_rate=fixed_rate)
-                    float_leg = InterestRateLeg(notional=notional, rate_type='float', frequency=payment_frequency)
-
-                    if is_payer:
-                        paying_leg = fixed_leg
-                        receiving_leg = float_leg
+                    # Standard IR swap or Basis swap
+                    if rate_type == 'floating':
+                        # Floating + Spread vs Floating Flat (Basis Swap)
+                        # We represent the spread leg (which acts as the net pricing driver)
+                        spread_leg = InterestRateLeg(notional=notional, rate_type='float', frequency=pos_freq, spread=spread)
+                        flat_leg = InterestRateLeg(notional=notional, rate_type='float', frequency=pos_freq, spread=0.0)
+                        
+                        if is_payer:
+                            paying_leg = spread_leg
+                            receiving_leg = flat_leg
+                        else:
+                            paying_leg = flat_leg
+                            receiving_leg = spread_leg
+                        portfolio_tuples_for_engine.append((spread_leg, tenor_years, is_payer))
                     else:
-                        paying_leg = float_leg
-                        receiving_leg = fixed_leg
-                    portfolio_tuples_for_engine.append((fixed_leg, tenor_years, is_payer))
+                        # Fixed vs Floating Flat
+                        fixed_leg = InterestRateLeg(notional=notional, rate_type='fixed', frequency=pos_freq, fixed_rate=fixed_rate)
+                        float_leg = InterestRateLeg(notional=notional, rate_type='float', frequency=pos_freq, spread=0.0)
+
+                        if is_payer:
+                            paying_leg = fixed_leg
+                            receiving_leg = float_leg
+                        else:
+                            paying_leg = float_leg
+                            receiving_leg = fixed_leg
+                        portfolio_tuples_for_engine.append((fixed_leg, tenor_years, is_payer))
 
                 try:
                     results = pricer.calculate_dv01(paying_leg, receiving_leg, maturity_date)
@@ -491,7 +508,8 @@ def calculate():
         if interpolation_method == 'Cubic Spline' and len(times) >= 3:
             try:
                 zero_rates_smooth = CubicSplineCurve(times, rates).evaluate(times_smooth).tolist()
-                dfs_smooth = CubicSplineCurve(times, dfs).evaluate(times_smooth).tolist()
+                df_spline = CubicSplineCurve(times, dfs)
+                dfs_smooth = df_spline.evaluate(times_smooth).tolist()
             except Exception:
                 interpolation_method = 'Linear (Fallback)'
                 zero_rates_smooth = np.interp(times_smooth, times, rates).tolist()

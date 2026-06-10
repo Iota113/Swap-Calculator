@@ -262,8 +262,9 @@
                     <li><a href="#interpolation"><i class="fa-solid fa-wave-square"></i> 5. Splines &amp; Interpolation</a></li>
                     <li><a href="#leg-valuation"><i class="fa-solid fa-file-invoice-dollar"></i> 6. Swap Leg Valuation</a></li>
                     <li><a href="#risk-management"><i class="fa-solid fa-shield-halved"></i> 7. Risk &amp; Hedging (DV01)</a></li>
-                    <li><a href="#liquidity-engine"><i class="fa-solid fa-filter"></i> 8. Liquidity Selection</a></li>
-                    <li><a href="#currency-swap"><i class="fa-solid fa-circle-question"></i> 9. Currency Swap</a></li>
+                    <li><a href="#spread-differences"><i class="fa-solid fa-arrow-right-arrow-left"></i> 8. Market vs. Coupon Spreads</a></li>
+                    <li><a href="#liquidity-engine"><i class="fa-solid fa-filter"></i> 9. Liquidity Selection</a></li>
+                    <li><a href="#currency-swap"><i class="fa-solid fa-circle-question"></i> 10. Currency Swap</a></li>
                 </ul>
             </aside>
 
@@ -612,8 +613,40 @@
                     </div>
                 </section>
                 <!-- Section 8 -->
+                <section class="docs-section" id="spread-differences">
+                    <h2><i class="fa-solid fa-arrow-right-arrow-left"></i> 8. Market Spreads vs. Coupon Spreads</h2>
+                    <p>
+                        In fixed income and swap pricing, the term <strong>"spread"</strong> is used in two entirely different contexts. It is critical to distinguish between them:
+                    </p>
+                    
+                    <div class="highlight-card">
+                        <h4>1. Market Instrument Spread (Bid-Ask Spread)</h4>
+                        <ul>
+                            <li><strong>Where:</strong> Entered per-instrument in the quote input tables (or CSV columns).</li>
+                            <li><strong>Unit:</strong> Basis Points (bps), where $1 \text{ bp} = 0.0001$ or $0.01\%$.</li>
+                            <li><strong>Description:</strong> Represents the bid-ask transaction spread of a benchmark market quote. This serves as a proxy for liquidity and transaction costs.</li>
+                            <li><strong>Application:</strong> Used exclusively by the <strong>Liquidity Auto-Selection Engine</strong>. When multiple benchmark instruments overlap in maturity, the engine selects the instrument with the smallest bid-ask spread to build the clean yield curve. It is not paid or received on any contract.</li>
+                        </ul>
+                    </div>
+
+                    <div class="highlight-card">
+                        <h4>2. Swap Leg Spread (Contractual Coupon Spread)</h4>
+                        <ul>
+                            <li><strong>Where:</strong> Entered globally per leg in the swap pricing input forms when the leg rate type is set to <strong>Floating Rate</strong>.</li>
+                            <li><strong>Unit:</strong> Percent (%) per annum.</li>
+                            <li><strong>Description:</strong> Represents the contractual interest rate premium or discount added to the floating rate index (e.g., SOFR + 0.50% or EURIBOR - 0.10%).</li>
+                            <li><strong>Application:</strong> Used by the <strong>Swap Pricing Engine</strong> to compute cashflows. For each payment period, the coupon paid is calculated as:
+                                <div class="equation-block">
+                                    $$\text{Cashflow Amount} = \text{Notional} \times (\text{Implied Index Rate} + \text{Contractual Spread}) \times \tau$$
+                                </div>
+                                Where $\tau$ is the year fraction for the period.
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+                <!-- Section 9 -->
                 <section class="docs-section" id="liquidity-engine">
-                    <h2><i class="fa-solid fa-filter"></i> 8. The Liquidity Auto-Selection Engine</h2>
+                    <h2><i class="fa-solid fa-filter"></i> 9. The Liquidity Auto-Selection Engine</h2>
                     <p>
                         When building yield curves, including instruments with duplicate or overlapping maturities (e.g. a 2Y Swap and a 2Y Future contract maturing within days of each other) leads to numerical instability, resulting in localized zero-rate spikes.
                     </p>
@@ -642,11 +675,11 @@
                         <li><strong>Theoretical Valuation Comparison</strong>: The engine still prices the skipped instruments against the generated curve, showing the valuation gap between actual market quotes and clean curve predictions. This allows traders to evaluate discrepancies.</li>
                     </ul>
                 </section>
-                <!-- Section 9 -->
+                <!-- Section 10 -->
                 <section class="docs-section" id="currency-swap">
-                    <h2><i class="fa-solid fa-circle-question"></i> 9. Cross-Currency Swap</h2>
+                    <h2><i class="fa-solid fa-circle-question"></i> 10. Cross-Currency Swap</h2>
                     <p>
-                        A cross-currency swap involves exchanging cash flows in two different currencies. Here are some key questions resolved for learners:
+                        A cross-currency swap involves exchanging cash flows in two different currencies.
                     </p>
                     
                     <h3>Why do we need a yield curve for a fixed leg if the coupon rate is fixed?</h3>
