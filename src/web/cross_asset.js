@@ -116,45 +116,30 @@ function updateTableHeaders() {
     }
 }
 
-// ---------- Sample data (own copy) ----------
-const sampleData = [
-    { Instrument: 'Cash', Tenor: 'O/N', QuoteType: 'RATE', Quote: 3.550, Spread: 1.0 },
-    { Instrument: 'Cash', Tenor: '1M', QuoteType: 'RATE', Quote: 3.608, Spread: 1.2 },
-    { Instrument: 'Cash', Tenor: '3M', QuoteType: 'RATE', Quote: 3.649, Spread: 1.5 },
-    { Instrument: 'Future', Tenor: 'SR3M6', QuoteType: 'PRICE', Quote: 96.330, Spread: 0.5 },
-    { Instrument: 'Future', Tenor: 'SR3U6', QuoteType: 'PRICE', Quote: 96.250, Spread: 0.6 },
-    { Instrument: 'Future', Tenor: 'SR3Z6', QuoteType: 'PRICE', Quote: 96.155, Spread: 0.5 },
-    { Instrument: 'Swap', Tenor: '1Y', QuoteType: 'RATE', Quote: 3.849, Spread: 2.0 },
-    { Instrument: 'Swap', Tenor: '2Y', QuoteType: 'RATE', Quote: 3.899, Spread: 2.2 },
-    { Instrument: 'Swap', Tenor: '5Y', QuoteType: 'RATE', Quote: 3.906, Spread: 2.8 },
-    { Instrument: 'Swap', Tenor: '10Y', QuoteType: 'RATE', Quote: 4.089, Spread: 3.5 },
-];
-
-const treasurySampleData = [
-    { Instrument: 'Bill', Tenor: '3M', Coupon: 0.0, Price: 98.710, Spread: 1.2 },
-    { Instrument: 'Bill', Tenor: '6M', Coupon: 0.0, Price: 97.450, Spread: 1.5 },
-    { Instrument: 'Note', Tenor: '2Y', Coupon: 4.250, Price: 99.300, Spread: 1.8 },
-    { Instrument: 'Note', Tenor: '5Y', Coupon: 4.000, Price: 98.500, Spread: 2.5 },
-    { Instrument: 'Bond', Tenor: '10Y', Coupon: 4.250, Price: 100.250, Spread: 1.5 },
-];
-
-function loadSampleData() {
+async function loadSampleData() {
     const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
-    marketQuotes = JSON.parse(JSON.stringify(curveType === 'Treasury' ? treasurySampleData : sampleData));
-    renderTable();
-    showAlert(`Sample ${curveType} market data loaded for this tab.`, 'success');
+    const filename = curveType === 'Treasury' ? 'treasury_fallback.csv' : 'usd_ois_fallback.csv';
+    try {
+        const response = await fetch(`/api/sample_data/${filename}`);
+        if (!response.ok) {
+            throw new Error(`Server returned status ${response.status}: ${response.statusText}`);
+        }
+        const text = await response.text();
+        marketQuotes = parseCSV(text);
+        renderTable();
+        showAlert(`Sample ${curveType} market data loaded for this tab.`, 'success');
+    } catch (err) {
+        showAlert(`Error loading sample data: ${err.message}`, 'danger');
+    }
 }
 loadSampleBtn.addEventListener('click', loadSampleData);
 
 // ---------- Template download ----------
 downloadTemplateBtn.addEventListener('click', () => {
     const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
-    const csv = curveType === 'Treasury'
-        ? "Instrument,Tenor,Coupon,Price,Spread\nBill,3M,0,98.71,1.2\nNote,2Y,4.25,99.30,1.8\nBond,10Y,4.25,100.25,1.5"
-        : "Instrument,Tenor,QuoteType,Quote,Spread\nCash,O/N,RATE,3.55,1.0\nFuture,SR3M6,PRICE,96.33,0.5\nSwap,5Y,RATE,3.906,2.8";
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const filename = curveType === 'Treasury' ? 'treasury_fallback.csv' : 'usd_ois_fallback.csv';
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
+    link.href = `/api/sample_data/${filename}`;
     link.download = `crossasset_${curveType.toLowerCase()}_template.csv`;
     document.body.appendChild(link);
     link.click();

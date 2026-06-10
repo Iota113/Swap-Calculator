@@ -603,51 +603,45 @@ def calculate():
 
 # --- CROSS-CURRENCY SWAP PRICER EXTENSION ENDPOINTS & HELPERS ---
 
-USD_FALLBACK_MARKET_DATA = [
-    { 'Instrument': 'Cash', 'Tenor': 'O/N', 'QuoteType': 'RATE', 'Quote': 3.550, 'Spread': 1.0 },
-    { 'Instrument': 'Cash', 'Tenor': '1M', 'QuoteType': 'RATE', 'Quote': 3.608, 'Spread': 1.2 },
-    { 'Instrument': 'Cash', 'Tenor': '3M', 'QuoteType': 'RATE', 'Quote': 3.649, 'Spread': 1.5 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3M6', 'QuoteType': 'PRICE', 'Quote': 96.330, 'Spread': 0.5 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3U6', 'QuoteType': 'PRICE', 'Quote': 96.250, 'Spread': 0.6 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3Z6', 'QuoteType': 'PRICE', 'Quote': 96.155, 'Spread': 0.5 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3H7', 'QuoteType': 'PRICE', 'Quote': 96.080, 'Spread': 0.8 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3M7', 'QuoteType': 'PRICE', 'Quote': 96.065, 'Spread': 0.7 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3U7', 'QuoteType': 'PRICE', 'Quote': 96.095, 'Spread': 0.9 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3Z7', 'QuoteType': 'PRICE', 'Quote': 96.140, 'Spread': 0.8 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3H8', 'QuoteType': 'PRICE', 'Quote': 96.170, 'Spread': 1.1 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3M8', 'QuoteType': 'PRICE', 'Quote': 96.180, 'Spread': 1.0 },
-    { 'Instrument': 'Swap', 'Tenor': '1Y', 'QuoteType': 'RATE', 'Quote': 3.849, 'Spread': 2.0 },
-    { 'Instrument': 'Swap', 'Tenor': '2Y', 'QuoteType': 'RATE', 'Quote': 3.899, 'Spread': 2.2 },
-    { 'Instrument': 'Swap', 'Tenor': '3Y', 'QuoteType': 'RATE', 'Quote': 3.889, 'Spread': 2.5 },
-    { 'Instrument': 'Swap', 'Tenor': '5Y', 'QuoteType': 'RATE', 'Quote': 3.906, 'Spread': 2.8 },
-    { 'Instrument': 'Swap', 'Tenor': '7Y', 'QuoteType': 'RATE', 'Quote': 3.975, 'Spread': 3.2 },
-    { 'Instrument': 'Swap', 'Tenor': '10Y', 'QuoteType': 'RATE', 'Quote': 4.089, 'Spread': 3.5 },
-    { 'Instrument': 'Swap', 'Tenor': '15Y', 'QuoteType': 'RATE', 'Quote': 4.264, 'Spread': 4.0 },
-    { 'Instrument': 'Swap', 'Tenor': '30Y', 'QuoteType': 'RATE', 'Quote': 4.308, 'Spread': 5.0 }
-]
+def load_fallback_csv(filename):
+    """Loads a fallback market data CSV file from the src/data directory."""
+    import csv
+    records = []
+    filepath = os.path.join(os.path.dirname(__file__), 'data', filename)
+    try:
+        with open(filepath, mode='r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                record = {}
+                for k, v in row.items():
+                    if v == '' or v is None:
+                        record[k] = None
+                    else:
+                        try:
+                            record[k] = float(v)
+                        except ValueError:
+                            record[k] = v
+                records.append(record)
+    except Exception as e:
+        print(f"Error loading fallback CSV {filename}: {e}")
+    return records
 
-EUR_FALLBACK_MARKET_DATA = [
-    { 'Instrument': 'Cash', 'Tenor': 'O/N', 'QuoteType': 'RATE', 'Quote': 2.250, 'Spread': 1.0 },
-    { 'Instrument': 'Cash', 'Tenor': '1M', 'QuoteType': 'RATE', 'Quote': 2.300, 'Spread': 1.2 },
-    { 'Instrument': 'Cash', 'Tenor': '3M', 'QuoteType': 'RATE', 'Quote': 2.350, 'Spread': 1.5 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3M6', 'QuoteType': 'PRICE', 'Quote': 97.650, 'Spread': 0.5 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3U6', 'QuoteType': 'PRICE', 'Quote': 97.600, 'Spread': 0.6 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3Z6', 'QuoteType': 'PRICE', 'Quote': 97.550, 'Spread': 0.5 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3H7', 'QuoteType': 'PRICE', 'Quote': 97.500, 'Spread': 0.8 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3M7', 'QuoteType': 'PRICE', 'Quote': 97.450, 'Spread': 0.7 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3U7', 'QuoteType': 'PRICE', 'Quote': 97.400, 'Spread': 0.9 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3Z7', 'QuoteType': 'PRICE', 'Quote': 97.350, 'Spread': 0.8 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3H8', 'QuoteType': 'PRICE', 'Quote': 97.300, 'Spread': 1.1 },
-    { 'Instrument': 'Future', 'Tenor': 'SR3M8', 'QuoteType': 'PRICE', 'Quote': 97.250, 'Spread': 1.0 },
-    { 'Instrument': 'Swap', 'Tenor': '1Y', 'QuoteType': 'RATE', 'Quote': 2.800, 'Spread': 2.0 },
-    { 'Instrument': 'Swap', 'Tenor': '2Y', 'QuoteType': 'RATE', 'Quote': 2.850, 'Spread': 2.2 },
-    { 'Instrument': 'Swap', 'Tenor': '3Y', 'QuoteType': 'RATE', 'Quote': 2.900, 'Spread': 2.5 },
-    { 'Instrument': 'Swap', 'Tenor': '5Y', 'QuoteType': 'RATE', 'Quote': 3.000, 'Spread': 2.8 },
-    { 'Instrument': 'Swap', 'Tenor': '7Y', 'QuoteType': 'RATE', 'Quote': 3.050, 'Spread': 3.2 },
-    { 'Instrument': 'Swap', 'Tenor': '10Y', 'QuoteType': 'RATE', 'Quote': 3.100, 'Spread': 3.5 },
-    { 'Instrument': 'Swap', 'Tenor': '15Y', 'QuoteType': 'RATE', 'Quote': 3.150, 'Spread': 4.0 },
-    { 'Instrument': 'Swap', 'Tenor': '30Y', 'QuoteType': 'RATE', 'Quote': 3.200, 'Spread': 5.0 }
-]
+@app.route('/api/sample_data/<filename>', methods=['GET'])
+def get_sample_data(filename):
+    """Safely serves a sample CSV template file from the src/data directory."""
+    allowed_files = {
+        'usd_ois_fallback.csv',
+        'eur_fallback.csv',
+        'treasury_fallback.csv',
+        'interest_rate_swap_portfolio.csv',
+        'cross_asset_portfolio.csv'
+    }
+    if filename not in allowed_files:
+        return jsonify({'success': False, 'error': 'Forbidden or not found'}), 404
+        
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
+    return send_from_directory(data_dir, filename)
+
 
 def _parse_and_validate_market_data(market_data_raw, curve_type):
     records = []
@@ -805,9 +799,9 @@ def calculate_currency_swap():
         
         # If empty, use fallbacks
         if not leg1_market_raw:
-            leg1_market_raw = USD_FALLBACK_MARKET_DATA
+            leg1_market_raw = load_fallback_csv('usd_ois_fallback.csv')
         if not leg2_market_raw:
-            leg2_market_raw = EUR_FALLBACK_MARKET_DATA
+            leg2_market_raw = load_fallback_csv('eur_fallback.csv')
             
         # Parse trade date
         try:

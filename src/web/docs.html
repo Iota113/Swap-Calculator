@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 
 <html lang="en">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>YieldCurve Documentation</title>
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-    <link href="style.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="style.css" rel="stylesheet" />
     <script>
         window.MathJax = {
             tex: {
@@ -32,7 +35,7 @@
             margin-top: 20px;
             align-items: start;
         }
-        
+
         .docs-sidebar {
             position: sticky;
             top: 100px;
@@ -44,7 +47,7 @@
             max-height: calc(100vh - 140px);
             overflow-y: auto;
         }
-        
+
         .docs-sidebar h3 {
             font-family: var(--font-heading);
             font-size: 14px;
@@ -54,14 +57,14 @@
             color: var(--accent);
             margin-bottom: 16px;
         }
-        
+
         .docs-nav-list {
             list-style: none;
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
-        
+
         .docs-nav-list a {
             color: var(--text-secondary);
             text-decoration: none;
@@ -74,34 +77,34 @@
             padding: 6px 12px;
             border-radius: 6px;
         }
-        
+
         .docs-nav-list a:hover {
             color: var(--text-primary);
             background: rgba(255, 255, 255, 0.03);
         }
-        
+
         [data-theme="light"] .docs-nav-list a:hover {
             background: rgba(0, 0, 0, 0.03);
         }
-        
+
         .docs-nav-list a.active {
             color: var(--text-primary);
             background: var(--primary-glow);
             border-left: 3px solid var(--primary);
             font-weight: 600;
         }
-        
+
         .docs-content {
             display: flex;
             flex-direction: column;
             gap: 50px;
             max-width: 900px;
         }
-        
+
         .docs-section {
             scroll-margin-top: 100px;
         }
-        
+
         .docs-section h2 {
             font-family: var(--font-heading);
             font-size: 26px;
@@ -114,18 +117,18 @@
             align-items: center;
             gap: 12px;
         }
-        
+
         .docs-section h2 i {
             color: var(--primary);
         }
-        
+
         .docs-section p {
             color: var(--text-secondary);
             font-size: 15px;
             line-height: 1.7;
             margin-bottom: 16px;
         }
-        
+
         .docs-section h3 {
             font-family: var(--font-heading);
             font-size: 18px;
@@ -133,19 +136,20 @@
             margin: 24px 0 12px 0;
             color: var(--text-primary);
         }
-        
-        .docs-section ul, .docs-section ol {
+
+        .docs-section ul,
+        .docs-section ol {
             margin-left: 24px;
             margin-bottom: 16px;
             color: var(--text-secondary);
             font-size: 15px;
             line-height: 1.7;
         }
-        
+
         .docs-section li {
             margin-bottom: 8px;
         }
-        
+
         /* Math/Equation Styling override for MathJax */
         .equation-block {
             display: flex;
@@ -160,19 +164,19 @@
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
             overflow-x: auto;
         }
-        
+
         [data-theme="light"] .equation-block {
             background: rgba(255, 255, 255, 0.5);
             box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
         }
-        
+
         .equation-label {
             margin-top: 12px;
             font-size: 12px;
             color: var(--text-muted);
             font-style: italic;
         }
-        
+
         code.inline-code {
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid var(--border-color);
@@ -182,11 +186,11 @@
             font-size: 13px;
             color: var(--accent);
         }
-        
+
         [data-theme="light"] code.inline-code {
             background: rgba(0, 0, 0, 0.04);
         }
-        
+
         .highlight-card {
             background: rgba(6, 182, 212, 0.04);
             border-left: 4px solid var(--accent);
@@ -194,7 +198,7 @@
             padding: 16px 20px;
             margin: 20px 0;
         }
-        
+
         .highlight-card h4 {
             font-family: var(--font-heading);
             font-size: 15px;
@@ -202,17 +206,18 @@
             color: var(--text-primary);
             margin-bottom: 6px;
         }
-        
+
         .highlight-card p {
             margin: 0;
             font-size: 13.5px;
             line-height: 1.6;
         }
-        
+
         @media (max-width: 992px) {
             .docs-layout {
                 grid-template-columns: 1fr;
             }
+
             .docs-sidebar {
                 position: static;
                 max-height: none;
@@ -229,96 +234,317 @@
                 <span>Yield<span class="highlight">Curve</span></span>
             </div>
 
-        <nav class="nav-links">
-            <a href="index.html"><i class="fa-solid fa-calculator"></i> Curve Builder</a>
-            <a href="currency_swap.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> Currency Swap</a>
-            <a href="cross_asset.html"><i class="fa-solid fa-right-left"></i> Cross-Asset Swap</a>
-            <a href="docs.html" class="active"><i class="fa-solid fa-book-open"></i> Docs &amp; Guide</a>
-            <a href="https://www.animestats.tf/" target="_blank"><i class="fa-solid fa-wand-magic-sparkles"></i> Inspiration</a>
-        </nav>
+            <nav class="nav-links">
+                <a href="index.html"><i class="fa-solid fa-calculator"></i> Curve Builder</a>
+                <a href="currency_swap.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> Currency Swap</a>
+                <a href="cross_asset.html"><i class="fa-solid fa-right-left"></i> Cross-Asset Swap</a>
+                <a href="docs.html" class="active"><i class="fa-solid fa-book-open"></i> Docs &amp; Guide</a>
+                <a href="https://www.animestats.tf/" target="_blank"><i class="fa-solid fa-wand-magic-sparkles"></i>
+                    Inspiration</a>
+            </nav>
 
-        <div class="header-actions">
-            <button class="icon-btn" id="theme-toggle" title="Toggle Theme">
-                <i class="fa-solid fa-moon"></i>
-            </button>
-        </div>
+            <div class="header-actions">
+                <button class="icon-btn" id="theme-toggle" title="Toggle Theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
         </div>
     </header>
 
     <main class="app-container">
         <section class="hero-section">
             <h1 class="hero-title">Mathematical <span class="highlight">Reference</span> &amp; Guide</h1>
-            <p class="hero-subtitle">Learn the theory, equations, and features driving our yield curve builder and swap pricing engine.</p>
+            <p class="hero-subtitle">Learn the theory, equations, and features driving our yield curve builder and swap
+                pricing engine.</p>
         </section>
 
         <div class="docs-layout">
             <aside class="docs-sidebar">
                 <h3>Table of Contents</h3>
                 <ul class="docs-nav-list">
-                    <li><a class="active" href="#core-concepts"><i class="fa-solid fa-compass"></i> 1. Core Concepts &amp; Guide</a></li>
+                    <li><a href="#notation-glossary"><i class="fa-solid fa-superscript"></i> 0. Notation Glossary</a>
+                    </li>
+                    <li><a class="active" href="#core-concepts"><i class="fa-solid fa-compass"></i> 1. Core Concepts
+                            &amp; Guide</a></li>
                     <li><a href="#market-instruments"><i class="fa-solid fa-list"></i> 2. Market Instruments</a></li>
-                    <li><a href="#foundations"><i class="fa-solid fa-hourglass-half"></i> 3. Time Value &amp; Conventions</a></li>
+                    <li><a href="#foundations"><i class="fa-solid fa-hourglass-half"></i> 3. Time Value &amp;
+                            Conventions</a></li>
                     <li><a href="#bootstrapping"><i class="fa-solid fa-stairs"></i> 4. Curve Bootstrapping</a></li>
-                    <li><a href="#interpolation"><i class="fa-solid fa-wave-square"></i> 5. Splines &amp; Interpolation</a></li>
-                    <li><a href="#leg-valuation"><i class="fa-solid fa-file-invoice-dollar"></i> 6. Swap Leg Valuation</a></li>
-                    <li><a href="#risk-management"><i class="fa-solid fa-shield-halved"></i> 7. Risk &amp; Hedging (DV01)</a></li>
-                    <li><a href="#spread-differences"><i class="fa-solid fa-arrow-right-arrow-left"></i> 8. Market vs. Coupon Spreads</a></li>
+                    <li><a href="#interpolation"><i class="fa-solid fa-wave-square"></i> 5. Splines &amp;
+                            Interpolation</a></li>
+                    <li><a href="#leg-valuation"><i class="fa-solid fa-file-invoice-dollar"></i> 6. Swap Leg
+                            Valuation</a></li>
+                    <li><a href="#risk-management"><i class="fa-solid fa-shield-halved"></i> 7. Risk &amp; Hedging
+                            (DV01)</a></li>
+                    <li><a href="#spread-differences"><i class="fa-solid fa-plus-minus"></i> 8. Market vs.
+                            Coupon Spreads</a></li>
                     <li><a href="#liquidity-engine"><i class="fa-solid fa-filter"></i> 9. Liquidity Selection</a></li>
-                    <li><a href="#currency-swap"><i class="fa-solid fa-circle-question"></i> 10. Currency Swap</a></li>
+                    <li><a href="#currency-swap"><i class="fa-solid fa-dollar-sign"></i> 10. Currency Swap</a></li>
+                    <li><a href="#references"><i class="fa-solid fa-book-open"></i> 11. References</a></li>
                 </ul>
             </aside>
 
             <div class="docs-content tex2jax_process">
+                <!-- Section 0: Notation Glossary -->
+                <section class="docs-section" id="notation-glossary">
+                    <h2><i class="fa-solid fa-sigma"></i> 0. Notation Glossary</h2>
+                    <p>
+                        The following symbols are used consistently throughout this documentation. All equations and
+                        prose adhere to this reference.
+                    </p>
+
+                    <h3>Core Financial Quantities</h3>
+                    <div class="highlight-card">
+                        <table style="width:100%; border-collapse:collapse; font-size:14px; line-height:1.8;">
+                            <thead>
+                                <tr style="border-bottom:1px solid var(--border-color);">
+                                    <th
+                                        style="text-align:left; padding:6px 12px; color:var(--accent); font-family:var(--font-heading); width:160px;">
+                                        Symbol</th>
+                                    <th
+                                        style="text-align:left; padding:6px 12px; color:var(--accent); font-family:var(--font-heading);">
+                                        Meaning</th>
+                                </tr>
+                            </thead>
+                            <tbody style="color:var(--text-secondary);">
+                                <tr>
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$D(0, T)$</td>
+                                    <td style="padding:6px 12px;">Discount factor — present value of \$1 received at
+                                        time
+                                        $T$, seen from today ($t=0$). Also written $D_n$ when indexed to grid node $n$,
+                                        or $D_i$ for summation index $i$.</td>
+                                </tr>
+                                <tr style="background:rgba(255,255,255,0.02);">
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$D_0$</td>
+                                    <td style="padding:6px 12px;">Discount factor at today's date: $D_0 = 1$ by
+                                        definition.</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$D_1(t),\;
+                                        D_2(t)$</td>
+                                    <td style="padding:6px 12px;">Leg-specific discount factors in a cross-currency
+                                        swap: $D_1(t)$ for the base (Leg 1) curve, $D_2(t)$ for the foreign (Leg 2)
+                                        curve.</td>
+                                </tr>
+                                <tr style="background:rgba(255,255,255,0.02);">
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$z(T)$</td>
+                                    <td style="padding:6px 12px;">Continuously compounded zero-coupon rate at maturity
+                                        $T$. Also written $z_a$, $z_1$, $z_2$ when referring to interpolation nodes $a$,
+                                        $1$, $2$.</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$R_n$</td>
+                                    <td style="padding:6px 12px;">Par swap rate for an $n$-year instrument (fixed coupon
+                                        rate that sets NPV = 0 at inception). Also used as $R_m$ for money market
+                                        deposit rate, $R_{\text{fixed}}$ for a fixed leg coupon rate.</td>
+                                </tr>
+                                <tr style="background:rgba(255,255,255,0.02);">
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$R'$</td>
+                                    <td style="padding:6px 12px;">Vector of market input rate quotes used in delta
+                                        sensitivity calculations.</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$PV$</td>
+                                    <td style="padding:6px 12px;">Present value of a cash flow or portfolio of cash
+                                        flows.</td>
+                                </tr>
+                                <tr style="background:rgba(255,255,255,0.02);">
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$NPV$</td>
+                                    <td style="padding:6px 12px;">Net present value — the algebraic sum of the PVs of
+                                        all legs (positive for received, negative for paid).</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$C$</td>
+                                    <td style="padding:6px 12px;">Cash flow amount (also used as bond coupon rate in
+                                        Treasury bootstrapping, where context makes it clear).</td>
+                                </tr>
+                                <tr style="background:rgba(255,255,255,0.02);">
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$P$</td>
+                                    <td style="padding:6px 12px;">Notional principal of a swap (also used as futures
+                                        price index $P_j$ where subscripted).</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Time &amp; Date Conventions</h3>
+                    <div class="highlight-card">
+                        <table style="width:100%; border-collapse:collapse; font-size:14px; line-height:1.8;">
+                            <thead>
+                                <tr style="border-bottom:1px solid var(--border-color);">
+                                    <th
+                                        style="text-align:left; padding:6px 12px; color:var(--accent); font-family:var(--font-heading); width:160px;">
+                                        Symbol</th>
+                                    <th
+                                        style="text-align:left; padding:6px 12px; color:var(--accent); font-family:var(--font-heading);">
+                                        Meaning</th>
+                                </tr>
+                            </thead>
+                            <tbody style="color:var(--text-secondary);">
+                                <tr>
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$T$, $t$</td>
+                                    <td style="padding:6px 12px;">Continuous time in years from the pricing date (today
+                                        = 0).</td>
+                                </tr>
+                                <tr style="background:rgba(255,255,255,0.02);">
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$D_i$, $D_a$
+                                    </td>
+                                    <td style="padding:6px 12px;">Calendar dates (day counts). Subscript distinguishes
+                                        date indices from discount factors; context disambiguates.</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">
+                                        $\alpha_{i-1,\,i}$</td>
+                                    <td style="padding:6px 12px;">Day count fraction (year fraction) for the accrual
+                                        period from date $D_{i-1}$ to date $D_i$, calculated according to the chosen
+                                        convention (ACT/360, ACT/365, 30/360). Also written $\alpha_{a,b}$ for a generic
+                                        period $[a, b]$, or simply $\alpha$ for a uniform period.</td>
+                                </tr>
+                                <tr style="background:rgba(255,255,255,0.02);">
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$\lambda$</td>
+                                    <td style="padding:6px 12px;">Interpolation weight: $\lambda = \frac{D_a - D_1}{D_2
+                                        - D_1}$, ranging from 0 at the left knot to 1 at the right knot.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Curve &amp; Swap Pricing Symbols</h3>
+                    <div class="highlight-card">
+                        <table style="width:100%; border-collapse:collapse; font-size:14px; line-height:1.8;">
+                            <thead>
+                                <tr style="border-bottom:1px solid var(--border-color);">
+                                    <th
+                                        style="text-align:left; padding:6px 12px; color:var(--accent); font-family:var(--font-heading); width:160px;">
+                                        Symbol</th>
+                                    <th
+                                        style="text-align:left; padding:6px 12px; color:var(--accent); font-family:var(--font-heading);">
+                                        Meaning</th>
+                                </tr>
+                            </thead>
+                            <tbody style="color:var(--text-secondary);">
+                                <tr>
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$\Phi_{a,b}$
+                                    </td>
+                                    <td style="padding:6px 12px;">Implied forward index rate for the period $[D_a,
+                                        D_b]$, derived from the discount curve.</td>
+                                </tr>
+                                <tr style="background:rgba(255,255,255,0.02);">
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$S_i(t)$</td>
+                                    <td style="padding:6px 12px;">Cubic spline segment $i$, a third-degree polynomial
+                                        fitted to zero rates between knots $t_i$ and $t_{i+1}$.</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$F(t)$</td>
+                                    <td style="padding:6px 12px;">FX forward rate at future time $t$ (cross-currency
+                                        context only; not a discount factor).</td>
+                                </tr>
+                                <tr style="background:rgba(255,255,255,0.02);">
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$S_0$</td>
+                                    <td style="padding:6px 12px;">Spot FX rate at the trade date (units: Leg 1 currency
+                                        per unit of Leg 2 currency).</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$PVBP$</td>
+                                    <td style="padding:6px 12px;">Present Value of a Basis Point — absolute change in
+                                        NPV for a +1 bp parallel shift in zero rates. Synonymous with <em>DV01</em>.
+                                    </td>
+                                </tr>
+                                <tr style="background:rgba(255,255,255,0.02);">
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">
+                                        $W_{\text{hedge}}$</td>
+                                    <td style="padding:6px 12px;">Optimal hedge weight — number of hedging instrument
+                                        contracts required to neutralise the PVBP of a portfolio.</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 12px; font-family:'JetBrains Mono',monospace;">$\mathcal{P}$
+                                    </td>
+                                    <td style="padding:6px 12px;">Portfolio of swap positions.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
                 <!-- Section 1 -->
                 <section class="docs-section" id="core-concepts">
                     <h2><i class="fa-solid fa-compass"></i> 1. Core Concepts &amp; App Guide</h2>
                     <p>
-                        A <strong>Yield Curve</strong> represents the graphical and mathematical relationship between interest rates and different maturities (tenors) for a given currency and credit quality. In quantitative finance, a yield curve is represented as a set of continuous <strong>Discount Factors</strong> or <strong>Zero-Coupon Yields</strong>.
+                        A <strong>Yield Curve</strong> represents the graphical and mathematical relationship between
+                        interest rates and different maturities (tenors) for a given currency and credit quality. In
+                        quantitative finance, a yield curve is represented as a set of continuous <strong>Discount
+                            Factors</strong> or <strong>Zero-Coupon Yields</strong>.
                     </p>
                     <p>
-                        Our web application allows users to build and visualize these curves in real-time, pricing customized interest rate swaps against the resulting curve.
+                        Our web application allows users to build and visualize these curves in real-time, pricing
+                        customized interest rate swaps against the resulting curve.
                     </p>
 
-                    <h3>Discount Factors (DF)</h3>
+                    <h3>Discount Factors (D)</h3>
                     <p>
-                        The discount factor <code class="inline-code">D(0, T)</code> is the present value of \$1 to be received at maturity <code class="inline-code">R</code> in the future. It represents the ultimate building block of asset pricing. Discount factors are monotonically decreasing with respect to maturity time:
+                        The discount factor <code class="inline-code">D(0, T)</code> is the present value of \$1 to be
+                        received at maturity <code class="inline-code">T</code> in the future. It represents the
+                        ultimate building block of asset pricing. Discount factors are monotonically decreasing with
+                        respect to maturity time:
                     </p>
                     <div class="equation-block">
                         $$D(0, T) = e^{-z(T) \cdot T}$$
-                        <div class="equation-label">Relationship between Discount Factor $D(0,T)$ and continuous Zero Rate $z(T)$</div>
+                        <div class="equation-label">Relationship between Discount Factor $D(0,T)$ and continuous Zero
+                            Rate $z(T)$</div>
                     </div>
 
                     <h3>Zero Rates</h3>
                     <p>
-                        The <strong>Zero-Coupon Rate</strong> <code class="inline-code">z(T)</code> is the annualized interest rate earned on a single cash flow maturing at time <code class="inline-code">T</code>, assuming continuous compounding. If we bootstrap the discount factors, we extract the continuous zero rate at any point via:
+                        The <strong>Zero-Coupon Rate</strong> <code class="inline-code">z(T)</code> is the annualized
+                        interest rate earned on a single cash flow maturing at time <code class="inline-code">T</code>,
+                        assuming continuous compounding. If we bootstrap the discount factors, we extract the continuous
+                        zero rate at any point via:
                     </p>
                     <div class="equation-block">
                         $$z(T) = -\frac{\ln(D(0, T))}{T}$$
                     </div>
                     <h3>App Interface Quickstart</h3>
                     <ul>
-                        <li><strong>Curve Configuration (Left Panel)</strong>: Toggle the Curve Type between <strong>OIS / Swap Curve</strong> (typical derivative curve built from Cash, Futures, and Swaps) and <strong>US Treasury Curve</strong> (built from government T-Bills and Coupon Notes). You can also alter the Trade Date, Day Count conventions, and Curve Interpolation settings.</li>
-                        <li><strong>Active Market Quotes (Bottom-Left)</strong>: Edit, delete, or manually add your curve knots. You can also drag and drop a `.csv` or Excel `.xlsx` file matching the download templates.</li>
-                        <li><strong>Swap Portfolio (Top-Right)</strong>: Enter customized swap positions. You can test standard fixed rate swaps or floating basis swaps (by typing <code class="inline-code">SOFR</code> or <code class="inline-code">SOFR + 0.5</code> in the Rate column).</li>
-                        <li><strong>Interactive Charts &amp; Outputs (Bottom)</strong>: The visualizer displays zero rates and discount factors on separate tabs. The bottom chart shows the projected cashflow schedule of your swap portfolio, which can be viewed in <strong>Split Axes</strong> (separate bars for periodic payments and a line for cumulative equity) or <strong>Combined Axis</strong>.</li>
+                        <li><strong>Curve Configuration (Left Panel)</strong>: Toggle the Curve Type between <strong>OIS
+                                / Swap Curve</strong> (typical derivative curve built from Cash, Futures, and Swaps) and
+                            <strong>US Treasury Curve</strong> (built from government T-Bills and Coupon Notes). You can
+                            also alter the Trade Date, Day Count conventions, and Curve Interpolation settings.
+                        </li>
+                        <li><strong>Active Market Quotes (Bottom-Left)</strong>: Edit, delete, or manually add your
+                            curve knots. You can also drag and drop a `.csv` or Excel `.xlsx` file matching the download
+                            templates.</li>
+                        <li><strong>Swap Portfolio (Top-Right)</strong>: Enter customized swap positions. You can test
+                            standard fixed rate swaps or floating basis swaps (by typing <code
+                                class="inline-code">SOFR</code> or <code class="inline-code">SOFR + 0.5</code> in the
+                            Rate column).</li>
+                        <li><strong>Interactive Charts &amp; Outputs (Bottom)</strong>: The visualizer displays zero
+                            rates and discount factors on separate tabs. The bottom chart shows the projected cashflow
+                            schedule of your swap portfolio, which can be viewed in <strong>Split Axes</strong>
+                            (separate bars for periodic payments and a line for cumulative equity) or <strong>Combined
+                                Axis</strong>.</li>
                     </ul>
                 </section>
                 <!-- Section 2 -->
                 <section class="docs-section" id="market-instruments">
                     <h2><i class="fa-solid fa-list"></i> 2. Market Instruments</h2>
                     <p>
-                        Interest rate curves are built using various highly liquid, standard market instruments. Because different tenors have different liquid vehicles, we use different instrument types across the maturity spectrum:
+                        Interest rate curves are built using various highly liquid, standard market instruments. Because
+                        different tenors have different liquid vehicles, we use different instrument types across the
+                        maturity spectrum:
                     </p>
                     <h3>1. Short-Term: Cash Deposits / O/N Rates</h3>
                     <p>
-                        For maturities from overnight (O/N) up to 3 months, simple money market cash deposits are used. The discount factor is computed directly from the rate quote using the day count fraction $\tau$ (usually ACT/360):
+                        For maturities from overnight (O/N) up to 3 months, simple money market cash deposits are used.
+                        The discount factor is computed directly from the rate quote using the day count fraction $\tau$
+                        (usually ACT/360):
                     </p>
                     <div class="equation-block">
                         $$D(0, T) = \frac{1}{1 + \text{Rate} \cdot \tau}$$
                     </div>
                     <h3>2. Medium-Term: Interest Rate Futures</h3>
                     <p>
-                        For tenors between 3 months and 2 years, quarterly interest rate futures (such as SOFR Futures) are the most liquid instruments. A future contract is quoted as a price index <code class="inline-code">P</code>. The implied forward interest rate is:
+                        For tenors between 3 months and 2 years, quarterly interest rate futures (such as SOFR Futures)
+                        are the most liquid instruments. A future contract is quoted as a price index <code
+                            class="inline-code">P</code>. The implied forward interest rate is:
                     </p>
                     <div class="equation-block">
                         $$\text{Rate} = 100 - P$$
@@ -331,44 +557,57 @@
                     </div>
                     <h3>3. Long-Term: Interest Rate Swaps (IRS)</h3>
                     <p>
-                        Beyond 2 years, par Swaps are the standard. A swap is an agreement to exchange a fixed coupon rate for a floating rate index (e.g. SOFR). At inception, the fixed swap rate is set so that the Net Present Value (NPV) of the swap is exactly zero.
+                        Beyond 2 years, par Swaps are the standard. A swap is an agreement to exchange a fixed coupon
+                        rate for a floating rate index (e.g. SOFR). At inception, the fixed swap rate is set so that the
+                        Net Present Value (NPV) of the swap is exactly zero.
                     </p>
                 </section>
                 <!-- Section 3 -->
                 <section class="docs-section" id="foundations">
                     <h2><i class="fa-solid fa-hourglass-half"></i> 3. Time Value &amp; Conventions</h2>
                     <p>
-                        The present value (<code class="inline-code">PV</code>) of a future cash flow <code class="inline-code">C</code> received at maturity point <code class="inline-code">n</code> is dictated by the discount factor <code class="inline-code">F_n</code> (represented as <code class="inline-code">D(0, t_n)</code> in curve builders). In discrete compounding terms, the relationship is:
+                        The present value (<code class="inline-code">PV</code>) of a future cash flow <code
+                            class="inline-code">C</code> received at maturity point <code class="inline-code">n</code>
+                        is dictated by the discount factor <code class="inline-code">D_n</code> (represented as <code
+                            class="inline-code">D(0, t_n)</code> in curve builders). In discrete compounding terms, the
+                        relationship is:
                     </p>
                     <div class="equation-block">
-                        $$PV = \frac{C}{(1 + R)^n} = C \cdot F_n$$
-                        <div class="equation-label">Discount factor representation: $F_n = \frac{1}{(1 + R)^n}$</div>
+                        $$PV = \frac{C}{(1 + R)^n} = C \cdot D_n$$
+                        <div class="equation-label">Discount factor representation: $D_n = \frac{1}{(1 + R)^n}$</div>
                     </div>
 
                     <h3>Day Count Fractions</h3>
                     <p>
-                        Let $\alpha_{i-1, i}$ denote the day count fraction between two dates <code class="inline-code">D_{i-1}</code> and <code class="inline-code">D_i</code>. Based on standard market conventions, these fractions are calculated as:
+                        Let $\alpha_{i-1, i}$ denote the day count fraction between two dates <code
+                            class="inline-code">D_{i-1}</code> and <code class="inline-code">D_i</code>. Based on
+                        standard market conventions, these fractions are calculated as:
                     </p>
                     <ul>
-                        <li><strong>Actual/365 (Fixed / Bond Basis)</strong>: 
-                                                    $\alpha = \frac{D_i - D_{i-1}}{365}$
-                                                </li>
-                        <li><strong>Actual/360 (Money Market Basis)</strong>: 
-                                                    $\alpha = \frac{D_i - D_{i-1}}{360}$
-                                                </li>
+                        <li><strong>Actual/365 (Fixed / Bond Basis)</strong>:
+                            $\alpha = \frac{D_i - D_{i-1}}{365}$
+                        </li>
+                        <li><strong>Actual/360 (Money Market Basis)</strong>:
+                            $\alpha = \frac{D_i - D_{i-1}}{360}$
+                        </li>
                         <li><strong>30/360 Basis</strong>: Assumes 30 days per month and 360 days per year.</li>
                     </ul>
                     <h3>Compounding Frequency Conversion</h3>
                     <p>
-                        When converting an interest rate <code class="inline-code">r_1</code> with compounding frequency <code class="inline-code">n_1</code> to an equivalent rate <code class="inline-code">r_2</code> with frequency <code class="inline-code">n_2</code>, we enforce compound balance:
+                        When converting an interest rate <code class="inline-code">r_1</code> with compounding frequency
+                        <code class="inline-code">n_1</code> to an equivalent rate <code class="inline-code">r_2</code>
+                        with frequency <code class="inline-code">n_2</code>, we enforce compound balance:
                     </p>
                     <div class="equation-block">
-                        $$\left(1 + \frac{r_1}{n_1}\right)^{n_1} = \left(1 + \frac{r_2}{n_2}\right)^{n_2} \implies r_2 = n_2 \left[ \left(1 + \frac{r_1}{n_1}\right)^{\frac{n_1}{n_2}} - 1 \right]$$
+                        $$\left(1 + \frac{r_1}{n_1}\right)^{n_1} = \left(1 + \frac{r_2}{n_2}\right)^{n_2} \implies r_2 =
+                        n_2 \left[ \left(1 + \frac{r_1}{n_1}\right)^{\frac{n_1}{n_2}} - 1 \right]$$
                     </div>
 
                     <h3>Annuity Present Value</h3>
                     <p>
-                        For an equal payment annuity stream yielding regular cash flows <code class="inline-code">C</code> over <code class="inline-code">n</code> periods at rate <code class="inline-code">i</code>, the present value aggregates to:
+                        For an equal payment annuity stream yielding regular cash flows <code
+                            class="inline-code">C</code> over <code class="inline-code">n</code> periods at rate <code
+                            class="inline-code">i</code>, the present value aggregates to:
                     </p>
                     <div class="equation-block">
                         $$PV = C \cdot \left[ \frac{1 - (1+i)^{-n}}{i} \right]$$
@@ -378,34 +617,44 @@
                 <section class="docs-section" id="bootstrapping">
                     <h2><i class="fa-solid fa-stairs"></i> 4. Curve Bootstrapping</h2>
                     <p>
-                        <strong>Bootstrapping</strong> is the process of sequentially solving for discount factors starting from today (<code class="inline-code">T=0</code>, <code class="inline-code">F_0 = 1</code>) out into the future.
+                        <strong>Bootstrapping</strong> is the process of sequentially solving for discount factors
+                        starting from today (<code class="inline-code">T=0</code>, <code
+                            class="inline-code">D_0 = 1</code>) out into the future.
                     </p>
                     <h3>OIS &amp; Swap Curve Bootstrapping</h3>
                     <p>
-                        For overnight indexed swap (OIS) curves, we use cash deposits for the ultra-short-term, interest rate futures to span the medium-term (up to the futures cutoff point), and par interest rate swaps for the long-term.
+                        For overnight indexed swap (OIS) curves, we use cash deposits for the ultra-short-term, interest
+                        rate futures to span the medium-term (up to the futures cutoff point), and par interest rate
+                        swaps for the long-term.
                     </p>
                     <p>
-                        Consider an <code class="inline-code">n</code>-year interest rate swap with a fixed par swap rate <code class="inline-code">R_n</code> and principal <code class="inline-code">P</code>. Setting the PV of the fixed coupon payments equal to the PV of the floating payments yields the bootstrapped discount factor formula at grid node <code class="inline-code">n</code>:
+                        Consider an <code class="inline-code">n</code>-year interest rate swap with a fixed par swap
+                        rate <code class="inline-code">R_n</code> and principal <code class="inline-code">P</code>.
+                        Setting the PV of the fixed coupon payments equal to the PV of the floating payments yields the
+                        bootstrapped discount factor formula at grid node <code class="inline-code">n</code>:
                     </p>
                     <div class="equation-block">
-                        $$F_n = \frac{1 - R_n \sum_{i=1}^{n-1} \alpha_{i-1,i} F_i}{1 + R_n \alpha_{n-1,n}}$$
+                        $$D_n = \frac{1 - R_n \sum_{i=1}^{n-1} \alpha_{i-1,i} D_i}{1 + R_n \alpha_{n-1,n}}$$
                         <div class="equation-label">Sequential Swap Bootstrapping Formula</div>
                     </div>
 
                     <h3>Extracting Zero Rates</h3>
                     <p>
-                        From the discount factors <code class="inline-code">F(0, T)</code>, we calculate the continuously compounded zero rate <code class="inline-code">r(T)</code> via:
+                        From the discount factors <code class="inline-code">D(0, T)</code>, we calculate the
+                        continuously compounded zero rate <code class="inline-code">z(T)</code> via:
                     </p>
                     <div class="equation-block">
-                        $$F(0, T) = e^{-r(T) \cdot T} \implies r(T) = -\frac{\ln(F(0, T))}{T}$$
+                        $$D(0, T) = e^{-z(T) \cdot T} \implies z(T) = -\frac{\ln(D(0, T))}{T}$$
                     </div>
 
                     <h3>Par Yield Re-expression</h3>
                     <p>
-                        Conversely, if we possess the discount curve, the par swap rate <code class="inline-code">R_n</code> for a tenor maturing at step <code class="inline-code">n</code> can be backed out as:
+                        Conversely, if we possess the discount curve, the par swap rate <code
+                            class="inline-code">R_n</code> for a tenor maturing at step <code
+                            class="inline-code">n</code> can be backed out as:
                     </p>
                     <div class="equation-block">
-                        $$R_n = \frac{1 - F_n}{\sum_{i=1}^n \alpha_{i-1,i} F_i}$$
+                        $$R_n = \frac{1 - D_n}{\sum_{i=1}^n \alpha_{i-1,i} D_i}$$
                     </div>
 
                     <h3>Short-Term Money Market Instruments</h3>
@@ -413,14 +662,14 @@
                         For single-period cash deposits or bills maturing at time <code class="inline-code">m</code>:
                     </p>
                     <div class="equation-block">
-                        $$F_m = \frac{1}{1 + R_m \alpha_{0,m}}$$
+                        $$D_m = \frac{1}{1 + R_m \alpha_{0,m}}$$
                         <div class="equation-label">Where $R_m$ is the deposit rate quote.</div>
                     </div>
                     <p>
                         Similarly, we extract the implied forward rate (e.g. <code class="inline-code">R_6M</code>) via:
                     </p>
                     <div class="equation-block">
-                        $$R_{\text{6M}} = \frac{1}{\alpha_{0,\text{6M}}} \left( \frac{1}{F_{\text{6M}}} - 1 \right)$$
+                        $$R_{\text{6M}} = \frac{1}{\alpha_{0,\text{6M}}} \left( \frac{1}{D_{\text{6M}}} - 1 \right)$$
                     </div>
 
                     <h3>US Treasury Curve Bootstrapping</h3>
@@ -428,17 +677,24 @@
                         For US Government bonds, the curve builder uses a different dual approach:
                     </p>
                     <ol>
-                        <li><strong>Treasury Bills (T-Bills)</strong>: These are zero-coupon instruments. The discount factor is computed directly from the price:
+                        <li><strong>Treasury Bills (T-Bills)</strong>: These are zero-coupon instruments. The discount
+                            factor is computed directly from the price:
                             <div class="equation-block">
-                                $$F_m = \frac{\text{Price}}{100}$$
+                                $$D_m = \frac{\text{Price}}{100}$$
                             </div>
                         </li>
-                        <li><strong>Treasury Notes &amp; Bonds</strong>: These pay semi-annual coupons. We bootstrap the final discount factor at the bond's maturity <code class="inline-code">T_N</code> by subtracting the present value of all intermediate coupon payments from the bond price:
+                        <li><strong>Treasury Notes &amp; Bonds</strong>: These pay semi-annual coupons. We bootstrap the
+                            final discount factor at the bond's maturity <code class="inline-code">T_N</code> by
+                            subtracting the present value of all intermediate coupon payments from the bond price:
                             <div class="equation-block">
-                                $$F_n = \frac{\text{Price} - \frac{C}{2} \sum_{i=1}^{n-1} \alpha_{i-1,i} F_i}{1 + \frac{C}{2}}$$
-                                <div class="equation-label">Treasury Bootstrap Formula (Price is divided by 100, C is coupon rate decimal)</div>
+                                $$D_n = \frac{\text{Price} - \frac{C}{2} \sum_{i=1}^{n-1} \alpha_{i-1,i} D_i}{1 +
+                                \frac{C}{2}}$$
+                                <div class="equation-label">Treasury Bootstrap Formula (Price is divided by 100, C is
+                                    coupon rate decimal)</div>
                             </div>
-                            Since intermediate coupon payment dates <code class="inline-code">t_i</code> do not always align with known bond maturities, we use <strong>linear zero-rate interpolation</strong> to find those intermediate discount factors <code class="inline-code">F_i</code>.
+                            Since intermediate coupon payment dates <code class="inline-code">t_i</code> do not always
+                            align with known bond maturities, we use <strong>linear zero-rate interpolation</strong> to
+                            find those intermediate discount factors <code class="inline-code">D_i</code>.
                         </li>
                     </ol>
                 </section>
@@ -446,200 +702,256 @@
                 <section class="docs-section" id="interpolation">
                     <h2><i class="fa-solid fa-wave-square"></i> 5. Yield Curve Interpolation</h2>
                     <p>
-                        Because bootstrapping only gives interest rates at the specific maturity dates (knots) of the input instruments, intermediate dates require interpolation.
+                        Because bootstrapping only gives interest rates at the specific maturity dates (knots) of the
+                        input instruments, intermediate dates require interpolation.
                     </p>
 
                     <h3>Continuous / Exponential Rate Interpolation</h3>
                     <p>
-                        To find a discount factor <code class="inline-code">F_a</code> at date <code class="inline-code">D_a</code> between two known grid nodes <code class="inline-code">D_1</code> and <code class="inline-code">D_2</code>, assuming a continuously compounded rate <code class="inline-code">R_a</code>:
+                        To find a discount factor <code class="inline-code">D_a</code> at date <code
+                            class="inline-code">D_a</code> between two known grid nodes <code
+                            class="inline-code">D_1</code> and <code class="inline-code">D_2</code>, assuming a
+                        continuously compounded rate <code class="inline-code">z_a</code>:
                     </p>
                     <div class="equation-block">
-                        $$F_a = e^{-\mathcal{R}_a(D_a - D_0)}$$
-                        <div class="equation-label">Interpolated rate $\mathcal{R}_a = (1-\lambda)\mathcal{R}_1 + \lambda\mathcal{R}_2$ where $\lambda = \frac{D_a - D_1}{D_2 - D_1}$</div>
+                        $$D_a = e^{-z_a(D_a - D_0)}$$
+                        <div class="equation-label">Interpolated rate $z_a = (1-\lambda)z_1 + \lambda z_2$ where
+                            $\lambda = \frac{D_a - D_1}{D_2 - D_1}$</div>
                     </div>
                     <p>
                         This translates geometrically to:
                     </p>
                     <div class="equation-block">
-                        $$F_a = F_1^{(1-\lambda)\frac{D_a-D_0}{D_1-D_0}} \cdot F_2^{\lambda\frac{D_a-D_0}{D_2-D_0}}$$
+                        $$D_a = D_1^{(1-\lambda)\frac{D_a-D_0}{D_1-D_0}} \cdot D_2^{\lambda\frac{D_a-D_0}{D_2-D_0}}$$
                     </div>
                     <h3>Natural Cubic Splines</h3>
                     <p>
-                        To avoid sudden shifts in forward rates, our engine uses a **Cubic Spline** on zero rates. This fits a third-degree polynomial between each knot:
+                        To avoid sudden shifts in forward rates, our engine uses a **Cubic Spline** on zero rates. This
+                        fits a third-degree polynomial between each knot:
                     </p>
                     <div class="equation-block">
                         $$S_i(t) = a_i + b_i(t - t_i) + c_i(t - t_i)^2 + d_i(t - t_i)^3$$
                     </div>
                     <p>
-                        This mathematical framework enforces continuity of the curve, its first derivative (slope), and its second derivative (curvature) across all knots, providing a smooth zero rate yield curve.
+                        This mathematical framework enforces continuity of the curve, its first derivative (slope), and
+                        its second derivative (curvature) across all knots, providing a smooth zero rate yield curve.
                     </p>
                     <ul>
-                        <li><strong>Zero Rate Continuity</strong>: <code class="inline-code">S_i(t_{i+1}) = S_{i+1}(t_{i+1})</code></li>
-                        <li><strong>Slope Continuity</strong>: <code class="inline-code">S'_i(t_{i+1}) = S'_{i+1}(t_{i+1})</code></li>
-                        <li><strong>Curvature Continuity</strong>: <code class="inline-code">S''_i(t_{i+1}) = S''_{i+1}(t_{i+1})</code></li>
+                        <li><strong>Zero Rate Continuity</strong>: <code
+                                class="inline-code">S_i(t_{i+1}) = S_{i+1}(t_{i+1})</code></li>
+                        <li><strong>Slope Continuity</strong>: <code
+                                class="inline-code">S'_i(t_{i+1}) = S'_{i+1}(t_{i+1})</code></li>
+                        <li><strong>Curvature Continuity</strong>: <code
+                                class="inline-code">S''_i(t_{i+1}) = S''_{i+1}(t_{i+1})</code></li>
                     </ul>
                 </section>
                 <!-- Section 6 -->
                 <section class="docs-section" id="leg-valuation">
                     <h2><i class="fa-solid fa-file-invoice-dollar"></i> 6. Swap Leg Valuation Frameworks</h2>
-                    
+
                     <h3>The Fixed Leg</h3>
                     <p>
-                        The present value (<code class="inline-code">PV</code>) of receiving or paying a fixed rate <code class="inline-code">R_fixed</code> is the sum of discounted fixed coupon flows:
+                        The present value (<code class="inline-code">PV</code>) of receiving or paying a fixed rate
+                        <code class="inline-code">R_fixed</code> is the sum of discounted fixed coupon flows:
                     </p>
                     <div class="equation-block">
-                        $$PV_{\text{fixed}} = \text{Notional} \cdot R_{\text{fixed}} \cdot \sum_{i=1}^n \alpha_{i-1,i} \cdot D(0, t_i)$$
+                        $$PV_{\text{fixed}} = \text{Notional} \cdot R_{\text{fixed}} \cdot \sum_{i=1}^n \alpha_{i-1,i}
+                        \cdot D(0, t_i)$$
                     </div>
 
                     <h3>The Standard Floating Leg</h3>
                     <p>
-                        The implied forward index rate $\Phi_{a,b}$ spanning from date <code class="inline-code">D_a</code> to <code class="inline-code">D_b</code> is:
+                        The implied forward index rate $\Phi_{a,b}$ spanning from date <code
+                            class="inline-code">D_a</code> to <code class="inline-code">D_b</code> is:
                     </p>
                     <div class="equation-block">
-                        $$\Phi_{a,b} = \frac{1}{\alpha_{a,b}} \left( \frac{F_a}{F_b} - 1 \right)$$
+                        $$\Phi_{a,b} = \frac{1}{\alpha_{a,b}} \left( \frac{D_a}{D_b} - 1 \right)$$
                     </div>
                     <p>
-                        Valuing a single standard floating cash flow payment at payment point <code class="inline-code">F_b</code> yields:
+                        Valuing a single standard floating cash flow payment at payment point <code
+                            class="inline-code">D_b</code> yields:
                     </p>
                     <div class="equation-block">
-                        $$PV_{\text{floating}} = \text{Notional} \cdot \Phi_{a,b} \cdot \alpha_{a,b} \cdot F_b = \text{Notional} \cdot [F_a - F_b]$$
+                        $$PV_{\text{floating}} = \text{Notional} \cdot \Phi_{a,b} \cdot \alpha_{a,b} \cdot D_b =
+                        \text{Notional} \cdot [D_a - D_b]$$
                     </div>
                     <p>
-                        For a multi-period standard floating leg, the intermediate discount factors collapse telescopically:
+                        For a multi-period standard floating leg, the intermediate discount factors collapse
+                        telescopically:
                     </p>
                     <div class="equation-block">
-                        $$PV_{\text{total\_floating}} = \sum_{i=1}^n \text{Notional} \cdot (F_{i-1} - F_i) = \text{Notional} \cdot [F_{\text{start}} - F_{\text{end}}]$$
+                        $$PV_{\text{total floating}} = \sum_{i=1}^n \text{Notional} \cdot (D_{i-1} - D_i) =
+                        \text{Notional} \cdot [D_{\text{start}} - D_{\text{end}}]$$
                         <div class="equation-label">No-arbitrage PV of standard floating leg</div>
                     </div>
 
                     <h3>Interest Rate Futures Chain Bootstrapping</h3>
                     <p>
-                        When constructing a discount curve from a serial chain of quarterly interest rate futures prices <code class="inline-code">P_j</code>, the subsequent boundary discount factor <code class="inline-code">F_{iF}</code> is calculated recursively:
+                        When constructing a discount curve from a serial chain of quarterly interest rate futures prices
+                        <code class="inline-code">P_j</code>, the subsequent boundary discount factor <code
+                            class="inline-code">D_{iF}</code> is calculated recursively:
                     </p>
                     <div class="equation-block">
-                        $$F_{iF} = F_{1F} \prod_{j=1}^{i-1} \frac{1}{1 + (100 - P_j)\alpha_{jF,(j+1)F}}$$
+                        $$D_{iF} = D_{1F} \prod_{j=1}^{i-1} \frac{1}{1 + (100 - P_j)\alpha_{jF,(j+1)F}}$$
                     </div>
 
                     <h3>Mismatched / Basis Swap Floating Leg</h3>
                     <p>
-                        When the rate reset index period ( $\alpha_{b,c}$ differs from the accrual payment period fraction $\alpha_{a,b}$ ), the cancellation breaks down, requiring explicit valuation:
+                        When the rate reset index period ( $\alpha_{b,c}$ differs from the accrual payment period
+                        fraction $\alpha_{a,b}$ ), the cancellation breaks down, requiring explicit valuation:
                     </p>
                     <div class="equation-block">
-                        $$PV_{\text{mismatched}} = P \left( \frac{F_b}{F_c} - 1 \right) \frac{\alpha_{a,b}}{\alpha_{b,c}} F_b$$
+                        $$PV_{\text{mismatched}} = P \left( \frac{D_b}{D_c} - 1 \right)
+                        \frac{\alpha_{a,b}}{\alpha_{b,c}} D_b$$
                     </div>
 
                     <h3>Floating Leg with Amortizing Principal</h3>
                     <p>
-                        If the swap principal <code class="inline-code">P_i</code> changes over time, the telescoping sum expands explicitly into:
+                        If the swap principal <code class="inline-code">P_i</code> changes over time, the telescoping
+                        sum expands explicitly into:
                     </p>
                     <div class="equation-block">
-                        $$PV_{\text{amortizing}} = F_1 P_1 + \sum_{i=2}^{n-1} F_i (P_i - P_{i-1}) - F_n P_{n-1}$$
+                        $$PV_{\text{amortizing}} = D_1 P_1 + \sum_{i=2}^{n-1} D_i (P_i - P_{i-1}) - D_n P_{n-1}$$
                     </div>
 
                     <h3>Forward Swap Rate</h3>
                     <p>
-                        The forward swap rate <code class="inline-code">R</code> is the rate that sets the present value of a newly initialized forward swap to 0:
+                        The forward swap rate <code class="inline-code">R</code> is the rate that sets the present value
+                        of a newly initialized forward swap to 0:
                     </p>
                     <div class="equation-block">
-                        $$R = \frac{F_{\text{start}} - F_{\text{end}}}{\sum_i \alpha_{i-1,i} F_i}$$
+                        $$R = \frac{D_{\text{start}} - D_{\text{end}}}{\sum_i \alpha_{i-1,i} D_i}$$
                     </div>
                 </section>
                 <!-- Section 7 -->
                 <section class="docs-section" id="risk-management">
                     <h2><i class="fa-solid fa-shield-halved"></i> 7. Risk Management: Delta Vectors &amp; Hedging</h2>
                     <p>
-                        Hedge ratios and interest rate exposures are calculated using partial derivative sensitivities of portfolio present value with respect to the input quotes <code class="inline-code">R'</code>:
+                        Hedge ratios and interest rate exposures are calculated using partial derivative sensitivities
+                        of portfolio present value with respect to the input quotes <code class="inline-code">R'</code>:
                     </p>
                     <div class="equation-block">
-                        $$\text{Delta}(\mathcal{P}) = \frac{1}{100} \times \frac{\partial PV(\mathcal{P})}{\partial \mathbf{F}} \times \frac{\partial \mathbf{F}}{\partial \mathbf{R}'}$$
+                        $$\text{Delta}(\mathcal{P}) = \frac{1}{100} \times \frac{\partial PV(\mathcal{P})}{\partial
+                        \mathbf{D}} \times \frac{\partial \mathbf{D}}{\partial \mathbf{R}'}$$
                     </div>
                     <p>
-                        Consider an isolated off-grid cash flow <code class="inline-code">C</code> occurring at date <code class="inline-code">D_a</code>, which sits between key grid maturities <code class="inline-code">D_1</code> and <code class="inline-code">D_2</code>. Its valuation is sensitive to movements at both boundaries:
+                        Consider an isolated off-grid cash flow <code class="inline-code">C</code> occurring at date
+                        <code class="inline-code">D_a</code>, which sits between key grid maturities <code
+                            class="inline-code">D_1</code> and <code class="inline-code">D_2</code>. Its valuation is
+                        sensitive to movements at both boundaries:
                     </p>
                     <div class="equation-block">
-                        $$PV(C) = F_a \cdot C \implies \frac{\partial PV(C)}{\partial F_i} = \frac{\partial F_a}{\partial F_i} \cdot C$$
+                        $$PV(C) = D_a \cdot C \implies \frac{\partial PV(C)}{\partial D_i} = \frac{\partial
+                        D_a}{\partial D_i} \cdot C$$
                     </div>
 
                     <h3>The Mathematical Bias of Non-Linear Interpolation</h3>
                     <p>
-                        While a linear interpolation methodology guarantees matching present values, an exponential curve construction method generates an exact hedging friction. Due to non-linear tracking errors:
+                        While a linear interpolation methodology guarantees matching present values, an exponential
+                        curve construction method generates an exact hedging friction. Due to non-linear tracking
+                        errors:
                     </p>
                     <div class="equation-block">
-                        $$\frac{\partial F_a}{\partial F_1} F_1 + \frac{\partial F_a}{\partial F_2} F_2 \neq F_a \implies PV(\text{Pair}) \neq PV(C)$$
-                        <div class="equation-label">Consequently, maintaining an identical delta risk posture over an exponentially interpolated curve introduces a subtle accounting value mismatch.</div>
+                        $$\frac{\partial D_a}{\partial D_1} D_1 + \frac{\partial D_a}{\partial D_2} D_2 \neq D_a
+                        \implies PV(\text{Pair}) \neq PV(C)$$
+                        <div class="equation-label">Consequently, maintaining an identical delta risk posture over an
+                            exponentially interpolated curve introduces a subtle accounting value mismatch.</div>
                     </div>
-                    
+
                     <h3>PVBP / DV01 Risk Formulation</h3>
                     <p>
-                        The Present Value of a Basis Point (<code class="inline-code">PVBP</code>), synonymous with <code class="inline-code">DV01</code> (Dollar Value of an 01), records the absolute variation in NPV caused by a parallel shift across the zero rate curve:
+                        The Present Value of a Basis Point (<code class="inline-code">PVBP</code>), synonymous with
+                        <code class="inline-code">DV01</code> (Dollar Value of an 01), records the absolute variation in
+                        NPV caused by a parallel shift across the zero rate curve:
                     </p>
                     <div class="equation-block">
-                        $$PVBP = \left| \frac{PV(R + 1\,\text{bp}) - PV(R - 1\,\text{bp})}{2} \right| \approx \frac{\partial PV}{\partial R} \times 0.0001$$
+                        $$PVBP = \left| \frac{PV(z + 1\,\text{bp}) - PV(z - 1\,\text{bp})}{2} \right| \approx
+                        \frac{\partial PV}{\partial z} \times 0.0001$$
                     </div>
                     <div class="highlight-card">
                         <h4>Pricer Implementation (One-Sided Parallel Shift)</h4>
                         <p>
-                            In our quantitative calculation engine, the Swap Pricer computes the PVBP (DV01) using a one-sided <code class="inline-code">+1</code> basis point shift:
+                            In our quantitative calculation engine, the Swap Pricer computes the PVBP (DV01) using a
+                            one-sided <code class="inline-code">+1</code> basis point shift:
                         </p>
                         <ol style="margin-left: 20px; font-size: 13.5px; line-height: 1.6; margin-top: 8px;">
-                            <li><strong>Base NPV</strong>: Value the portfolio swaps using the constructed baseline zero rate curve to get $NPV_{\text{base}}$.</li>
-                            <li><strong>Zero Rate Shift</strong>: Apply a <code class="inline-code">+1</code> bp (<code class="inline-code">+0.0001</code>) parallel shift to all continuous zero rates:
+                            <li><strong>Base NPV</strong>: Value the portfolio swaps using the constructed baseline zero
+                                rate curve to get $NPV_{\text{base}}$.</li>
+                            <li><strong>Zero Rate Shift</strong>: Apply a <code class="inline-code">+1</code> bp (<code
+                                    class="inline-code">+0.0001</code>) parallel shift to all continuous zero rates:
                                 $z_{\text{bumped}}(t) = z(t) + 0.0001$
                             </li>
-                            <li><strong>Re-calculate Discount Factors</strong>: Convert the bumped zero rates back to discount factors:
+                            <li><strong>Re-calculate Discount Factors</strong>: Convert the bumped zero rates back to
+                                discount factors:
                                 $D_{\text{bumped}}(t) = e^{-z_{\text{bumped}}(t) \cdot t}$
                             </li>
-                            <li><strong>Re-value Swaps</strong>: Re-price the swap portfolio with the bumped discount factors to get $NPV_{\text{bumped}}$.</li>
+                            <li><strong>Re-value Swaps</strong>: Re-price the swap portfolio with the bumped discount
+                                factors to get $NPV_{\text{bumped}}$.</li>
                             <li><strong>Calculate Change</strong>: The Swap Delta (PVBP) is the absolute net change:
                                 $PVBP = |NPV_{\text{bumped}} - NPV_{\text{base}}|$
                             </li>
                         </ol>
                     </div>
                     <p>
-                        For a standard fixed swap leg, the <code class="inline-code">PVBP</code> aggregates directly into a measure of the underlying annuity string metric:
+                        For a standard fixed swap leg, the <code class="inline-code">PVBP</code> aggregates directly
+                        into a measure of the underlying annuity string metric:
                     </p>
                     <div class="equation-block">
-                        $$PVBP_{\text{fixed}} = \text{Notional} \cdot \alpha \cdot \sum_{i=1}^n F_i \times 0.0001$$
+                        $$PVBP_{\text{fixed}} = \text{Notional} \cdot \alpha \cdot \sum_{i=1}^n D_i \times 0.0001$$
                     </div>
 
                     <h3>Optimal Hedge Ratios</h3>
                     <p>
-                        To neutralize the directional interest rate exposure of a swap portfolio using a liquid benchmark hedging contract, we calculate the hedge weight <code class="inline-code">W_hedge</code>:
+                        To neutralize the directional interest rate exposure of a swap portfolio using a liquid
+                        benchmark hedging contract, we calculate the hedge weight <code
+                            class="inline-code">W_hedge</code>:
                     </p>
 
                     <div class="equation-block">
                         $$W_{\text{hedge}} = - \frac{PVBP_{\text{portfolio}}}{PVBP_{\text{hedging\_instrument}}}$$
-                        <div class="equation-label">Ensures that $PVBP_{\text{portfolio}} + W_{\text{hedge}} \times PVBP_{\text{hedging\_instrument}} = 0$</div>
+                        <div class="equation-label">Ensures that $PVBP_{\text{portfolio}} + W_{\text{hedge}} \times
+                            PVBP_{\text{hedging\_instrument}} = 0$</div>
                     </div>
                 </section>
                 <!-- Section 8 -->
                 <section class="docs-section" id="spread-differences">
-                    <h2><i class="fa-solid fa-arrow-right-arrow-left"></i> 8. Market Spreads vs. Coupon Spreads</h2>
+                    <h2><i class="fa-solid fa-plus-minus"></i> 8. Market Spreads vs. Coupon Spreads</h2>
                     <p>
-                        In fixed income and swap pricing, the term <strong>"spread"</strong> is used in two entirely different contexts. It is critical to distinguish between them:
+                        In fixed income and swap pricing, the term <strong>"spread"</strong> is used in two entirely
+                        different contexts. It is critical to distinguish between them:
                     </p>
-                    
+
                     <div class="highlight-card">
                         <h4>1. Market Instrument Spread (Bid-Ask Spread)</h4>
                         <ul>
-                            <li><strong>Where:</strong> Entered per-instrument in the quote input tables (or CSV columns).</li>
-                            <li><strong>Unit:</strong> Basis Points (bps), where $1 \text{ bp} = 0.0001$ or $0.01\%$.</li>
-                            <li><strong>Description:</strong> Represents the bid-ask transaction spread of a benchmark market quote. This serves as a proxy for liquidity and transaction costs.</li>
-                            <li><strong>Application:</strong> Used exclusively by the <strong>Liquidity Auto-Selection Engine</strong>. When multiple benchmark instruments overlap in maturity, the engine selects the instrument with the smallest bid-ask spread to build the clean yield curve. It is not paid or received on any contract.</li>
+                            <li><strong>Where:</strong> Entered per-instrument in the quote input tables (or CSV
+                                columns).</li>
+                            <li><strong>Unit:</strong> Basis Points (bps), where $1 \text{ bp} = 0.0001$ or $0.01\%$.
+                            </li>
+                            <li><strong>Description:</strong> Represents the bid-ask transaction spread of a benchmark
+                                market quote. This serves as a proxy for liquidity and transaction costs.</li>
+                            <li><strong>Application:</strong> Used exclusively by the <strong>Liquidity Auto-Selection
+                                    Engine</strong>. When multiple benchmark instruments overlap in maturity, the engine
+                                selects the instrument with the smallest bid-ask spread to build the clean yield curve.
+                                It is not paid or received on any contract.</li>
                         </ul>
                     </div>
 
                     <div class="highlight-card">
                         <h4>2. Swap Leg Spread (Contractual Coupon Spread)</h4>
                         <ul>
-                            <li><strong>Where:</strong> Entered globally per leg in the swap pricing input forms when the leg rate type is set to <strong>Floating Rate</strong>.</li>
+                            <li><strong>Where:</strong> Entered globally per leg in the swap pricing input forms when
+                                the leg rate type is set to <strong>Floating Rate</strong>.</li>
                             <li><strong>Unit:</strong> Percent (%) per annum.</li>
-                            <li><strong>Description:</strong> Represents the contractual interest rate premium or discount added to the floating rate index (e.g., SOFR + 0.50% or EURIBOR - 0.10%).</li>
-                            <li><strong>Application:</strong> Used by the <strong>Swap Pricing Engine</strong> to compute cashflows. For each payment period, the coupon paid is calculated as:
+                            <li><strong>Description:</strong> Represents the contractual interest rate premium or
+                                discount added to the floating rate index (e.g., SOFR + 0.50% or EURIBOR - 0.10%).</li>
+                            <li><strong>Application:</strong> Used by the <strong>Swap Pricing Engine</strong> to
+                                compute cashflows. For each payment period, the coupon paid is calculated as:
                                 <div class="equation-block">
-                                    $$\text{Cashflow Amount} = \text{Notional} \times (\text{Implied Index Rate} + \text{Contractual Spread}) \times \tau$$
+                                    $$\text{Cashflow Amount} = \text{Notional} \times (\text{Implied Index Rate} +
+                                    \text{Contractual Spread}) \times \alpha$$
                                 </div>
-                                Where $\tau$ is the year fraction for the period.
+                                Where $\alpha$ is the year fraction for the period.
                             </li>
                         </ul>
                     </div>
@@ -648,52 +960,71 @@
                 <section class="docs-section" id="liquidity-engine">
                     <h2><i class="fa-solid fa-filter"></i> 9. The Liquidity Auto-Selection Engine</h2>
                     <p>
-                        When building yield curves, including instruments with duplicate or overlapping maturities (e.g. a 2Y Swap and a 2Y Future contract maturing within days of each other) leads to numerical instability, resulting in localized zero-rate spikes.
+                        When building yield curves, including instruments with duplicate or overlapping maturities (e.g.
+                        a 2Y Swap and a 2Y Future contract maturing within days of each other) leads to numerical
+                        instability, resulting in localized zero-rate spikes.
                     </p>
                     <div class="highlight-card">
                         <h4>The 0.05-Year Overlap Rule</h4>
                         <p>
-                            The engine scans the maturity times of all active instruments. Overlaps are detected using a <strong>0.05-year window</strong> (~18 days):
+                            The engine scans the maturity times of all active instruments. Overlaps are detected using a
+                            <strong>0.05-year window</strong> (~18 days):
                             $|t_{\text{instrument}_1} - t_{\text{instrument}_2}| &lt; 0.05 \text{ years}$
                         </p>
                     </div>
 
                     <h3>Spread-Based Comparison &amp; Selection</h3>
                     <div class="equation-block">
-                        $$\text{Spread (in bps)} = \frac{\text{Ask Price} - \text{Bid Price}}{\text{Mid Price}} \times 10,000$$
+                        $$\text{Spread (in bps)} = \frac{\text{Ask Price} - \text{Bid Price}}{\text{Mid Price}} \times
+                        10,000$$
                     </div>
 
                     <p>
-                        For any overlapping group, the engine compares the user-specified **Spread (bps)** column, which represents the **bid-ask spread** (serving as a proxy for transaction costs and liquidity, and not the yield spread):
+                        For any overlapping group, the engine compares the user-specified **Spread (bps)** column, which
+                        represents the **bid-ask spread** (serving as a proxy for transaction costs and liquidity, and
+                        not the yield spread):
                     </p>
                     <div class="equation-block">
-                        $$\text{Instrument}_{\text{selected}} = \arg\min_{\text{instruments}} (\text{Spread}_{\text{bps}})$$
+                        $$\text{Instrument}_{\text{selected}} = \arg\min_{\text{instruments}}
+                        (\text{Spread}_{\text{bps}})$$
                     </div>
                     <ul>
-                        <li>The instrument with the <strong>minimum spread</strong> is flagged as <strong>Active</strong>.</li>
-                        <li>All other overlapping instruments are marked as <strong>Skipped (Illiquid Overlap)</strong> to protect the curve building matrix.</li>
-                        <li><strong>Theoretical Valuation Comparison</strong>: The engine still prices the skipped instruments against the generated curve, showing the valuation gap between actual market quotes and clean curve predictions. This allows traders to evaluate discrepancies.</li>
+                        <li>The instrument with the <strong>minimum spread</strong> is flagged as
+                            <strong>Active</strong>.
+                        </li>
+                        <li>All other overlapping instruments are marked as <strong>Skipped (Illiquid Overlap)</strong>
+                            to protect the curve building matrix.</li>
+                        <li><strong>Theoretical Valuation Comparison</strong>: The engine still prices the skipped
+                            instruments against the generated curve, showing the valuation gap between actual market
+                            quotes and clean curve predictions. This allows traders to evaluate discrepancies.</li>
                     </ul>
                 </section>
                 <!-- Section 10 -->
                 <section class="docs-section" id="currency-swap">
-                    <h2><i class="fa-solid fa-circle-question"></i> 10. Cross-Currency Swap</h2>
+                    <h2><i class="fa-solid fa-dollar-sign"></i> 10. Cross-Currency Swap</h2>
                     <p>
                         A cross-currency swap involves exchanging cash flows in two different currencies.
                     </p>
-                    
+
                     <h3>Why do we need a yield curve for a fixed leg if the coupon rate is fixed?</h3>
                     <p>
-                        Even though the cashflow payments of a fixed leg are static (e.g., 3.5%), you still require the corresponding currency's yield curve to:
+                        Even though the cashflow payments of a fixed leg are static (e.g., 3.5%), you still require the
+                        corresponding currency's yield curve to:
                     </p>
                     <ul>
-                        <li><strong>Discount Cashflows</strong>: Find the present value (PV) of the payments today. Each payment must be discounted using the interest rate for its specific payment date.</li>
-                        <li><strong>FX Forward Curve Derivation</strong>: Under Covered Interest Parity (CIP), the forward FX rate at maturity $t$ is calculated as $F(t) = S_0 \times \frac{DF_2(t)}{DF_1(t)}$. Both curves are necessary to find these discount factors.</li>
+                        <li><strong>Discount Cashflows</strong>: Find the present value (PV) of the payments today. Each
+                            payment must be discounted using the interest rate for its specific payment date.</li>
+                        <li><strong>FX Forward Curve Derivation</strong>: Under Covered Interest Parity (CIP), the
+                            forward FX rate at maturity $t$ is calculated as $F(t) = S_0 \times \frac{D_2(t)}{D_1(t)}$.
+                            Both curves are necessary to find these discount factors.</li>
                     </ul>
-                    
+
                     <h3>What is the difference between the Contract "Fixed" Rate and Market Rates?</h3>
                     <p>
-                        The <strong>Contract Rate</strong> (or fixed leg coupon) is the agreed-upon interest rate that the counterparties exchange. The <strong>Market Rates</strong> (Cash, Futures, Swaps quotes) are the current rates trading in the open market, which we bootstrap to build the <strong>Yield Curve</strong> (representing the term structure of interest rates).
+                        The <strong>Contract Rate</strong> (or fixed leg coupon) is the agreed-upon interest rate that
+                        the counterparties exchange. The <strong>Market Rates</strong> (Cash, Futures, Swaps quotes) are
+                        the current rates trading in the open market, which we bootstrap to build the <strong>Yield
+                            Curve</strong> (representing the term structure of interest rates).
                     </p>
 
                     <h3>How does the Cross-Currency Swap Pricer calculate values?</h3>
@@ -701,36 +1032,54 @@
                         The cross-currency swap pricer values contracts in a structured five-step workflow:
                     </p>
                     <ol>
-                        <li><strong>Independent Bootstrapping</strong>: First, the interest rate yield curves for both Leg 1 (Base Currency) and Leg 2 (Foreign Currency) are bootstrapped independently from their respective market quotes (Cash, Futures, Swaps).</li>
-                        <li><strong>FX Forward Curve Derivation</strong>: Using the bootstrapped curves and the user-specified spot FX rate $S_0$, the forward FX rates are derived for all future payment dates under Covered Interest Parity (CIP):
+                        <li><strong>Independent Bootstrapping</strong>: First, the interest rate yield curves for both
+                            Leg 1 (Base Currency) and Leg 2 (Foreign Currency) are bootstrapped independently from their
+                            respective market quotes (Cash, Futures, Swaps).</li>
+                        <li><strong>FX Forward Curve Derivation</strong>: Using the bootstrapped curves and the
+                            user-specified spot FX rate $S_0$, the forward FX rates are derived for all future payment
+                            dates under Covered Interest Parity (CIP):
                             <div class="equation-block">
-                                $$F(t) = S_0 \times \frac{DF_2(t)}{DF_1(t)}$$
+                                $$F(t) = S_0 \times \frac{D_2(t)}{D_1(t)}$$
                             </div>
-                            Where $DF_1(t)$ is the discount factor from the Leg 1 curve, and $DF_2(t)$ is the discount factor from the Leg 2 curve.
+                            Where $D_1(t)$ is the discount factor from the Leg 1 curve, and $D_2(t)$ is the discount
+                            factor from the Leg 2 curve.
                         </li>
-                        <li><strong>Cashflow Generation</strong>: Payment schedules (fixed interest, floating index payments, or basis spreads) are projected for both legs in their native currencies.</li>
-                        <li><strong>Currency Conversion</strong>: All Leg 2 cashflows (interest payments and notional exchanges) are converted to the base Leg 1 currency using the corresponding derived forward FX rates:
+                        <li><strong>Cashflow Generation</strong>: Payment schedules (fixed interest, floating index
+                            payments, or basis spreads) are projected for both legs in their native currencies.</li>
+                        <li><strong>Currency Conversion</strong>: All Leg 2 cashflows (interest payments and notional
+                            exchanges) are converted to the base Leg 1 currency using the corresponding derived forward
+                            FX rates:
                             <div class="equation-block">
                                 $$\text{Leg 2 Converted Amount}_t = \text{Leg 2 Native Amount}_t \times F(t)$$
                             </div>
                         </li>
-                        <li><strong>Discounting &amp; Net NPV</strong>: The net cashflow for each period is calculated as $\text{Leg 1 Amount} + \text{Leg 2 Converted Amount}$. These net cashflows are discounted back to the trade date using the Leg 1 discount curve:
+                        <li><strong>Discounting &amp; Net NPV</strong>: The net cashflow for each period is calculated
+                            as $\text{Leg 1 Amount} + \text{Leg 2 Converted Amount}$. These net cashflows are discounted
+                            back to the trade date using the Leg 1 discount curve:
                             <div class="equation-block">
-                                $$\text{Net Swap NPV} = \sum_{t} \text{Net Cashflow}_t \times DF_1(t)$$
+                                $$\text{Net Swap NPV} = \sum_{t} \text{Net Cashflow}_t \times D_1(t)$$
                             </div>
-                            The pricer also supports final notional exchange at maturity as separate offsetting cashflows.
+                            The pricer also supports final notional exchange at maturity as separate offsetting
+                            cashflows.
                         </li>
                     </ol>
+                </section>
+
+                <!-- Section 11 -->
+                <section class="docs-section" id="References">
+                    <h2><i class="fa-solid fa-book-open"></i> 11. References</h2>
+                    <p> Is this true?
+                    </p>
                 </section>
             </div>
         </div>
     </main>
 
-<footer class="app-footer">
-    <p>© 2026 YieldCurve. Built for institutional-grade fixed income analytics.</p>
-</footer>
+    <footer class="app-footer">
+        <p>© 2026 YieldCurve. Built for institutional-grade fixed income analytics.</p>
+    </footer>
 
-<script>
+    <script>
         // Sync Theme with main website
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -745,7 +1094,7 @@
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateThemeIcon(newTheme);
-            
+
             // Trigger MathJax re-render if necessary to ensure color adjustments
             if (window.MathJax && window.MathJax.typeset) {
                 MathJax.typeset();
@@ -783,4 +1132,5 @@
         });
     </script>
 </body>
+
 </html>

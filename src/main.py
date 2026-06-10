@@ -1,7 +1,18 @@
-from data.csv_to_py import DataParser
-from src.quant.futures_curve_builder import FuturesCurveBuilder
-from quant.swap_pricer import SwapPricer
+import os
+import sys
 import datetime
+import matplotlib
+matplotlib.use('Agg')
+
+# Ensure the src directory is in the import path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+
+from data.csv_to_py import DataParser
+from quant.futures_curve_builder import FuturesCurveBuilder
+from quant.swap_pricer import SwapPricer
+from quant.swap_legs import InterestRateLeg
 
 """
 main.py
@@ -17,7 +28,7 @@ def main():
 def run_curve_builder(plot_type='zero_rate'):
     print("--- Starting Futures Curve Pipeline ---")
 
-    parser = DataParser(data_path="src/data/real-data.csv", config_path="src/data/config.json")
+    parser = DataParser(data_path="src/data/usd_ois_fallback.csv", config_path="src/data/config.json")
     parser.load_configuration()
     parser.load_market_data()
 
@@ -47,7 +58,10 @@ def run_curve_builder(plot_type='zero_rate'):
         fixed_rate = 0.035
         freq = 2
 
-        results = pricer.calculate_dv01(notional, fixed_rate, maturity_date, freq, is_payer=True)
+        paying_leg = InterestRateLeg(notional=notional, rate_type='fixed', frequency=freq, fixed_rate=fixed_rate)
+        receiving_leg = InterestRateLeg(notional=notional, rate_type='float', frequency=freq, spread=0.0)
+
+        results = pricer.calculate_dv01(paying_leg, receiving_leg, maturity_date)
 
         print(f"Base Swap NPV: ${results['base_npv']:,.2f}")
         print(f"Shifted NPV (+1bp): ${results['bumped_npv']:,.2f}")
