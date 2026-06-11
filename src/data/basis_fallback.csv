@@ -1,0 +1,9 @@
+Instrument,Tenor,QuoteType,Quote
+Swap,1Y,RATE,-0.150
+Swap,2Y,RATE,-0.180
+Swap,3Y,RATE,-0.200
+Swap,5Y,RATE,-0.225
+Swap,7Y,RATE,-0.240
+Swap,10Y,RATE,-0.250
+Swap,15Y,RATE,-0.260
+Swap,30Y,RATE,-0.270
