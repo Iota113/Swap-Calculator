@@ -1,6 +1,7 @@
 // App State
 let curve1MarketQuotes = [];
 let curve2MarketQuotes = [];
+let basisMarketQuotes = [];
 let calculationResults = null;
 let currentChartType = 'zero_rate';
 let curvesChart = null;
@@ -42,6 +43,7 @@ const recalcNotionalBtn = document.getElementById('recalc-notional-btn');
 const fxPairLabel = document.getElementById('fx-pair-label');
 const curve1Name = document.getElementById('curve1-name');
 const curve2Name = document.getElementById('curve2-name');
+const basisPairName = document.getElementById('basis-pair-name');
 const curve1NodesTitle = document.getElementById('curve1-nodes-title');
 const curve2NodesTitle = document.getElementById('curve2-nodes-title');
 const curve1Dropzone = document.getElementById('curve1-dropzone');
@@ -50,6 +52,9 @@ const curve1Status = document.getElementById('curve1-status');
 const curve2Dropzone = document.getElementById('curve2-dropzone');
 const curve2FileInput = document.getElementById('curve2-file');
 const curve2Status = document.getElementById('curve2-status');
+const basisDropzone = document.getElementById('basis-dropzone');
+const basisFileInput = document.getElementById('basis-file');
+const basisStatus = document.getElementById('basis-status');
 
 // Output Tables & Toggles
 const showZeroRateBtn = document.getElementById('show-zero-rate');
@@ -58,17 +63,21 @@ const showFxForwardBtn = document.getElementById('show-fx-forward');
 const cashflowsTbody = document.getElementById('cashflows-tbody');
 const curve1KnotsTbody = document.getElementById('curve1-knots-tbody');
 const curve2KnotsTbody = document.getElementById('curve2-knots-tbody');
+const basisKnotsTbody = document.getElementById('basis-knots-tbody');
 const fxForwardTbody = document.getElementById('fx-forward-tbody');
 const exportCashflowsBtn = document.getElementById('export-cashflows');
 
 const showCurve1TableBtn = document.getElementById('show-curve1-table');
 const showCurve2TableBtn = document.getElementById('show-curve2-table');
+const showBasisTableBtn = document.getElementById('show-basis-table');
 const showFxTableBtn = document.getElementById('show-fx-table');
 const curve1TableWrapper = document.getElementById('curve1-table-wrapper');
 const curve2TableWrapper = document.getElementById('curve2-table-wrapper');
+const basisTableWrapper = document.getElementById('basis-table-wrapper');
 const fxTableWrapper = document.getElementById('fx-table-wrapper');
 const curve1TabLabel = document.getElementById('curve1-tab-label');
 const curve2TabLabel = document.getElementById('curve2-tab-label');
+const basisTabLabel = document.getElementById('basis-tab-label');
 
 // Initial Setup
 document.addEventListener('DOMContentLoaded', () => {
@@ -113,6 +122,7 @@ function updateLabelStates() {
     if (fxPairLabel) fxPairLabel.textContent = `${c1}/${c2}`;
     if (curve1Name) curve1Name.textContent = c1;
     if (curve2Name) curve2Name.textContent = c2;
+    if (basisPairName) basisPairName.textContent = `${c2}/${c1}`; // EUR/USD basis (Leg 2/Leg 1)
     if (curve1NodesTitle) curve1NodesTitle.textContent = c1;
     if (curve2NodesTitle) curve2NodesTitle.textContent = c2;
 
@@ -121,6 +131,7 @@ function updateLabelStates() {
 
     if (curve1TabLabel) curve1TabLabel.textContent = `${c1} Nodes`;
     if (curve2TabLabel) curve2TabLabel.textContent = `${c2} Nodes`;
+    if (basisTabLabel) basisTabLabel.textContent = `${c2} Basis Nodes`;
 
     // Leg 1 type label
     if (leg1Type && leg1RateLabel) {
@@ -196,6 +207,19 @@ curve2FileInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) handleCurveFile(e.target.files[0], 2);
 });
 
+// Drag & Drop / File Uploads Curve Basis
+basisDropzone.addEventListener('click', () => basisFileInput.click());
+basisDropzone.addEventListener('dragover', (e) => { e.preventDefault(); basisDropzone.classList.add('dragover'); });
+basisDropzone.addEventListener('dragleave', () => basisDropzone.classList.remove('dragover'));
+basisDropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    basisDropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) handleCurveFile(e.dataTransfer.files[0], 3);
+});
+basisFileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) handleCurveFile(e.target.files[0], 3);
+});
+
 function handleCurveFile(file, curveNum) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -205,9 +229,12 @@ function handleCurveFile(file, curveNum) {
                 if (curveNum === 1) {
                     curve1MarketQuotes = parsed;
                     curve1Status.innerHTML = `<span style="color: var(--success); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Loaded ${parsed.length} quotes from ${file.name}</span>`;
-                } else {
+                } else if (curveNum === 2) {
                     curve2MarketQuotes = parsed;
                     curve2Status.innerHTML = `<span style="color: var(--success); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Loaded ${parsed.length} quotes from ${file.name}</span>`;
+                } else {
+                    basisMarketQuotes = parsed;
+                    basisStatus.innerHTML = `<span style="color: var(--success); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Loaded ${parsed.length} quotes from ${file.name}</span>`;
                 }
                 showAlert(`Curve ${curveNum} market data successfully loaded!`, 'success');
             } else {
@@ -260,10 +287,13 @@ function parseCSV(text) {
 resetCurvesBtn.addEventListener('click', () => {
     curve1MarketQuotes = [];
     curve2MarketQuotes = [];
+    basisMarketQuotes = [];
     curve1Status.textContent = 'Using default USD OIS curve sample data.';
     curve2Status.textContent = 'Using default EUR curve sample data.';
+    basisStatus.textContent = 'Using default EUR/USD market basis curve sample data.';
     curve1FileInput.value = '';
     curve2FileInput.value = '';
+    basisFileInput.value = '';
     showAlert('Reset back to default sample curves.', 'info');
     triggerCalculation();
 });
@@ -370,7 +400,8 @@ async function triggerCalculation() {
                 curve_config1: curve_config1,
                 curve_config2: curve_config2,
                 leg1_market_data: curve1MarketQuotes,
-                leg2_market_data: curve2MarketQuotes
+                leg2_market_data: curve2MarketQuotes,
+                basis_market_data: basisMarketQuotes
             })
         });
 
@@ -387,7 +418,7 @@ async function triggerCalculation() {
             updateNPVDisplays(data.npv_results);
             renderRiskResults(data.risk_results);
             renderCashflowTable(data.cashflows);
-            renderKnotTables(data.leg1_knots, data.leg2_knots);
+            renderKnotTables(data.leg1_knots, data.leg2_knots, data.basis_knots);
             renderFXForwardTable(data.fx_forward_curve);
 
             renderCurvesChart();
@@ -417,6 +448,10 @@ function renderRiskResults(risk) {
 
     document.getElementById('risk-leg1-dv01').textContent = formatRiskAmount(p.leg1_dv01, c1);
     document.getElementById('risk-leg2-dv01').textContent = formatRiskAmount(p.leg2_dv01, c1);
+    
+    if (document.getElementById('risk-basis-dv01')) {
+        document.getElementById('risk-basis-dv01').textContent = formatRiskAmount(p.basis_dv01, c1);
+    }
 
     const fxEl = document.getElementById('risk-fx-delta');
     const fxDelta = p.fx_delta_1pct;
@@ -445,13 +480,21 @@ function renderRiskResults(risk) {
 
     renderDeltaVectorTable('leg1-delta-tbody', risk.leg1_delta_vector || [], c1);
     renderDeltaVectorTable('leg2-delta-tbody', risk.leg2_delta_vector || [], c1);
+    renderDeltaVectorTable('basis-delta-tbody', risk.basis_delta_vector || [], c1);
+    
+    // Reset inputs on new pricing calculation runs
+    document.querySelectorAll('.pnl-move-input').forEach(input => input.value = "0.0");
+    const fxInput = document.getElementById('pnl-fx-bump');
+    if (fxInput) fxInput.value = "0.0";
+    
+    updatePnlAttribution();
 }
 
 function renderDeltaVectorTable(tbodyId, rows, currency) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No pillars</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No pillars</td></tr>';
         return;
     }
     rows.forEach(row => {
@@ -463,6 +506,10 @@ function renderDeltaVectorTable(tbodyId, rows, currency) {
             <td>${row.tenor}</td>
             <td style="font-family: monospace;">${quoteLabel}</td>
             <td style="${deltaColor} font-family: monospace; font-weight: 600;">${row.delta >= 0 ? '+' : ''}${currency} ${row.delta.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td style="width: 80px; padding: 4px 6px;">
+                <input type="number" class="pnl-move-input" data-delta="${row.delta}" value="0.0" step="0.1" 
+                    style="width: 60px; padding: 4px 6px; font-size: 11px; text-align: center; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);">
+            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -523,7 +570,7 @@ function renderCashflowTable(cashflows) {
     });
 }
 
-function renderKnotTables(knots1, knots2) {
+function renderKnotTables(knots1, knots2, knotsBasis) {
     curve1KnotsTbody.innerHTML = '';
     knots1.forEach(k => {
         const tr = document.createElement('tr');
@@ -555,6 +602,24 @@ function renderKnotTables(knots1, knots2) {
         `;
         curve2KnotsTbody.appendChild(tr);
     });
+
+    if (basisKnotsTbody && knotsBasis) {
+        basisKnotsTbody.innerHTML = '';
+        knotsBasis.forEach(k => {
+            const tr = document.createElement('tr');
+            let badge = `<span class="status-badge active">Active</span>`;
+            if (k.skipped) badge = `<span class="status-badge skipped">Skipped</span>`;
+            if (k.error) badge = `<span class="status-badge error">Error</span>`;
+
+            tr.innerHTML = `
+                <td><strong>${k.tenor}</strong></td>
+                <td>${k.df !== undefined ? k.df.toFixed(5) : '-'}</td>
+                <td>${k.zero_rate !== undefined ? k.zero_rate.toFixed(3) + '%' : '-'}</td>
+                <td>${badge}</td>
+            `;
+            basisKnotsTbody.appendChild(tr);
+        });
+    }
 }
 
 function renderFXForwardTable(fxForward) {
@@ -622,6 +687,7 @@ function renderCurvesChart() {
 
     const activeKnots1 = calculationResults.leg1_knots.filter(k => !k.error && !k.skipped && k.t > 0);
     const activeKnots2 = calculationResults.leg2_knots.filter(k => !k.error && !k.skipped && k.t > 0);
+    const activeKnotsBasis = calculationResults.basis_knots ? calculationResults.basis_knots.filter(k => !k.error && !k.skipped && k.t > 0) : [];
 
     if (currentChartType === 'zero_rate') {
         chartTitle = 'Interest Rate Zero Curves (Smooth Spline)';
@@ -675,6 +741,33 @@ function renderCurvesChart() {
                 z: 5
             }
         ];
+
+        if (calculationResults.basis_curve) {
+            const datasetBasis = calculationResults.basis_curve.times.map((t, idx) => ({ x: t, y: calculationResults.basis_curve.zero_rates[idx] }));
+            const knotsDataBasis = activeKnotsBasis.map(k => ({ x: k.t, y: k.zero_rate, label: k.tenor }));
+            datasets.push(
+                {
+                    label: `${c2} Basis Curve`,
+                    data: datasetBasis,
+                    showLine: true,
+                    borderColor: '#10b981', // green
+                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.1
+                },
+                {
+                    label: `${c2} Basis Nodes`,
+                    data: knotsDataBasis,
+                    showLine: false,
+                    pointBackgroundColor: '#34d399',
+                    pointBorderColor: isDark ? '#070913' : '#ffffff',
+                    pointBorderWidth: 1.5,
+                    pointRadius: 5,
+                    z: 5
+                }
+            );
+        }
     } else if (currentChartType === 'discount_factor') {
         chartTitle = 'Discount Factor Curves';
         yLabel = 'Discount Factor D(0, T)';
@@ -732,6 +825,35 @@ function renderCurvesChart() {
                 z: 5
             }
         ];
+
+        if (calculationResults.basis_curve) {
+            const datasetBasis = calculationResults.basis_curve.times.map((t, idx) => ({ x: t, y: calculationResults.basis_curve.discount_factors[idx] }));
+            const knotsDataBasis = activeKnotsBasis.map(k => ({ x: k.t, y: k.df, label: k.tenor }));
+            datasetBasis.unshift({ x: 0, y: 1.0 });
+            knotsDataBasis.unshift({ x: 0, y: 1.0, label: 'Origin' });
+            datasets.push(
+                {
+                    label: `${c2} Basis Curve`,
+                    data: datasetBasis,
+                    showLine: true,
+                    borderColor: '#10b981',
+                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.1
+                },
+                {
+                    label: `${c2} Basis Nodes`,
+                    data: knotsDataBasis,
+                    showLine: false,
+                    pointBackgroundColor: '#34d399',
+                    pointBorderColor: isDark ? '#070913' : '#ffffff',
+                    pointBorderWidth: 1.5,
+                    pointRadius: 5,
+                    z: 5
+                }
+            );
+        }
     } else {
         chartTitle = 'FX Forward Curve (Covered Interest Parity)';
         yLabel = `Forward FX Rate (${c1}/${c2})`;
@@ -929,34 +1051,141 @@ exportCashflowsBtn.addEventListener('click', () => {
 });
 
 // Toggle Curve & Forward Tables Logic
-if (showCurve1TableBtn && showCurve2TableBtn && showFxTableBtn) {
+if (showCurve1TableBtn && showCurve2TableBtn && showBasisTableBtn && showFxTableBtn) {
     showCurve1TableBtn.addEventListener('click', () => {
         showCurve1TableBtn.classList.add('active');
         showCurve2TableBtn.classList.remove('active');
+        showBasisTableBtn.classList.remove('active');
         showFxTableBtn.classList.remove('active');
 
         curve1TableWrapper.style.display = 'block';
         curve2TableWrapper.style.display = 'none';
+        basisTableWrapper.style.display = 'none';
         fxTableWrapper.style.display = 'none';
     });
 
     showCurve2TableBtn.addEventListener('click', () => {
         showCurve1TableBtn.classList.remove('active');
         showCurve2TableBtn.classList.add('active');
+        showBasisTableBtn.classList.remove('active');
         showFxTableBtn.classList.remove('active');
 
         curve1TableWrapper.style.display = 'none';
         curve2TableWrapper.style.display = 'block';
+        basisTableWrapper.style.display = 'none';
+        fxTableWrapper.style.display = 'none';
+    });
+
+    showBasisTableBtn.addEventListener('click', () => {
+        showCurve1TableBtn.classList.remove('active');
+        showCurve2TableBtn.classList.remove('active');
+        showBasisTableBtn.classList.add('active');
+        showFxTableBtn.classList.remove('active');
+
+        curve1TableWrapper.style.display = 'none';
+        curve2TableWrapper.style.display = 'none';
+        basisTableWrapper.style.display = 'block';
         fxTableWrapper.style.display = 'none';
     });
 
     showFxTableBtn.addEventListener('click', () => {
         showCurve1TableBtn.classList.remove('active');
         showCurve2TableBtn.classList.remove('active');
+        showBasisTableBtn.classList.remove('active');
         showFxTableBtn.classList.add('active');
 
         curve1TableWrapper.style.display = 'none';
         curve2TableWrapper.style.display = 'none';
+        basisTableWrapper.style.display = 'none';
         fxTableWrapper.style.display = 'block';
     });
 }
+
+// P&L Attribution & Scenario Calculator Logic
+function updatePnlAttribution() {
+    if (!calculationResults || !calculationResults.risk_results) return;
+
+    const c1 = leg1Currency.value;
+    const risk = calculationResults.risk_results;
+    
+    // 1. Leg 1 Rate P&L
+    let leg1Pnl = 0.0;
+    document.querySelectorAll('#leg1-delta-tbody .pnl-move-input').forEach(input => {
+        const move = parseFloat(input.value) || 0.0;
+        const delta = parseFloat(input.dataset.delta) || 0.0;
+        leg1Pnl += move * delta;
+    });
+
+    // 2. Leg 2 Rate P&L
+    let leg2Pnl = 0.0;
+    document.querySelectorAll('#leg2-delta-tbody .pnl-move-input').forEach(input => {
+        const move = parseFloat(input.value) || 0.0;
+        const delta = parseFloat(input.dataset.delta) || 0.0;
+        leg2Pnl += move * delta;
+    });
+
+    // 3. Basis Curve P&L
+    let basisPnl = 0.0;
+    document.querySelectorAll('#basis-delta-tbody .pnl-move-input').forEach(input => {
+        const move = parseFloat(input.value) || 0.0;
+        const delta = parseFloat(input.dataset.delta) || 0.0;
+        basisPnl += move * delta;
+    });
+
+    // 4. FX Spot P&L
+    const fxMove = parseFloat(document.getElementById('pnl-fx-bump').value) || 0.0;
+    const fxDelta = risk.parallel.fx_delta_1pct; // sensitivity for +1% relative move
+    const fxPnl = fxMove * fxDelta;
+
+    // Sum total
+    const totalPnl = leg1Pnl + leg2Pnl + basisPnl + fxPnl;
+
+    // Display formatted results
+    const formatPnlText = (val) => {
+        const prefix = val >= 0 ? '+' : '-';
+        const absVal = Math.abs(val);
+        return `${prefix}${c1} ${absVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+
+    document.getElementById('pnl-leg1-contrib').textContent = formatPnlText(leg1Pnl);
+    document.getElementById('pnl-leg2-contrib').textContent = formatPnlText(leg2Pnl);
+    document.getElementById('pnl-basis-contrib').textContent = formatPnlText(basisPnl);
+    document.getElementById('pnl-fx-contrib').textContent = formatPnlText(fxPnl);
+
+    const totalEl = document.getElementById('pnl-total-impact');
+    totalEl.textContent = formatPnlText(totalPnl);
+    
+    // Style total text color based on sign
+    if (totalPnl >= 0) {
+        totalEl.style.color = 'var(--success)';
+        totalEl.style.textShadow = '0 0 10px rgba(16,185,129,0.25)';
+    } else {
+        totalEl.style.color = 'var(--danger)';
+        totalEl.style.textShadow = '0 0 10px rgba(239,68,68,0.25)';
+    }
+}
+
+// Global listeners for P&L widget interactions
+document.addEventListener('input', (e) => {
+    if (e.target.classList.contains('pnl-move-input') || e.target.id === 'pnl-fx-bump') {
+        updatePnlAttribution();
+    }
+});
+
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'pnl-reset-btn') {
+        document.querySelectorAll('.pnl-move-input').forEach(input => input.value = "0.0");
+        const fxInput = document.getElementById('pnl-fx-bump');
+        if (fxInput) fxInput.value = "0.0";
+        updatePnlAttribution();
+    } else if (e.target.id === 'pnl-shift-leg1-btn') {
+        document.querySelectorAll('#leg1-delta-tbody .pnl-move-input').forEach(input => input.value = "1.0");
+        updatePnlAttribution();
+    } else if (e.target.id === 'pnl-shift-leg2-btn') {
+        document.querySelectorAll('#leg2-delta-tbody .pnl-move-input').forEach(input => input.value = "1.0");
+        updatePnlAttribution();
+    } else if (e.target.id === 'pnl-shift-basis-btn') {
+        document.querySelectorAll('#basis-delta-tbody .pnl-move-input').forEach(input => input.value = "1.0");
+        updatePnlAttribution();
+    }
+});

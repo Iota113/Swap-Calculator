@@ -22,6 +22,7 @@ class CurrencySwapPricer:
         leg2_config: dict,
         curve_builder1,
         curve_builder2,
+        curve_builder2_basis=None,
     ):
         """
         Cross-currency swap pricer.
@@ -36,6 +37,7 @@ class CurrencySwapPricer:
         self.leg2 = leg2_config
         self.curve1 = curve_builder1
         self.curve2 = curve_builder2
+        self.curve2_basis = curve_builder2_basis or curve_builder2
         self.leg1_ir = InterestRateLeg.from_leg_config(leg1_config)
         self.leg2_ir = InterestRateLeg.from_leg_config(leg2_config)
 
@@ -91,6 +93,7 @@ class CurrencySwapPricer:
         spot_fx_rate: Optional[float] = None,
         leg1_config: Optional[dict] = None,
         leg2_config: Optional[dict] = None,
+        curve2_basis=None,
     ) -> Tuple[List[Dict], Dict]:
         """
         Price the cross-currency swap.
@@ -98,6 +101,7 @@ class CurrencySwapPricer:
         """
         curve1 = curve1 or self.curve1
         curve2 = curve2 or self.curve2
+        curve2_basis = curve2_basis or self.curve2_basis or curve2
         spot = spot_fx_rate if spot_fx_rate is not None else self.spot_fx_rate
 
         leg1_cfg = {**self.leg1, **(leg1_config or {})}
@@ -121,7 +125,7 @@ class CurrencySwapPricer:
                 leg1_amount=leg1_map.get(payment_date, 0.0),
                 leg2_amount=leg2_map.get(payment_date, 0.0),
                 curve1=curve1,
-                curve2=curve2,
+                curve2=curve2_basis,
                 spot_fx_rate=spot,
                 leg1_day_count=leg1_cfg.get("day_count", "ACT/365"),
                 leg2_day_count=leg2_cfg.get("day_count", "ACT/365"),
@@ -147,7 +151,7 @@ class CurrencySwapPricer:
             leg1_amount=leg1_principal,
             leg2_amount=leg2_principal,
             curve1=curve1,
-            curve2=curve2,
+            curve2=curve2_basis,
             spot_fx_rate=spot,
             leg1_day_count=leg1_cfg.get("day_count", "ACT/365"),
             leg2_day_count=leg2_cfg.get("day_count", "ACT/365"),
