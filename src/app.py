@@ -423,7 +423,13 @@ def calculate():
         cashflow_timeseries = []
         try:
             engine = CashflowEngine(builder)
-            cashflow_timeseries = engine.generate_portfolio_cashflows(portfolio_tuples_for_engine)
+            raw_cashflows = engine.generate_portfolio_cashflows(portfolio_tuples_for_engine)
+            # Sanitize NaN/Inf produced by the engine before jsonify sees them
+            for cf in raw_cashflows:
+                for k, v in cf.items():
+                    if isinstance(v, float) and (np.isnan(v) or np.isinf(v)):
+                        cf[k] = 0.0
+            cashflow_timeseries = raw_cashflows
         except Exception as cf_err:
             print(f"Cashflow engine failed: {cf_err}")
 

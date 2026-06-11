@@ -57,7 +57,11 @@ class AssetPriceOracle:
                 raise ValueError(
                     f"No price data found for {ticker_clean} on or before {as_of_date_str}"
                 )
-
+        hist = hist.dropna(subset=['Close'])
+        if hist.empty:
+            raise ValueError(
+                f"No valid (non-NaN) closing price for {ticker_clean} on or before {as_of_date_str}"
+            )
         # Last row of the window == nearest valid close at-or-before as_of.
         return float(hist['Close'].iloc[-1])
 
