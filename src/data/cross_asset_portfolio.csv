@@ -1,0 +1,2 @@
+notional,fixed_rate,ticker,asset_class,tenor_years,frequency,position
+10000000,3.5,MU,auto,1,2,receiver

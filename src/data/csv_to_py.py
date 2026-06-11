@@ -53,10 +53,16 @@ class DataParser:
         except FileNotFoundError:
             print(f"Error: Could not find {self.data_path}")
 
+    def get_active_instrument_slice(self, instrument_name):
+        """Returns records for a specific active instrument type."""
+        if self.curve_data.empty:
+            return pd.DataFrame()
+        return self.curve_data[self.curve_data['Instrument'].str.upper() == instrument_name.upper()]
+
 
 if __name__ == "__main__":
     # Instantiate the updated parser
-    parser = DataParser(data_path="src/data/real-data.csv", config_path="src/data/config.json")
+    parser = DataParser(data_path="src/data/usd_ois_fallback.csv", config_path="src/data/config.json")
     
     parser.load_configuration()
     

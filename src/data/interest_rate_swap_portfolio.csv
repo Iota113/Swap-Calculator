@@ -1,0 +1,2 @@
+notional,rate_type,fixed_rate,spread,tenor_years,frequency,position
+10000000,fixed,3.5,0.0,5,2,payer
