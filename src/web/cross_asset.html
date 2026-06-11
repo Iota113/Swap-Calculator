@@ -475,10 +475,16 @@
 
                 <!-- CA-QUOTES-PANEL : same width as the portfolio, aligned directly beneath it -->
                 <div class="data-panel card">
-                    <div class="card-header">
+                     <div class="card-header">
                         <i class="fa-solid fa-list-ol"></i>
                         <h2>Active Market Quotes</h2>
                         <div class="card-actions">
+                            <button id="import-quotes-btn" class="btn btn-secondary btn-sm" title="Import CSV">
+                                <i class="fa-solid fa-file-import"></i> Import CSV
+                            </button>
+                            <button id="sample-quotes-btn" class="btn btn-secondary btn-sm" title="Sample Data">
+                                <i class="fa-solid fa-folder-open"></i> Sample Data
+                            </button>
                             <button id="add-row" class="btn btn-secondary btn-sm">
                                 <i class="fa-solid fa-plus"></i> Add Quote
                             </button>
@@ -502,79 +508,58 @@
             </div>
 
             <!-- ===== RIGHT (30%): slim curve configuration ===== -->
-            <div class="right-column">
-
-                <!-- CA-CURVE-CONFIG : Day Count Basis removed (now per-position in the portfolio) -->
-                <div class="control-panel card">
-                    <div class="card-header">
-                        <i class="fa-solid fa-sliders"></i>
-                        <h2>Curve Configuration</h2>
+        <div class="right-column">
+            <div class="control-panel card">
+                <div class="card-header">
+                    <i class="fa-solid fa-sliders"></i>
+                    <h2>Curve Configuration</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="curve-type">Curve Type</label>
+                        <select id="curve-type">
+                            <option value="OIS" selected>OIS / Swap Curve</option>
+                            <option value="Treasury">US Treasury Curve</option>
+                        </select>
                     </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label for="curve-type">Curve Type</label>
-                            <select id="curve-type">
-                                <option value="OIS" selected>OIS / Swap Curve</option>
-                                <option value="Treasury">US Treasury Curve</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="trade-date">Curve / Valuation Date</label>
-                            <input type="text" id="trade-date" value="28-05-2026" placeholder="DD-MM-YYYY">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="payment-freq">Payment Frequency</label>
-                            <select id="payment-freq">
-                                <option value="1">Annual (1)</option>
-                                <option value="2" selected>Semi-Annual (2)</option>
-                                <option value="4">Quarterly (4)</option>
-                                <option value="12">Monthly (12)</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="interpolation">Interpolation</label>
-                            <select id="interpolation">
-                                <option value="Cubic Spline" selected>Cubic Spline</option>
-                                <option value="Linear">Linear Zero Rates</option>
-                            </select>
-                        </div>
-
-                        <!-- CA-FUTURES-CUTOFF : "years" rendered inside the box, not editable -->
-                        <div class="form-group">
-                            <label for="cutoff-years">Futures Cutoff</label>
-                            <div class="embedded-suffix">
-                                <input type="number" id="cutoff-years" value="2.0" step="0.25" min="0">
-                                <span class="unit">years</span>
-                            </div>
-                        </div>
-
-                        <div class="dropzone-container">
-                            <label>Import Market Data</label>
-                            <div id="dropzone" class="dropzone">
-                                <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
-                                <p class="dropzone-text">Drag &amp; Drop CSV / Excel or <span
-                                        class="browse-link">browse</span></p>
-                                <p class="dropzone-subtext">Supports columns: Instrument, Tenor, QuoteType, Quote</p>
-                                <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display: none;">
-                            </div>
-                        </div>
-
-                        <div class="config-actions">
-                            <button id="download-template" class="btn btn-secondary">
-                                <i class="fa-solid fa-download"></i> Template CSV
-                            </button>
-                            <button id="load-sample" class="btn btn-secondary">
-                                <i class="fa-solid fa-folder-open"></i> Sample Data
-                            </button>
-                        </div>
+                    <div class="form-group">
+                        <label for="trade-date">Curve Date</label>
+                        <input type="text" id="trade-date" value="28-05-2026" placeholder="DD-MM-YYYY">
+                    </div>
+                    <div class="form-group">
+                        <label for="payment-freq">Payment Frequency</label>
+                        <select id="payment-freq">
+                            <option value="2" selected>Semi-Annual (2)</option>
+                            <option value="4">Quarterly (4)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="interpolation">Interpolation</label>
+                        <select id="interpolation">
+                            <option value="Cubic Spline" selected>Cubic Spline</option>
+                        </select>
                     </div>
                 </div>
             </div>
 
-            <div id="alert-container" class="alert-container"></div>
+    <div class="card" style="flex: 1; border: 1px solid var(--primary-glow);">
+        <div class="card-header">
+            <i class="fa-solid fa-crosshairs"></i>
+            <h2>Portfolio Concentration</h2>
         </div>
+        <div class="card-body" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px;">
+            <div style="font-size: 42px; color: var(--text-muted); margin-bottom: 15px;">
+                <i class="fa-solid fa-chart-pie"></i>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                Run a calculation to view your aggregate exposure by asset class (Equity vs. Commodity) and identify top P&L drivers.
+            </p>
+        </div>
+    </div>
+</div>
+        <div 
+        id="alert-container" class="alert-container"></div>
+    </div>
 
         <!-- ===== Results (hidden until first run) ===== -->
         <div id="results-container" class="results-grid" style="display: none;">
@@ -654,24 +639,13 @@
             </div>
 
             <!-- CA-CASHFLOW-ROW : projection chart (left) + schedule & PV table (right) -->
-            <div class="ca-cashflow-row">
-
-                <div class="charts-card card" style="height: 45vh;">
-                    <div class="card-header"
-                        style="display: flex; justify-content: space-between; align-items: center;">
+            <div id="ca-cashflow-container" style="display: flex; gap: 16px; margin-top: 20px; width: 100%;">
+                
+                <div id="cf-chart-panel" class="charts-card card" style="flex: 1; transition: all 0.3s ease; min-width: 400px; height: 45vh;">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <i class="fa-solid fa-water"></i>
                             <h2>Cashflow Projection</h2>
-                        </div>
-                        <div class="toggle-container" style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: #94a3b8; font-size: 0.85rem;">Split Axes</span>
-                            <label class="switch"
-                                style="position: relative; display: inline-block; width: 40px; height: 22px;">
-                                <input type="checkbox" id="axis-toggle" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider"
-                                    style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .3s; border-radius: 34px;"></span>
-                            </label>
-                            <span style="color: #94a3b8; font-size: 0.85rem;">Combined Axis</span>
                         </div>
                     </div>
                     <div class="card-body chart-wrapper">
@@ -681,17 +655,15 @@
                     </div>
                 </div>
 
-                <!-- CA-CASHFLOW-SCHEDULE -->
-                <div class="card" style="height: 45vh;">
-                    <div class="card-header"
-                        style="display: flex; justify-content: space-between; align-items: center;">
+                <div id="cf-table-panel" class="card" style="width: 60%; transition: all 0.3s ease; height: 45vh; flex-shrink: 0;">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <i class="fa-solid fa-calendar-days"></i>
-                            <h2>Cashflow Schedule &amp; PV</h2>
+                            <h2>Schedule &amp; PV</h2>
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <button id="export-cashflows" class="btn btn-secondary btn-sm">
-                                <i class="fa-solid fa-file-export"></i> Export CSV
+                            <button id="toggle-cashflow-table" class="btn btn-secondary btn-sm" title="Toggle Table Visibility">
+                                <i class="fa-solid fa-compress"></i>
                             </button>
                         </div>
                     </div>
@@ -703,7 +675,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </main>
 

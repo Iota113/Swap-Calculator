@@ -22,8 +22,10 @@ const calculateBtn = document.getElementById('calculate-btn');
 const resultsContainer = document.getElementById('results-container');
 const alertContainer = document.getElementById('alert-container');
 const themeToggleBtn = document.getElementById('theme-toggle');
-const downloadTemplateBtn = document.getElementById('download-template');
-const loadSampleBtn = document.getElementById('load-sample');
+
+// Updated IDs from new HTML refactor
+const importQuotesBtn = document.getElementById('import-quotes-btn');
+const sampleQuotesBtn = document.getElementById('sample-quotes-btn');
 const showZeroRateBtn = document.getElementById('show-zero-rate');
 const showDfBtn = document.getElementById('show-df');
 const curveTypeSelect = document.getElementById('curve-type');
@@ -31,14 +33,33 @@ const curveTypeSelect = document.getElementById('curve-type');
 // ---------- Formatting helpers ----------
 const fmt4 = v => (v == null || v === '' || isNaN(v)) ? '--' : Number(v).toFixed(4);
 const fmtMoney = v => (v == null || isNaN(v)) ? '--' : Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 function formatWithCommas(value) {
     const raw = String(value).replace(/,/g, '');
     if (raw === '' || isNaN(raw)) return value;
     return Number(raw).toLocaleString('en-US');
 }
+
 function parseDDMMYYYY(s) {
     const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec((s || '').trim());
     return m ? new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1])) : null;
+}
+
+function formatNiceDate(isoString) {
+    if (!isoString) return '--';
+    const date = new Date(isoString);
+    const formatter = new Intl.DateTimeFormat('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: '2-digit'
+    });
+    
+    const parts = formatter.formatToParts(date);
+    const day = parts.find(p => p.type === 'day').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const year = parts.find(p => p.type === 'year').value;
+
+    return `${day} ${month} '${year}`;
 }
 
 // ---------- Init & Session ----------
@@ -145,6 +166,7 @@ if (curveTypeSelect) {
 }
 
 function updateTableHeaders() {
+    if(!marketTableHead || !outputTableHead) return;
     const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
     if (curveType === 'Treasury') {
         marketTableHead.innerHTML = `
@@ -190,15 +212,10 @@ function loadSampleData() {
     saveSession();
     showAlert(`Sample ${curveType} market data loaded for this tab.`, 'success');
 }
-loadSampleBtn.addEventListener('click', loadSampleData);
 
-downloadTemplateBtn.addEventListener('click', () => {
-    const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
-    const csv = curveType === 'Treasury'
-        ? "Instrument,Tenor,Coupon,Price,Spread\nBill,3M,0,98.71,1.2\nNote,2Y,4.25,99.30,1.8\nBond,10Y,4.25,100.25,1.5"
-        : "Instrument,Tenor,QuoteType,Quote,Spread\nCash,O/N,RATE,3.55,1.0\nFuture,SR3M6,PRICE,96.33,0.5\nSwap,5Y,RATE,3.906,2.8";
-    downloadCSV(csv, `crossasset_${curveType.toLowerCase()}_template.csv`);
-});
+if (sampleQuotesBtn) {
+    sampleQuotesBtn.addEventListener('click', loadSampleData);
+}
 
 function downloadCSV(text, filename) {
     const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
@@ -212,6 +229,7 @@ function downloadCSV(text, filename) {
 
 // ---------- Market table render ----------
 function renderTable() {
+    if(!marketTableBody) return;
     marketTableBody.innerHTML = '';
     if (marketQuotes.length === 0) {
         marketTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:30px;">No market quotes. Add a row, load sample, or drop a file.</td></tr>`;
@@ -274,23 +292,26 @@ function renderTable() {
         }));
 }
 
-addRowBtn.addEventListener('click', () => {
-    const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
-    marketQuotes.push(curveType === 'Treasury'
-        ? { Instrument: 'Note', Tenor: '', Coupon: 0.0, Price: 100.0, Spread: null }
-        : { Instrument: 'Cash', Tenor: '', QuoteType: 'RATE', Quote: 0.0, Spread: null });
-    renderTable();
-    saveSession();
-});
+if (addRowBtn) {
+    addRowBtn.addEventListener('click', () => {
+        const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
+        marketQuotes.push(curveType === 'Treasury'
+            ? { Instrument: 'Note', Tenor: '', Coupon: 0.0, Price: 100.0, Spread: null }
+            : { Instrument: 'Cash', Tenor: '', QuoteType: 'RATE', Quote: 0.0, Spread: null });
+        renderTable();
+        saveSession();
+    });
+}
 
-clearTableBtn.addEventListener('click', () => { marketQuotes = []; renderTable(); saveSession(); });
+if (clearTableBtn) {
+    clearTableBtn.addEventListener('click', () => { marketQuotes = []; renderTable(); saveSession(); });
+}
 
 // ---------- File import (CSV / XLSX) for MARKET QUOTES ----------
-dropzone.addEventListener('click', () => fileInput.click());
-['dragover', 'dragenter'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('dragover'); }));
-['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, () => dropzone.classList.remove('dragover')));
-dropzone.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
-fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+if (importQuotesBtn && fileInput) {
+    importQuotesBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+}
 
 function handleFile(file) {
     const name = file.name.toLowerCase();
@@ -342,7 +363,7 @@ function showAlert(message, type = 'info') {
 }
 
 // ============================================================
-// Multi-position portfolio table with Backend Name Resolution
+// Multi-position portfolio table
 // ============================================================
 const portfolioTableBody = document.getElementById('portfolio-table-body');
 const addPortfolioRowBtn = document.getElementById('add-portfolio-row');
@@ -559,76 +580,78 @@ function gatherPortfolioData(presentDate) {
         }));
 }
 
-calculateBtn.addEventListener('click', async () => {
-    if (marketQuotes.length === 0) { showAlert('Market quotes table is empty.', 'danger'); return; }
+if (calculateBtn) {
+    calculateBtn.addEventListener('click', async () => {
+        if (marketQuotes.length === 0) { showAlert('Market quotes table is empty.', 'danger'); return; }
 
-    const tradeDateEl = document.getElementById('trade-date');
-    const tradeDate = tradeDateEl ? tradeDateEl.value.trim() : '';
-    if (!/^\d{2}-\d{2}-\d{4}$/.test(tradeDate)) { showAlert('Curve Date must be DD-MM-YYYY.', 'danger'); return; }
+        const tradeDateEl = document.getElementById('trade-date');
+        const tradeDate = tradeDateEl ? tradeDateEl.value.trim() : '';
+        if (!/^\d{2}-\d{2}-\d{4}$/.test(tradeDate)) { showAlert('Curve Date must be DD-MM-YYYY.', 'danger'); return; }
 
-    const presentDateEl = document.getElementById('ca-present-date') || document.getElementById('ca-valuation-date');
-    const presentDate = presentDateEl ? presentDateEl.value.trim() : '';
+        const presentDateEl = document.getElementById('ca-present-date') || document.getElementById('ca-valuation-date');
+        const presentDate = presentDateEl ? presentDateEl.value.trim() : '';
 
-    const portfolio = gatherPortfolioData(presentDate);
-    if (portfolio.length === 0) { showAlert('Add at least one position with a ticker.', 'danger'); return; }
+        const portfolio = gatherPortfolioData(presentDate);
+        if (portfolio.length === 0) { showAlert('Add at least one position with a ticker.', 'danger'); return; }
 
-    for (const p of portfolio) {
-        if (p.asset_trade_date && !/^\d{2}-\d{2}-\d{4}$/.test(p.asset_trade_date)) {
-            showAlert(`Position ${p.ticker}: Trade Date must be DD-MM-YYYY (or blank for curve date).`, 'danger');
-            return;
-        }
-    }
-
-    const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
-    
-    const payload = {
-        config: {
-            curve_type: curveType,
-            trade_date: tradeDate,
-            day_count_convention: 'ACT/365',
-            payment_frequency: parseInt(document.getElementById('payment-freq')?.value || 2),
-            interpolation_method: document.getElementById('interpolation')?.value || 'Cubic Spline',
-            futures_cutoff_years: parseFloat(document.getElementById('cutoff-years')?.value || 2.0)
-        },
-        market_data: marketQuotes,
-        portfolio: portfolio
-    };
-
-    calculateBtn.disabled = true;
-    calculateBtn.innerHTML = `<span class="spinner"></span> Fetching live data...`;
-
-    try {
-        const res = await fetch('/api/calculate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-
-        if (!data.success) {
-            showAlert(data.error || 'Unknown server error.', 'danger');
-            resultsContainer.style.display = 'none';
-            return;
+        for (const p of portfolio) {
+            if (p.asset_trade_date && !/^\d{2}-\d{2}-\d{4}$/.test(p.asset_trade_date)) {
+                showAlert(`Position ${p.ticker}: Trade Date must be DD-MM-YYYY (or blank for curve date).`, 'danger');
+                return;
+            }
         }
 
-        calculationResults = data;
-        curveValuationDate = parseDDMMYYYY(tradeDate);
-        resultsContainer.style.display = 'grid';
-        renderOutputTable();
-        renderCharts();
-        renderValuationPanel(data.portfolio_results);
-        drawCashflowChart(data.cashflows);
-        renderCashflowTable(data.cashflows);
-        saveSession();
-        showAlert(`Priced ${portfolio.length} position(s) (${data.curves.method}).`, 'success');
-        resultsContainer.scrollIntoView({ behavior: 'smooth' });
-    } catch (err) {
-        showAlert(`Network error: ${err.message}. Is the Flask server running?`, 'danger');
-    } finally {
-        calculateBtn.disabled = false;
-        calculateBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Calculate Cross-Asset NPV`;
-    }
-});
+        const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
+        
+        const payload = {
+            config: {
+                curve_type: curveType,
+                trade_date: tradeDate,
+                day_count_convention: 'ACT/365',
+                payment_frequency: parseInt(document.getElementById('payment-freq')?.value || 2),
+                interpolation_method: document.getElementById('interpolation')?.value || 'Cubic Spline',
+                futures_cutoff_years: parseFloat(document.getElementById('cutoff-years')?.value || 2.0)
+            },
+            market_data: marketQuotes,
+            portfolio: portfolio
+        };
+
+        calculateBtn.disabled = true;
+        calculateBtn.innerHTML = `<span class="spinner"></span> Fetching live data...`;
+
+        try {
+            const res = await fetch('/api/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (!data.success) {
+                showAlert(data.error || 'Unknown server error.', 'danger');
+                if (resultsContainer) resultsContainer.style.display = 'none';
+                return;
+            }
+
+            calculationResults = data;
+            curveValuationDate = parseDDMMYYYY(tradeDate);
+            if (resultsContainer) resultsContainer.style.display = 'grid';
+            renderOutputTable();
+            renderCharts();
+            renderValuationPanel(data.portfolio_results);
+            drawCashflowChart(data.cashflows);
+            renderCashflowTable(data.cashflows);
+            saveSession();
+            showAlert(`Priced ${portfolio.length} position(s) (${data.curves.method}).`, 'success');
+            if (resultsContainer) resultsContainer.scrollIntoView({ behavior: 'smooth' });
+        } catch (err) {
+            showAlert(`Network error: ${err.message}. Is the Flask server running?`, 'danger');
+        } finally {
+            calculateBtn.disabled = false;
+            calculateBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Calculate Cross-Asset NPV`;
+        }
+    });
+}
 
 // ============================================================
 // CA-RENDERING : Output Tables & Charts
@@ -660,10 +683,11 @@ function renderValuationPanel(pr) {
     } else {
         initEl.textContent = '—'; curEl.textContent = '—'; sumEl.textContent = `${pr.positions_priced} position(s) priced`;
     }
-    panel.style.display = 'flex';
+    if (panel) panel.style.display = 'flex';
 }
 
 function renderOutputTable() {
+    if(!outputTableBody) return;
     outputTableBody.innerHTML = '';
     if (!calculationResults || !calculationResults.knots) return;
     const curveType = curveTypeSelect ? curveTypeSelect.value : 'OIS';
@@ -720,7 +744,10 @@ function tToDateLabel(t) {
 
 function renderCharts() {
     if (!calculationResults || !calculationResults.curves) return;
-    const ctx = document.getElementById('yield-chart').getContext('2d');
+    const canvas = document.getElementById('yield-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
     if (yieldChart) yieldChart.destroy();
 
     const isDark = (document.documentElement.getAttribute('data-theme') || 'dark') === 'dark';
@@ -778,7 +805,8 @@ function drawCashflowChart(cashflowData) {
     const ctx = canvas.getContext('2d');
     if (cashflowChart) cashflowChart.destroy();
 
-    const labels = cashflowData.map(d => d.date);
+    // Use formatNiceDate to get that clean "1 Jul '26" label
+    const labels = cashflowData.map(d => formatNiceDate(d.date));
     const netFlows = cashflowData.map(d => d.net_cashflow);
     const cumulativeFlows = cashflowData.map(d => d.cumulative);
 
@@ -821,18 +849,39 @@ function drawCashflowChart(cashflowData) {
     });
 }
 
-const axisToggleEl = document.getElementById('axis-toggle');
-if (axisToggleEl) axisToggleEl.addEventListener('change', () => { if (currentCashflowData) drawCashflowChart(currentCashflowData); });
+// ---------- Toggle Logic for Seamless Expanding ----------
+const toggleCfBtn = document.getElementById('toggle-cashflow-table');
+const cfTablePanel = document.getElementById('cf-table-panel');
+
+if (toggleCfBtn && cfTablePanel) {
+    toggleCfBtn.addEventListener('click', () => {
+        if (cfTablePanel.style.display === 'none') {
+            cfTablePanel.style.display = 'block';
+            toggleCfBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            toggleCfBtn.title = "Hide Table";
+        } else {
+            cfTablePanel.style.display = 'none';
+            toggleCfBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            toggleCfBtn.title = "Show Table";
+        }
+        
+        // Let the CSS flex transition finish, then force Chart.js to recalculate its canvas bounds
+        setTimeout(() => {
+            if (cashflowChart) cashflowChart.resize();
+        }, 350); 
+    });
+}
+
 
 const CF_COLUMNS = [
-    { key: 'date',           label: 'Payment Date',       fmt: v => v },
+    { key: 'date',           label: 'Payment Date',       fmt: formatNiceDate },
     { key: 'type',           label: 'Type',               fmt: v => v },
     { key: 'fixed_cashflow', label: 'Fixed Leg ($)',      fmt: fmtMoney },
     { key: 'asset_cashflow', label: 'Asset Leg ($)',      fmt: fmtMoney },
     { key: 'net_cashflow',   label: 'Net Cashflow ($)',   fmt: fmtMoney },
     { key: 'df',             label: 'DF',                 fmt: fmt4 },
     { key: 'pv',             label: 'PV of Net ($)',      fmt: fmtMoney },
-    { key: 'cumulative',     label: 'Cumulative PnL ($)', fmt: fmtMoney },
+    { key: 'cumulative',     label: 'Cumulative PnL ($)', fmt: fmtMoney }, // Column for Cumulative Cashflow
 ];
 
 function activeCashflowColumns(cashflows) {
@@ -863,15 +912,3 @@ function renderCashflowTable(cashflows) {
         body.appendChild(tr);
     });
 }
-
-const exportCashflowsBtn = document.getElementById('export-cashflows');
-if (exportCashflowsBtn) exportCashflowsBtn.addEventListener('click', () => {
-    if (!currentCashflowData || !currentCashflowData.length) { showAlert('Run a calculation first.', 'danger'); return; }
-    const cols = activeCashflowColumns(currentCashflowData);
-    const headLine = cols.map(c => c.label.replace(/,/g, '')).join(',');
-    const lines = currentCashflowData.map(r => cols.map(c => {
-        const v = r[c.key];
-        return typeof v === 'number' ? v.toFixed(c.key === 'df' ? 4 : 2) : (v ?? '');
-    }).join(','));
-    downloadCSV([headLine, ...lines].join('\n'), 'crossasset_cashflow_schedule.csv');
-});

@@ -1,5 +1,3 @@
-
-
 # Swap Calculator
 
 A web app tool used to calculate the projected floating rates and net cash flows of multiple and different interest rate swaps across different payment dates. By modeling projected market index rates using cash, futures, and par swap rates, this calculator simplifies complex financial hedges into actionable data, quantifying proffability and risk of different swap positions.
@@ -11,10 +9,12 @@ Built using Python (flask) and plain HTML/JS/CSS; this is an ongoing collaborati
 - [User Guide](#user-guide)
   - [Installation](#installation)
   - [Features](#features--workflows)
-  - [Workflow and Examples]
+  - [Workflow and Examples] (#Workflow and Examples)
 - [Documentation & Guides](#documentation--guides)
 - [Acknowledgments & References](#acknowledgments--references)
 - [Contributors](#contributors)
+
+<br>
 
 ## Showcase
 
@@ -54,8 +54,9 @@ The core attributes defined in a swap contract:
 
 If you just want to run the quant engine in the command line, you can run `python src/main.py` which will calculate swap NPVs and use matplotlib to show the curves.
 
-## Deployment
+### Deployment
 It is configured to run on Render via `render.yaml` and `Procfile` using Gunicorn.
+
 ### Features & Workflows
 
 #### Interest Rate Swap
@@ -91,7 +92,6 @@ It is configured to run on Render via `render.yaml` and `Procfile` using Gunicor
 - **Math Docs**: A docs page and a LaTeX file (`financial-math.tex`) explaining the math formulas.
 
 ## Acknowledgments & References
-
 **References**
 * **Miron, Paul. *Pricing and Hedging Swaps*.** This book served as our primary educational resource and reference guide. It provided the foundational knowledge on pricing methods, swap valuation, and the underlying mathematics that power the core logic of this calculator. 
 
@@ -101,6 +101,6 @@ It is configured to run on Render via `render.yaml` and `Procfile` using Gunicor
 
 ## Contributors
 
-- [@podles](https://github.com/podles) (Ayden) - Developer
-- [@Iota113](https://github.com/Iota113) - Developer
-- [@yunn-ctrl]
+- [@podledges](https://github.com/podledges) (Ayden) - Developer
+- [@Iota113](https://github.com/Iota113) (Henry) - Developer
+- [@yunn-ctrl] 
