@@ -76,20 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeIcon(savedTheme);
-    
+
     // Formatting & Sync listeners
     initNotionalFormatting(leg1Notional);
     initNotionalFormatting(leg2Notional);
     initSyncingListeners();
     updateLabelStates();
-    
-    // Automatically price on page load to show beautiful results immediately
-    triggerCalculation();
 });
 
 // Comma Formatting Utilities
 function formatWithCommas(value) {
-    let num = value.replace(/[^0-9.]/g, ''); 
+    let num = value.replace(/[^0-9.]/g, '');
     if (!num) return '';
     let parts = num.split('.');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -111,20 +108,20 @@ function initNotionalFormatting(input) {
 function updateLabelStates() {
     const c1 = leg1Currency.value;
     const c2 = leg2Currency.value;
-    
+
     // Label pairs
     if (fxPairLabel) fxPairLabel.textContent = `${c1}/${c2}`;
     if (curve1Name) curve1Name.textContent = c1;
     if (curve2Name) curve2Name.textContent = c2;
     if (curve1NodesTitle) curve1NodesTitle.textContent = c1;
     if (curve2NodesTitle) curve2NodesTitle.textContent = c2;
-    
+
     document.querySelectorAll('.leg1-curr-label').forEach(el => el.textContent = c1);
     document.querySelectorAll('.leg2-curr-label').forEach(el => el.textContent = c2);
-    
+
     if (curve1TabLabel) curve1TabLabel.textContent = `${c1} Nodes`;
     if (curve2TabLabel) curve2TabLabel.textContent = `${c2} Nodes`;
-    
+
     // Leg 1 type label
     if (leg1Type && leg1RateLabel) {
         if (leg1Type.value === 'fixed') {
@@ -133,7 +130,7 @@ function updateLabelStates() {
             leg1RateLabel.textContent = 'Spread (%)';
         }
     }
-    
+
     // Leg 2 type label
     if (leg2Type && leg2RateLabel) {
         if (leg2Type.value === 'fixed') {
@@ -147,20 +144,20 @@ function updateLabelStates() {
 function initSyncingListeners() {
     leg1Currency.addEventListener('change', updateLabelStates);
     leg2Currency.addEventListener('change', updateLabelStates);
-    
+
     leg1Type.addEventListener('change', updateLabelStates);
     leg2Type.addEventListener('change', updateLabelStates);
-    
+
     // Leg 1 Position controls Leg 2 Position
     leg1Position.addEventListener('change', (e) => {
         leg2Position.value = e.target.value === 'receiver' ? 'payer' : 'receiver';
     });
-    
+
     // Leg 1 Tenor controls Leg 2 Tenor
     leg1Tenor.addEventListener('input', (e) => {
         leg2Tenor.value = e.target.value;
     });
-    
+
     // Recalc Notional Button
     recalcNotionalBtn.addEventListener('click', () => {
         const spotFx = parseFloat(spotFxInput.value) || 1.0;
@@ -226,29 +223,29 @@ function handleCurveFile(file, curveNum) {
 function parseCSV(text) {
     const lines = text.split(/\r?\n/);
     if (lines.length === 0) return [];
-    
+
     const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
     const instIdx = headers.findIndex(h => h.toLowerCase() === 'instrument');
     const tenorIdx = headers.findIndex(h => h.toLowerCase() === 'tenor');
     const typeIdx = headers.findIndex(h => h.toLowerCase() === 'quotetype');
     const quoteIdx = headers.findIndex(h => h.toLowerCase() === 'quote');
     const spreadIdx = headers.findIndex(h => h.toLowerCase() === 'spread');
-    
+
     if (instIdx === -1 || tenorIdx === -1 || typeIdx === -1 || quoteIdx === -1) {
         throw new Error('CSV headers must include: Instrument, Tenor, QuoteType, Quote');
     }
-    
+
     const records = [];
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
-        
+
         const cols = line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
         if (cols.length <= Math.max(instIdx, tenorIdx, typeIdx, quoteIdx)) continue;
-        
+
         const spreadVal = spreadIdx !== -1 ? cols[spreadIdx] : '';
         const spread = spreadVal !== '' && !isNaN(parseFloat(spreadVal)) ? parseFloat(spreadVal) : null;
-        
+
         records.push({
             Instrument: cols[instIdx].charAt(0).toUpperCase() + cols[instIdx].slice(1).toLowerCase(),
             Tenor: cols[tenorIdx].toUpperCase(),
@@ -278,14 +275,14 @@ function showAlert(message, type = 'info') {
     let iconClass = 'fa-circle-info';
     if (type === 'danger') iconClass = 'fa-circle-xmark';
     if (type === 'success') iconClass = 'fa-circle-check';
-    
+
     alertDiv.innerHTML = `
         <i class="fa-solid ${iconClass}"></i>
         <span>${message}</span>
     `;
     alertContainer.innerHTML = '';
     alertContainer.appendChild(alertDiv);
-    
+
     if (type !== 'danger') {
         setTimeout(() => {
             alertDiv.style.opacity = '0';
@@ -303,7 +300,7 @@ themeToggleBtn.addEventListener('click', () => {
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     updateThemeIcon(newTheme);
-    
+
     if (calculationResults) {
         renderCurvesChart();
         renderTimelineChart();
@@ -318,13 +315,13 @@ function updateThemeIcon(theme) {
 // Calculate Action
 calculateBtn.addEventListener('click', triggerCalculation);
 
- async function triggerCalculation() {
+async function triggerCalculation() {
     calculateBtn.disabled = true;
     calculateBtn.innerHTML = `<span class="spinner"></span> Pricing Swap...`;
-    
+
     const tradeDate = tradeDateInput.value.trim();
     const spotFx = parseFloat(spotFxInput.value) || 1.0;
-    
+
     const leg1 = {
         currency: leg1Currency.value,
         notional: stripCommas(leg1Notional.value),
@@ -335,7 +332,7 @@ calculateBtn.addEventListener('click', triggerCalculation);
         tenor_years: parseInt(leg1Tenor.value),
         is_payer: leg1Position.value === 'payer'
     };
-    
+
     const leg2 = {
         currency: leg2Currency.value,
         notional: stripCommas(leg2Notional.value),
@@ -346,21 +343,21 @@ calculateBtn.addEventListener('click', triggerCalculation);
         tenor_years: parseInt(leg1Tenor.value), // Matched
         is_payer: leg2Position.value === 'payer'
     };
-    
+
     const curve_config1 = {
         day_count_convention: leg1Daycount.value,
         payment_frequency: parseInt(leg1Frequency.value),
         interpolation_method: document.getElementById('curve1-interpolation').value,
         futures_cutoff_years: parseFloat(document.getElementById('curve1-cutoff').value) || 2.0
     };
-    
+
     const curve_config2 = {
         day_count_convention: leg2Daycount.value,
         payment_frequency: parseInt(leg2Frequency.value),
         interpolation_method: document.getElementById('curve2-interpolation').value,
         futures_cutoff_years: parseFloat(document.getElementById('curve2-cutoff').value) || 2.0
     };
-    
+
     try {
         const response = await fetch('/api/calculate_currency_swap', {
             method: 'POST',
@@ -376,9 +373,9 @@ calculateBtn.addEventListener('click', triggerCalculation);
                 leg2_market_data: curve2MarketQuotes
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (!data.success) {
             showAlert(data.error || 'Pricing calculation failed.', 'danger');
             resultsContainer.style.display = 'none';
@@ -386,15 +383,16 @@ calculateBtn.addEventListener('click', triggerCalculation);
             calculationResults = data;
             resultsContainer.style.display = 'grid';
             showAlert('Cross-currency swap valued successfully!', 'success');
-            
+
             updateNPVDisplays(data.npv_results);
+            renderRiskResults(data.risk_results);
             renderCashflowTable(data.cashflows);
             renderKnotTables(data.leg1_knots, data.leg2_knots);
             renderFXForwardTable(data.fx_forward_curve);
-            
+
             renderCurvesChart();
             renderTimelineChart();
-            
+
             resultsContainer.scrollIntoView({ behavior: 'smooth' });
         }
     } catch (err) {
@@ -405,20 +403,85 @@ calculateBtn.addEventListener('click', triggerCalculation);
     }
 }
 
+function formatRiskAmount(value, currency) {
+    if (value === null || value === undefined) return '—';
+    const prefix = value >= 0 ? '+' : '';
+    return `${prefix}${currency} ${Math.abs(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function renderRiskResults(risk) {
+    if (!risk || !risk.parallel) return;
+
+    const c1 = leg1Currency.value;
+    const p = risk.parallel;
+
+    document.getElementById('risk-leg1-dv01').textContent = formatRiskAmount(p.leg1_dv01, c1);
+    document.getElementById('risk-leg2-dv01').textContent = formatRiskAmount(p.leg2_dv01, c1);
+
+    const fxEl = document.getElementById('risk-fx-delta');
+    const fxDelta = p.fx_delta_1pct;
+    fxEl.textContent = `${fxDelta >= 0 ? '+' : '-'}${c1} ${Math.abs(fxDelta).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    fxEl.style.color = fxDelta >= 0 ? 'var(--success)' : 'var(--danger)';
+
+    const leg1SpreadWrap = document.getElementById('risk-leg1-spread-wrap');
+    const leg2SpreadWrap = document.getElementById('risk-leg2-spread-wrap');
+    if (p.leg1_spread_pvbp != null) {
+        leg1SpreadWrap.style.display = 'block';
+        document.getElementById('risk-leg1-spread').textContent = formatRiskAmount(p.leg1_spread_pvbp, c1);
+    } else {
+        leg1SpreadWrap.style.display = 'none';
+    }
+    if (p.leg2_spread_pvbp != null) {
+        leg2SpreadWrap.style.display = 'block';
+        document.getElementById('risk-leg2-spread').textContent = formatRiskAmount(p.leg2_spread_pvbp, c1);
+    } else {
+        leg2SpreadWrap.style.display = 'none';
+    }
+
+    const methodNote = document.getElementById('risk-method-note');
+    if (risk.method) {
+        methodNote.textContent = `Rate bumps: ${risk.method.rate_bump}. FX: ${risk.method.fx_bump}. Spread: ${risk.method.spread_bump}. All ΔNPV in ${c1}.`;
+    }
+
+    renderDeltaVectorTable('leg1-delta-tbody', risk.leg1_delta_vector || [], c1);
+    renderDeltaVectorTable('leg2-delta-tbody', risk.leg2_delta_vector || [], c1);
+}
+
+function renderDeltaVectorTable(tbodyId, rows, currency) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
+    if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No pillars</td></tr>';
+        return;
+    }
+    rows.forEach(row => {
+        const tr = document.createElement('tr');
+        const deltaColor = row.delta >= 0 ? 'color: var(--success);' : 'color: var(--danger);';
+        const quoteLabel = row.quote_type === 'PRICE' ? row.quote.toFixed(4) : `${row.quote.toFixed(4)}%`;
+        tr.innerHTML = `
+            <td>${row.instrument}</td>
+            <td>${row.tenor}</td>
+            <td style="font-family: monospace;">${quoteLabel}</td>
+            <td style="${deltaColor} font-family: monospace; font-weight: 600;">${row.delta >= 0 ? '+' : ''}${currency} ${row.delta.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
 function updateNPVDisplays(results) {
     const c1 = leg1Currency.value;
-    
-    document.getElementById('leg1-interest-pv-display').textContent = `Interest PV: ${c1} ${results.leg1_interest_pv.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    document.getElementById('leg1-notional-pv-display').textContent = `Notional PV: ${c1} ${results.leg1_notional_pv.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    document.getElementById('leg1-total-pv-display').textContent = `${c1} ${results.leg1_total_pv.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    
-    document.getElementById('leg2-interest-pv-display').textContent = `Interest PV: ${c1} ${results.leg2_interest_pv.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    document.getElementById('leg2-notional-pv-display').textContent = `Notional PV: ${c1} ${results.leg2_notional_pv.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    document.getElementById('leg2-total-pv-display').textContent = `${c1} ${results.leg2_total_pv.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    
+
+    document.getElementById('leg1-interest-pv-display').textContent = `Interest PV: ${c1} ${results.leg1_interest_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('leg1-notional-pv-display').textContent = `Notional PV: ${c1} ${results.leg1_notional_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('leg1-total-pv-display').textContent = `${c1} ${results.leg1_total_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    document.getElementById('leg2-interest-pv-display').textContent = `Interest PV: ${c1} ${results.leg2_interest_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('leg2-notional-pv-display').textContent = `Notional PV: ${c1} ${results.leg2_notional_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('leg2-total-pv-display').textContent = `${c1} ${results.leg2_total_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
     const netNPV = document.getElementById('net-npv-display');
-    netNPV.textContent = `${c1} ${results.total_net_npv.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    
+    netNPV.textContent = `${c1} ${results.total_net_npv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
     // Style Net NPV based on sign
     if (results.total_net_npv >= 0.0) {
         netNPV.style.color = 'var(--success)';
@@ -433,28 +496,28 @@ function renderCashflowTable(cashflows) {
     cashflowsTbody.innerHTML = '';
     cashflows.forEach(cf => {
         const tr = document.createElement('tr');
-        
+
         // Highlight maturity principal exchange row
         if (cf.type === 'principal') {
             tr.style.background = 'rgba(255, 255, 255, 0.04)';
             tr.style.fontWeight = 'bold';
         }
-        
+
         // Colors for positive/negative cashflows
         const l1Color = cf.leg1_amount >= 0 ? 'color: var(--success);' : 'color: var(--danger);';
         const l2Color = cf.leg2_amount >= 0 ? 'color: var(--success);' : 'color: var(--danger);';
         const netColor = cf.net_cashflow >= 0 ? 'color: var(--success);' : 'color: var(--danger);';
-        
+
         tr.innerHTML = `
             <td>${cf.date}</td>
             <td><span class="status-badge ${cf.type === 'principal' ? 'active' : 'skipped'}">${cf.type.toUpperCase()}</span></td>
-            <td style="${l1Color}">${cf.leg1_amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-            <td style="${l2Color}">${cf.leg2_amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td style="${l1Color}">${cf.leg1_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+            <td style="${l2Color}">${cf.leg2_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td>${cf.fx_forward.toFixed(6)}</td>
-            <td style="${l2Color}">${cf.leg2_converted.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-            <td style="${netColor}">${cf.net_cashflow.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td style="${l2Color}">${cf.leg2_converted.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+            <td style="${netColor}">${cf.net_cashflow.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td>${cf.df.toFixed(6)}</td>
-            <td style="${netColor} font-weight: bold;">${cf.pv.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td style="${netColor} font-weight: bold;">${cf.pv.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
         `;
         cashflowsTbody.appendChild(tr);
     });
@@ -467,7 +530,7 @@ function renderKnotTables(knots1, knots2) {
         let badge = `<span class="status-badge active">Active</span>`;
         if (k.skipped) badge = `<span class="status-badge skipped">Skipped</span>`;
         if (k.error) badge = `<span class="status-badge error">Error</span>`;
-        
+
         tr.innerHTML = `
             <td><strong>${k.tenor}</strong></td>
             <td>${k.df !== undefined ? k.df.toFixed(5) : '-'}</td>
@@ -476,14 +539,14 @@ function renderKnotTables(knots1, knots2) {
         `;
         curve1KnotsTbody.appendChild(tr);
     });
-    
+
     curve2KnotsTbody.innerHTML = '';
     knots2.forEach(k => {
         const tr = document.createElement('tr');
         let badge = `<span class="status-badge active">Active</span>`;
         if (k.skipped) badge = `<span class="status-badge skipped">Skipped</span>`;
         if (k.error) badge = `<span class="status-badge error">Error</span>`;
-        
+
         tr.innerHTML = `
             <td><strong>${k.tenor}</strong></td>
             <td>${k.df !== undefined ? k.df.toFixed(5) : '-'}</td>
@@ -541,35 +604,35 @@ function renderCurvesChart() {
     if (!calculationResults) return;
     const canvas = document.getElementById('curves-chart');
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (curvesChart) curvesChart.destroy();
-    
+
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
     const isDark = theme === 'dark';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
     const textColor = isDark ? '#94a3b8' : '#475569';
-    
+
     const c1 = leg1Currency.value;
     const c2 = leg2Currency.value;
-    
+
     let chartTitle = '';
     let yLabel = '';
     let datasets = [];
-    
+
     const activeKnots1 = calculationResults.leg1_knots.filter(k => !k.error && !k.skipped && k.t > 0);
     const activeKnots2 = calculationResults.leg2_knots.filter(k => !k.error && !k.skipped && k.t > 0);
-    
+
     if (currentChartType === 'zero_rate') {
         chartTitle = 'Interest Rate Zero Curves (Smooth Spline)';
         yLabel = 'Continuous Zero Rate (%)';
-        
+
         const dataset1 = calculationResults.leg1_curve.times.map((t, idx) => ({ x: t, y: calculationResults.leg1_curve.zero_rates[idx] }));
         const dataset2 = calculationResults.leg2_curve.times.map((t, idx) => ({ x: t, y: calculationResults.leg2_curve.zero_rates[idx] }));
-        
+
         const knotsData1 = activeKnots1.map(k => ({ x: k.t, y: k.zero_rate, label: k.tenor }));
         const knotsData2 = activeKnots2.map(k => ({ x: k.t, y: k.zero_rate, label: k.tenor }));
-        
+
         datasets = [
             {
                 label: `${c1} Curve`,
@@ -615,18 +678,18 @@ function renderCurvesChart() {
     } else if (currentChartType === 'discount_factor') {
         chartTitle = 'Discount Factor Curves';
         yLabel = 'Discount Factor D(0, T)';
-        
+
         const dataset1 = calculationResults.leg1_curve.times.map((t, idx) => ({ x: t, y: calculationResults.leg1_curve.discount_factors[idx] }));
         const dataset2 = calculationResults.leg2_curve.times.map((t, idx) => ({ x: t, y: calculationResults.leg2_curve.discount_factors[idx] }));
-        
+
         dataset1.unshift({ x: 0, y: 1.0 });
         dataset2.unshift({ x: 0, y: 1.0 });
-        
+
         const knotsData1 = activeKnots1.map(k => ({ x: k.t, y: k.df, label: k.tenor }));
         const knotsData2 = activeKnots2.map(k => ({ x: k.t, y: k.df, label: k.tenor }));
         knotsData1.unshift({ x: 0, y: 1.0, label: 'Origin' });
         knotsData2.unshift({ x: 0, y: 1.0, label: 'Origin' });
-        
+
         datasets = [
             {
                 label: `${c1} Curve`,
@@ -672,16 +735,16 @@ function renderCurvesChart() {
     } else {
         chartTitle = 'FX Forward Curve (Covered Interest Parity)';
         yLabel = `Forward FX Rate (${c1}/${c2})`;
-        
+
         const fxData = [...calculationResults.fx_forward_curve];
         fxData.sort((a, b) => a.t - b.t);
-        
+
         const smoothData = fxData.map(item => ({ x: item.t, y: item.forward_rate }));
         smoothData.unshift({ x: 0, y: parseFloat(spotFxInput.value) || 1.0 });
-        
+
         const knotData = fxData.map(item => ({ x: item.t, y: item.forward_rate, label: item.tenor }));
         knotData.unshift({ x: 0, y: parseFloat(spotFxInput.value) || 1.0, label: 'Spot' });
-        
+
         datasets = [
             {
                 label: `Forward FX Rate`,
@@ -705,7 +768,7 @@ function renderCurvesChart() {
             }
         ];
     }
-    
+
     curvesChart = new Chart(ctx, {
         type: 'scatter',
         data: { datasets: datasets },
@@ -755,29 +818,29 @@ function renderTimelineChart() {
     if (!calculationResults || !calculationResults.cashflows) return;
     const canvas = document.getElementById('cashflow-timeline-chart');
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (timelineChart) timelineChart.destroy();
-    
+
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
     const isDark = theme === 'dark';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
     const textColor = isDark ? '#94a3b8' : '#475569';
-    
+
     // Process cashflows: group by date
     const interestCfs = calculationResults.cashflows.filter(cf => cf.type === 'interest');
-    
+
     const labels = interestCfs.map(cf => cf.date);
     const leg1Flows = interestCfs.map(cf => cf.leg1_amount);
     const leg2Flows = interestCfs.map(cf => cf.leg2_converted); // converted to Currency 1
-    
+
     // Net cumulative PV of interest payments
     let cumulative = 0.0;
     const cumulativeFlows = interestCfs.map(cf => {
         cumulative += cf.pv; // already discounted net cashflow in Leg 1 currency
         return cumulative;
     });
-    
+
     timelineChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -844,16 +907,16 @@ function renderTimelineChart() {
 // Export cashflow table to CSV
 exportCashflowsBtn.addEventListener('click', () => {
     if (!calculationResults || !calculationResults.cashflows) return;
-    
+
     const c1 = leg1Currency.value;
     const c2 = leg2Currency.value;
-    
+
     let csvContent = `PaymentDate,Type,Leg1_Cashflow_${c1},Leg2_Cashflow_${c2},ForwardFXRate,Leg2_Converted_${c1},Net_Cashflow_${c1},DiscountFactor_${c1},PV_Net_Cashflow_${c1}\n`;
-    
+
     calculationResults.cashflows.forEach(cf => {
         csvContent += `${cf.date},${cf.type},${cf.leg1_amount},${cf.leg2_amount},${cf.fx_forward},${cf.leg2_converted},${cf.net_cashflow},${cf.df},${cf.pv}\n`;
     });
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -871,7 +934,7 @@ if (showCurve1TableBtn && showCurve2TableBtn && showFxTableBtn) {
         showCurve1TableBtn.classList.add('active');
         showCurve2TableBtn.classList.remove('active');
         showFxTableBtn.classList.remove('active');
-        
+
         curve1TableWrapper.style.display = 'block';
         curve2TableWrapper.style.display = 'none';
         fxTableWrapper.style.display = 'none';
@@ -881,7 +944,7 @@ if (showCurve1TableBtn && showCurve2TableBtn && showFxTableBtn) {
         showCurve1TableBtn.classList.remove('active');
         showCurve2TableBtn.classList.add('active');
         showFxTableBtn.classList.remove('active');
-        
+
         curve1TableWrapper.style.display = 'none';
         curve2TableWrapper.style.display = 'block';
         fxTableWrapper.style.display = 'none';
@@ -891,7 +954,7 @@ if (showCurve1TableBtn && showCurve2TableBtn && showFxTableBtn) {
         showCurve1TableBtn.classList.remove('active');
         showCurve2TableBtn.classList.remove('active');
         showFxTableBtn.classList.add('active');
-        
+
         curve1TableWrapper.style.display = 'none';
         curve2TableWrapper.style.display = 'none';
         fxTableWrapper.style.display = 'block';

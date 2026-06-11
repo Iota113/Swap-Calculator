@@ -270,7 +270,7 @@
                     <li><a href="#foundations"><i class="fa-solid fa-hourglass-half"></i> 3. Time Value &amp;
                             Conventions</a></li>
                     <li><a href="#bootstrapping"><i class="fa-solid fa-stairs"></i> 4. Curve Bootstrapping</a></li>
-                    <li><a href="#interpolation"><i class="fa-solid fa-wave-square"></i> 5. Splines &amp;
+                    <li><a href="#interpolation"><i class="fa-solid fa-wave-square"></i> 5. Yield Curve
                             Interpolation</a></li>
                     <li><a href="#leg-valuation"><i class="fa-solid fa-file-invoice-dollar"></i> 6. Swap Leg
                             Valuation</a></li>
@@ -280,7 +280,9 @@
                             Coupon Spreads</a></li>
                     <li><a href="#liquidity-engine"><i class="fa-solid fa-filter"></i> 9. Liquidity Selection</a></li>
                     <li><a href="#currency-swap"><i class="fa-solid fa-dollar-sign"></i> 10. Currency Swap</a></li>
-                    <li><a href="#references"><i class="fa-solid fa-book-open"></i> 11. References</a></li>
+                    <li><a href="#ccs-risk"><i class="fa-solid fa-shield-halved"></i> 11. Cross-Currency Risk &amp;
+                            Sensitivities</a></li>
+                    <li><a href="#references"><i class="fa-solid fa-book-open"></i> 12. References</a></li>
                 </ul>
             </aside>
 
@@ -724,10 +726,11 @@
                     <div class="equation-block">
                         $$D_a = D_1^{(1-\lambda)\frac{D_a-D_0}{D_1-D_0}} \cdot D_2^{\lambda\frac{D_a-D_0}{D_2-D_0}}$$
                     </div>
-                    <h3>Natural Cubic Splines</h3>
+                    <h3>Cubic Splines</h3>
                     <p>
-                        To avoid sudden shifts in forward rates, our engine uses a **Cubic Spline** on zero rates. This
-                        fits a third-degree polynomial between each knot:
+                        A commonly used approach for constructing smooth yield curves is cubic spline interpolation.
+                        Our app applies a natural cubic spline to the bootstrapped zero rates, fitting a third-degree
+                        polynomial between each knot.
                     </p>
                     <div class="equation-block">
                         $$S_i(t) = a_i + b_i(t - t_i) + c_i(t - t_i)^2 + d_i(t - t_i)^3$$
@@ -833,29 +836,45 @@
                     <div class="equation-block">
                         $$\text{Delta}(\mathcal{P}) = \frac{1}{100} \times \frac{\partial PV(\mathcal{P})}{\partial
                         \mathbf{D}} \times \frac{\partial \mathbf{D}}{\partial \mathbf{R}'}$$
-                    </div>
-                    <p>
-                        Consider an isolated off-grid cash flow <code class="inline-code">C</code> occurring at date
-                        <code class="inline-code">D_a</code>, which sits between key grid maturities <code
-                            class="inline-code">D_1</code> and <code class="inline-code">D_2</code>. Its valuation is
-                        sensitive to movements at both boundaries:
-                    </p>
-                    <div class="equation-block">
-                        $$PV(C) = D_a \cdot C \implies \frac{\partial PV(C)}{\partial D_i} = \frac{\partial
-                        D_a}{\partial D_i} \cdot C$$
+                        <div class="equation-label">Analytical representation of portfolio delta sensitivity. In
+                            practice, our quantitative engine approximates these derivatives using finite-difference
+                            (bump-and-revalue) methods.</div>
                     </div>
 
-                    <h3>The Mathematical Bias of Non-Linear Interpolation</h3>
+                    <h3>Zero-Rate Curve Delta vs. Market Quote Delta</h3>
                     <p>
-                        While a linear interpolation methodology guarantees matching present values, an exponential
-                        curve construction method generates an exact hedging friction. Due to non-linear tracking
-                        errors:
+                        When measuring interest rate sensitivities, there are two primary methodologies used in
+                        quantitative finance:
                     </p>
-                    <div class="equation-block">
-                        $$\frac{\partial D_a}{\partial D_1} D_1 + \frac{\partial D_a}{\partial D_2} D_2 \neq D_a
-                        \implies PV(\text{Pair}) \neq PV(C)$$
-                        <div class="equation-label">Consequently, maintaining an identical delta risk posture over an
-                            exponentially interpolated curve introduces a subtle accounting value mismatch.</div>
+                    <div class="highlight-card">
+                        <h4>1. Zero-Rate Curve Delta (Zero Delta)</h4>
+                        <p>
+                            Calculated by applying a parallel shift directly to the continuously compounded zero rates
+                            on the already constructed yield curve ($z_{\text{bumped}}(t) = z(t) + 0.0001$), bypassing
+                            the re-bootstrapping solver.
+                        </p>
+                        <ul style="margin-left: 20px; font-size: 13.5px; line-height: 1.6; margin-top: 8px;">
+                            <li><strong>Application:</strong> Used in our <strong>Single-Currency Curve
+                                    Builder</strong>.</li>
+                            <li><strong>Pros/Cons:</strong> Extremely fast and computationally efficient, making it
+                                ideal for simple visual pricing and large portfolios. However, because it doesn't shift
+                                the underlying quotes, it does not exactly align with tradable instruments.</li>
+                        </ul>
+                    </div>
+                    <div class="highlight-card">
+                        <h4>2. Market Quote Delta (Instrument/Pillar Delta)</h4>
+                        <p>
+                            Calculated by shifting the underlying market benchmark quotes (e.g. cash, futures, swaps) by
+                            $+1$ bp, and then **re-bootstrapping** (rebuilding) the entire curve.
+                        </p>
+                        <ul style="margin-left: 20px; font-size: 13.5px; line-height: 1.6; margin-top: 8px;">
+                            <li><strong>Application:</strong> Used in our <strong>Cross-Currency Swap Engine</strong>.
+                            </li>
+                            <li><strong>Pros/Cons:</strong> This is the institutional front-office standard for trading
+                                and hedging. It captures the non-linear relationship of the bootstrapping solver and
+                                propagates shifts correctly through the FX forward curves. It is computationally more
+                                intensive as it requires rebuilding the curve for every bump run.</li>
+                        </ul>
                     </div>
 
                     <h3>PVBP / DV01 Risk Formulation</h3>
@@ -908,9 +927,28 @@
                     </p>
 
                     <div class="equation-block">
-                        $$W_{\text{hedge}} = - \frac{PVBP_{\text{portfolio}}}{PVBP_{\text{hedging\_instrument}}}$$
+                        $$W_{\text{hedge}} = - \frac{PVBP_{\text{portfolio}}}{PVBP_{\text{hedging instrument}}}$$
                         <div class="equation-label">Ensures that $PVBP_{\text{portfolio}} + W_{\text{hedge}} \times
-                            PVBP_{\text{hedging\_instrument}} = 0$</div>
+                            PVBP_{\text{hedging instrument}} = 0$</div>
+                    </div>
+                    <div class="highlight-card">
+                        <h4>Application Disclaimer</h4>
+                        <p>
+                            <em>Note: While this mathematical framework is provided for educational purposes, our
+                                application does not currently support the automatic calculation of hedge weights or
+                                optimal portfolio hedging ratios.</em>
+                        </p>
+                    </div>
+
+                    <div class="highlight-card">
+                        <h4>Single-Currency vs. Cross-Currency Risk Formulation</h4>
+                        <p>
+                            In the single-currency curve builder, interest rate risk is evaluated solely via a global
+                            parallel shift of the continuous zero rate curve (yielding a single parallel <strong>DV01 /
+                                PVBP</strong>). For multi-curve and cross-currency instruments (where curves are
+                            re-bootstrapped under quote bumps, and per-pillar delta vectors are calculated), see <a
+                                href="#ccs-risk">Section 11. Cross-Currency Risk &amp; Sensitivities</a>.
+                        </p>
                     </div>
                 </section>
                 <!-- Section 8 -->
@@ -1066,8 +1104,142 @@
                 </section>
 
                 <!-- Section 11 -->
-                <section class="docs-section" id="References">
-                    <h2><i class="fa-solid fa-book-open"></i> 11. References</h2>
+                <section class="docs-section" id="ccs-risk">
+                    <h2><i class="fa-solid fa-shield-halved"></i> 11. Cross-Currency Risk &amp; Sensitivities</h2>
+                    <p>
+                        Cross-Currency Swaps (CCS) expose traders to multiple risk factors across two independent yield
+                        curves (Base and Foreign currencies) as well as the spot FX rate and contractual coupon spreads.
+                        The quantitative engine uses a <strong>bump-and-revalue</strong> approach to calculate highly
+                        accurate sensitivities.
+                    </p>
+
+                    <h3>1. Base Net Present Value ($NPV_{\text{base}}$)</h3>
+                    <p>
+                        All risk sensitivities are measured as deviations from the baseline swap valuation. The total
+                        Net Present Value ($NPV$) of the swap is calculated in the Base Currency (Leg 1) as:
+                    </p>
+                    <div class="equation-block">
+                        $$NPV_{\text{base}} = NPV_{\text{Leg 1}} + NPV_{\text{Leg 2, converted}}$$
+                    </div>
+                    <p>
+                        Where $NPV_{\text{Leg 2, converted}}$ represents Leg 2 cash flows converted to Leg 1 currency
+                        using the derived FX forward rates $F(t)$ and discounted back to the trade date using the Leg 1
+                        discount factors:
+                    </p>
+                    <div class="equation-block">
+                        $$NPV_{\text{Leg 2, converted}} = \sum_{t} C_{2, t} \cdot F(t) \cdot D_1(t)$$
+                    </div>
+
+                    <h3>2. Curve Parallel Delta &amp; DV01</h3>
+                    <p>
+                        The parallel rate sensitivity measures the impact of a $+1$ basis point (+0.0001) parallel shift
+                        in the market quotes of a single curve. Unlike a direct shift of the zero-rate curve, this
+                        method <strong>re-bootstraps</strong> the entire curve to capture the non-linear relationship
+                        between market quotes and zero rates:
+                    </p>
+                    <ol>
+                        <li><strong>Quote Shift</strong>: All active benchmark market quotes $Q_i$ for a curve (Leg 1 or
+                            Leg 2) are bumped by $+1$ bp:
+                            <ul>
+                                <li><strong>Rate Quotes (Cash, Swaps)</strong>: Increased by $+1$ bp ($+0.01$ percentage
+                                    points): $Q_{i, \text{bumped}} = Q_i + 0.01$</li>
+                                <li><strong>Futures Price Quotes</strong>: Decreased by $-1$ bp ($-0.01$ price points)
+                                    to represent a $+1$ bp increase in the implied rate: $Q_{i, \text{bumped}} = Q_i -
+                                    0.01$</li>
+                            </ul>
+                        </li>
+                        <li><strong>Re-bootstrapping</strong>: The curve builder rebuilds and re-interpolates the curve
+                            using the bumped quotes to generate bumped discount factors $D_{\text{bumped}}(t)$.</li>
+                        <li><strong>Re-pricing</strong>: The cross-currency swap is re-priced using the bumped curve
+                            while keeping the other curve and spot FX rate constant, yielding $NPV_{\text{bumped}}$.
+                        </li>
+                        <li><strong>Sensitivity Output</strong>:
+                            <div class="equation-block">
+                                $$\text{Parallel Delta} = NPV_{\text{bumped}} - NPV_{\text{base}}$$
+                                $$\text{Parallel DV01} = \left| NPV_{\text{bumped}} - NPV_{\text{base}} \right|$$
+                            </div>
+                        </li>
+                    </ol>
+
+                    <h3>3. Per-Pillar Delta Vectors</h3>
+                    <p>
+                        Parallel DV01 can mask offsetting risks across the term structure. To identify local rate
+                        sensitivities, the engine calculates a <strong>Per-Pillar Delta Vector</strong> by bumping
+                        market quotes one-by-one:
+                    </p>
+                    <p>
+                        For each active benchmark instrument (pillar) $k$ in the curve's market data:
+                    </p>
+                    <ol>
+                        <li>Apply a $+1$ bp bump <strong>only</strong> to the quote $Q_k$ (rates $+1$ bp, futures $-1$
+                            bp), leaving all other quotes unchanged.</li>
+                        <li>Re-bootstrap the curve using this single bumped quote.</li>
+                        <li>Re-value the cross-currency swap to obtain $NPV_{\text{bumped, } k}$.</li>
+                        <li>Compute the pillar sensitivity (signed Delta and absolute PVBP):
+                            <div class="equation-block">
+                                $$\text{Pillar Delta}_k = NPV_{\text{bumped, } k} - NPV_{\text{base}}$$
+                                $$\text{Pillar PVBP}_k = \left| NPV_{\text{bumped, } k} - NPV_{\text{base}} \right|$$
+                            </div>
+                        </li>
+                    </ol>
+                    <p>
+                        This results in a vector of sensitivities $(\Delta_1, \Delta_2, \dots, \Delta_M)$ corresponding
+                        to the $M$ active knots of the curve, providing precise inputs for bucketed hedging.
+                    </p>
+
+                    <h3>4. FX Spot Delta</h3>
+                    <p>
+                        The FX Delta measures the sensitivity of the swap's NPV to relative fluctuations in the spot FX
+                        rate $S_0$ (defined as Leg 1 currency per unit of Leg 2 currency). It represents the NPV change
+                        in Base Currency for a relative $+1\%$ spot move:
+                    </p>
+                    <ol>
+                        <li><strong>Spot FX Shift</strong>: Apply a $+1\%$ relative increase to the spot FX rate:
+                            <div class="equation-block">
+                                $$S_{\text{bumped}} = S_0 \times (1 + 0.01)$$
+                            </div>
+                        </li>
+                        <li><strong>FX Forward Curve Re-derivation</strong>: Re-calculate the forward FX rates
+                            $F_{\text{bumped}}(t)$ under Covered Interest Parity (CIP) using the baseline curves:
+                            <div class="equation-block">
+                                $$F_{\text{bumped}}(t) = S_{\text{bumped}} \times \frac{D_2(t)}{D_1(t)}$$
+                            </div>
+                        </li>
+                        <li><strong>Re-pricing</strong>: Re-value the swap using the bumped FX forwards to obtain
+                            $NPV_{\text{bumped, FX}}$.</li>
+                        <li><strong>FX Delta Output</strong>:
+                            <div class="equation-block">
+                                $$\text{FX Delta}_{1\%} = NPV_{\text{bumped, FX}} - NPV_{\text{base}}$$
+                            </div>
+                        </li>
+                    </ol>
+
+                    <h3>5. Basis Spread PVBP</h3>
+                    <p>
+                        If a leg is a floating rate leg with a contractual basis spread, the engine calculates the
+                        sensitivity of the swap value to a $+1$ bp shift in that contractual spread (percent per annum):
+                    </p>
+                    <ol>
+                        <li>Apply a $+1$ bp bump to the contractual spread: $\text{Spread}_{\text{bumped}} =
+                            \text{Spread} + 0.01\%$.</li>
+                        <li>Re-calculate the floating leg interest cashflows:
+                            <div class="equation-block">
+                                $$C_{i, \text{bumped}} = \text{Notional} \times (\Phi_{i-1, i} + \text{Spread} + 0.0001)
+                                \times \alpha_{i-1, i}$$
+                            </div>
+                        </li>
+                        <li>Re-value the swap to obtain $NPV_{\text{bumped, spread}}$.</li>
+                        <li>Compute the Spread PVBP:
+                            <div class="equation-block">
+                                $$\text{Spread PVBP} = \left| NPV_{\text{bumped, spread}} - NPV_{\text{base}} \right|$$
+                            </div>
+                        </li>
+                    </ol>
+                </section>
+
+                <!-- Section 12 -->
+                <section class="docs-section" id="references">
+                    <h2><i class="fa-solid fa-book-open"></i> 12. References</h2>
                     <p> Is this true?
                     </p>
                 </section>

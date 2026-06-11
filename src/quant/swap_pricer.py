@@ -1,5 +1,6 @@
 import numpy as np
 from quant.day_counter import calculate_year_fraction
+from quant.risk_engine import parallel_bumped_discount_factors, RiskEngine
 
 
 class SwapPricer:
@@ -41,17 +42,7 @@ class SwapPricer:
             npv += cf["amount"] * df
         return npv
 
-    @staticmethod
-    def parallel_bumped_discount_factors(curve_builder, bp_shift: float = 0.0001) -> dict:
-        """Build a +bp_shift parallel-shifted discount factor curve from bootstrapped knots."""
-        bumped_dfs = {}
-        for t, df in curve_builder.discount_factors.items():
-            if t == 0:
-                bumped_dfs[t] = 1.0
-            else:
-                zero_rate = -np.log(df) / t
-                bumped_dfs[t] = np.exp(-(zero_rate + bp_shift) * t)
-        return bumped_dfs
+    parallel_bumped_discount_factors = staticmethod(parallel_bumped_discount_factors)
 
     def price_swap(self, paying_leg, receiving_leg, maturity_date, custom_curve=None):
         """
@@ -76,14 +67,4 @@ class SwapPricer:
 
     def calculate_dv01(self, paying_leg, receiving_leg, maturity_date):
         """Calculates swap PVBP via a +1 bp parallel shift on zero rates."""
-        base_npv = self.price_swap(paying_leg, receiving_leg, maturity_date)
-        bumped_dfs = self.parallel_bumped_discount_factors(self.curve_builder)
-        bumped_npv = self.price_swap(
-            paying_leg, receiving_leg, maturity_date, custom_curve=bumped_dfs
-        )
-
-        return {
-            "base_npv": base_npv,
-            "bumped_npv": bumped_npv,
-            "dv01": abs(bumped_npv - base_npv),
-        }
+        return RiskEngine.calculate_swap_dv01(self, paying_leg, receiving_leg, maturity_date)

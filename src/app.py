@@ -26,6 +26,7 @@ from quant.swap_pricer import SwapPricer
 from quant.cashflow_engine import CashflowEngine
 from quant.swap_legs import InterestRateLeg
 from quant.currency_swap_pricer import CurrencySwapPricer
+from quant.risk_engine import RiskEngine
 
 app = Flask(__name__, static_folder='web', static_url_path='')
 
@@ -886,6 +887,14 @@ def calculate_currency_swap():
         )
         
         cashflows, npv_results = pricer.price_swap()
+
+        risk_results = RiskEngine.calculate_ccs_risk(
+            pricer=pricer,
+            active_market_data1=active_records1,
+            active_market_data2=active_records2,
+            config1=config1,
+            config2=config2,
+        )
         
         # Generate knots outputs for visualization
         knots1 = _generate_curve_knots(leg1_records, builder1, config1)
@@ -923,7 +932,8 @@ def calculate_currency_swap():
             'leg2_curve': smooth_curve2,
             'fx_forward_curve': fx_forward_curve,
             'cashflows': cashflows,
-            'npv_results': npv_results
+            'npv_results': npv_results,
+            'risk_results': risk_results,
         })
         
     except Exception as e:

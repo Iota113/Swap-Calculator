@@ -89,17 +89,24 @@ class CurrencySwapPricer:
         curve1=None,
         curve2=None,
         spot_fx_rate: Optional[float] = None,
+        leg1_config: Optional[dict] = None,
+        leg2_config: Optional[dict] = None,
     ) -> Tuple[List[Dict], Dict]:
         """
         Price the cross-currency swap.
-        Optional curve/spot overrides support future bump-and-revalue risk runs.
+        Optional curve/spot/leg overrides support bump-and-revalue risk runs.
         """
         curve1 = curve1 or self.curve1
         curve2 = curve2 or self.curve2
         spot = spot_fx_rate if spot_fx_rate is not None else self.spot_fx_rate
 
-        leg1_cfs = self._generate_interest_cashflows(self.leg1_ir, self.leg1, curve1)
-        leg2_cfs = self._generate_interest_cashflows(self.leg2_ir, self.leg2, curve2)
+        leg1_cfg = {**self.leg1, **(leg1_config or {})}
+        leg2_cfg = {**self.leg2, **(leg2_config or {})}
+        leg1_ir = InterestRateLeg.from_leg_config(leg1_cfg)
+        leg2_ir = InterestRateLeg.from_leg_config(leg2_cfg)
+
+        leg1_cfs = self._generate_interest_cashflows(leg1_ir, leg1_cfg, curve1)
+        leg2_cfs = self._generate_interest_cashflows(leg2_ir, leg2_cfg, curve2)
 
         leg1_map = cashflows_to_date_map(leg1_cfs)
         leg2_map = cashflows_to_date_map(leg2_cfs)
@@ -116,8 +123,8 @@ class CurrencySwapPricer:
                 curve1=curve1,
                 curve2=curve2,
                 spot_fx_rate=spot,
-                leg1_day_count=self.leg1.get("day_count", "ACT/365"),
-                leg2_day_count=self.leg2.get("day_count", "ACT/365"),
+                leg1_day_count=leg1_cfg.get("day_count", "ACT/365"),
+                leg2_day_count=leg2_cfg.get("day_count", "ACT/365"),
                 row_type="interest",
             )
             leg1_interest_pv += row.pop("_leg1_pv")
@@ -125,13 +132,13 @@ class CurrencySwapPricer:
             merged_schedule.append(row)
 
         leg1_principal = generate_principal_exchange(
-            float(self.leg1.get("notional", 0.0)),
-            bool(self.leg1.get("is_payer", False)),
+            float(leg1_cfg.get("notional", 0.0)),
+            bool(leg1_cfg.get("is_payer", False)),
             self.maturity_date,
         )[0]["amount"]
         leg2_principal = generate_principal_exchange(
-            float(self.leg2.get("notional", 0.0)),
-            bool(self.leg2.get("is_payer", False)),
+            float(leg2_cfg.get("notional", 0.0)),
+            bool(leg2_cfg.get("is_payer", False)),
             self.maturity_date,
         )[0]["amount"]
 
@@ -142,8 +149,8 @@ class CurrencySwapPricer:
             curve1=curve1,
             curve2=curve2,
             spot_fx_rate=spot,
-            leg1_day_count=self.leg1.get("day_count", "ACT/365"),
-            leg2_day_count=self.leg2.get("day_count", "ACT/365"),
+            leg1_day_count=leg1_cfg.get("day_count", "ACT/365"),
+            leg2_day_count=leg2_cfg.get("day_count", "ACT/365"),
             row_type="principal",
         )
         leg1_notional_pv = principal_row.pop("_leg1_pv")

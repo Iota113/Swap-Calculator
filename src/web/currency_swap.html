@@ -1,24 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cross-Currency Swap Pricer</title>
-    
+    <title>Currency Swap</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    
+
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="grid-overlay"></div>
-    
+
     <header class="app-header">
         <div class="header-container">
             <div class="logo">
@@ -26,11 +30,13 @@
                 <span>Yield<span class="highlight">Curve</span></span>
             </div>
             <nav class="nav-links">
-                <a href="index.html"><i class="fa-solid fa-calculator"></i> Curve Builder</a>
-                <a href="currency_swap.html" class="active"><i class="fa-solid fa-arrow-right-arrow-left"></i> Currency Swap</a>
+                <a href="index.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> Interest Rate Swap</a>
+                <a href="currency_swap.html" class="active"><i class="fa-solid fa-dollar-sign"></i> Currency
+                    Swap</a>
                 <a href="cross_asset.html"><i class="fa-solid fa-right-left"></i> Cross-Asset Swap</a>
                 <a href="docs.html"><i class="fa-solid fa-book-open"></i> Docs & Guide</a>
-                <a href="https://www.animestats.tf/" target="_blank"><i class="fa-solid fa-wand-magic-sparkles"></i> Inspiration</a>
+                <a href="https://www.animestats.tf/" target="_blank"><i class="fa-solid fa-wand-magic-sparkles"></i>
+                    Inspiration</a>
             </nav>
             <div class="header-actions">
                 <button id="theme-toggle" class="icon-btn" title="Toggle Theme">
@@ -42,11 +48,13 @@
 
     <main class="app-container">
         <section class="hero-section">
-            <h1 class="hero-title"><span class="highlight">Currency Swap Pricer</span></h1>
-            <p class="hero-subtitle">Price cross-currency fixed/float, float/float (basis), and fixed/fixed interest rate swaps. Bootstrap dual yield curves, derive the FX forward curve via CIP, and project complete cashflow schedules.</p>
+            <h1 class="hero-title"><span class="highlight">Currency Swap</span></h1>
+            <p class="hero-subtitle">Price cross-currency fixed/float, float/float (basis), and fixed/fixed interest
+                rate swaps. Bootstrap dual yield curves, derive the FX forward curve via CIP, and project complete
+                cashflow schedules.</p>
         </section>
 
-        <div class="dashboard-grid">    
+        <div class="dashboard-grid">
             <div class="left-column">
                 <!-- Leg 1 Configuration -->
                 <div class="card" style="margin-bottom: 20px;">
@@ -199,8 +207,10 @@
                             <div class="form-group">
                                 <label for="spot-fx-rate">Spot FX Rate (<span id="fx-pair-label">USD/EUR</span>)</label>
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <input type="number" id="spot-fx-rate" value="1.0800" step="0.0001" style="flex: 1;">
-                                    <button id="recalc-notional-btn" class="btn btn-secondary btn-sm" title="Re-calculate Leg 2 Notional using Spot FX" style="height: 45px;">
+                                    <input type="number" id="spot-fx-rate" value="1.0800" step="0.0001"
+                                        style="flex: 1;">
+                                    <button id="recalc-notional-btn" class="btn btn-secondary btn-sm"
+                                        title="Re-calculate Leg 2 Notional using Spot FX" style="height: 45px;">
                                         <i class="fa-solid fa-rotate"></i> Sync Notional
                                     </button>
                                 </div>
@@ -215,7 +225,7 @@
                         </div>
                     </div>
                 </div>
-            </div> 
+            </div>
 
             <div class="right-column">
                 <!-- Curve 1 Settings & Import -->
@@ -241,11 +251,13 @@
                         <div class="dropzone-container">
                             <div id="curve1-dropzone" class="dropzone">
                                 <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
-                                <p class="dropzone-text">Drag & Drop Curve 1 CSV or <span class="browse-link">browse</span></p>
+                                <p class="dropzone-text">Drag & Drop Curve 1 CSV or <span
+                                        class="browse-link">browse</span></p>
                                 <input type="file" id="curve1-file" accept=".csv" style="display: none;">
                             </div>
                         </div>
-                        <div id="curve1-status" style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 5px;">
+                        <div id="curve1-status"
+                            style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 5px;">
                             Using default USD OIS curve sample data.
                         </div>
                     </div>
@@ -274,11 +286,13 @@
                         <div class="dropzone-container">
                             <div id="curve2-dropzone" class="dropzone">
                                 <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
-                                <p class="dropzone-text">Drag & Drop Curve 2 CSV or <span class="browse-link">browse</span></p>
+                                <p class="dropzone-text">Drag & Drop Curve 2 CSV or <span
+                                        class="browse-link">browse</span></p>
                                 <input type="file" id="curve2-file" accept=".csv" style="display: none;">
                             </div>
                         </div>
-                        <div id="curve2-status" style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 5px;">
+                        <div id="curve2-status"
+                            style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 5px;">
                             Using default EUR curve sample data.
                         </div>
                     </div>
@@ -286,9 +300,11 @@
 
                 <!-- Pricing Trigger -->
                 <div class="card" style="border: 1px solid var(--primary-glow); background: rgba(59, 130, 246, 0.03);">
-                    <div class="card-body" style="padding: 20px; text-align: center; display: flex; flex-direction: column; gap: 15px; align-items: center;">
+                    <div class="card-body"
+                        style="padding: 20px; text-align: center; display: flex; flex-direction: column; gap: 15px; align-items: center;">
                         <p style="font-size: 13px; color: var(--text-secondary);">
-                            Click below to generate interest rate curves, derive the CIP forward FX curve, and price the swap.
+                            Click below to generate interest rate curves, derive the CIP forward FX curve, and price the
+                            swap.
                         </p>
                         <button id="calculate-btn" class="btn btn-primary btn-lg" style="width: 100%;">
                             <i class="fa-solid fa-bolt"></i> Calculate Swap Price & NPV
@@ -298,36 +314,140 @@
                         </button>
                     </div>
                 </div>
-            </div> 
+            </div>
         </div>
-        
+
         <div id="alert-container" class="alert-container" style="margin-top: 20px;"></div>
 
         <!-- Results Display -->
-        <div id="results-container" class="results-grid" style="display: none; grid-template-columns: 1fr; margin-top: 30px; gap: 24px;">
+        <div id="results-container" class="results-grid"
+            style="display: none; grid-template-columns: 1fr; margin-top: 30px; gap: 24px;">
             <!-- NPV summary cards -->
             <div class="card" style="grid-column: 1 / -1;">
                 <div class="card-header">
                     <i class="fa-solid fa-scale-balanced"></i>
                     <h2>Cross-Currency Valuation & NPV Breakdown</h2>
                 </div>
-                <div class="card-body" style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 20px; text-align: center; padding: 30px 24px;">
+                <div class="card-body"
+                    style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 20px; text-align: center; padding: 30px 24px;">
                     <div>
-                        <h4 style="color: var(--text-secondary); font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Leg 1 NPV (<span class="leg1-curr-label">USD</span>)</h4>
-                        <div id="leg1-interest-pv-display" style="font-size: 13px; color: var(--text-muted);">Interest PV: 0.00</div>
-                        <div id="leg1-notional-pv-display" style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">Notional PV: 0.00</div>
-                        <div id="leg1-total-pv-display" style="font-size: 20px; font-weight: 700; color: var(--primary);">0.00</div>
+                        <h4
+                            style="color: var(--text-secondary); font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">
+                            Leg 1 NPV (<span class="leg1-curr-label">USD</span>)</h4>
+                        <div id="leg1-interest-pv-display" style="font-size: 13px; color: var(--text-muted);">Interest
+                            PV: 0.00</div>
+                        <div id="leg1-notional-pv-display"
+                            style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">Notional PV: 0.00
+                        </div>
+                        <div id="leg1-total-pv-display"
+                            style="font-size: 20px; font-weight: 700; color: var(--primary);">0.00</div>
                     </div>
                     <div style="border-left: 1px solid var(--border-color); padding-left: 30px;">
-                        <h4 style="color: var(--text-secondary); font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Leg 2 NPV (in <span class="leg1-curr-label">USD</span>)</h4>
-                        <div id="leg2-interest-pv-display" style="font-size: 13px; color: var(--text-muted);">Interest PV: 0.00</div>
-                        <div id="leg2-notional-pv-display" style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">Notional PV: 0.00</div>
-                        <div id="leg2-total-pv-display" style="font-size: 20px; font-weight: 700; color: var(--accent);">0.00</div>
+                        <h4
+                            style="color: var(--text-secondary); font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">
+                            Leg 2 NPV (in <span class="leg1-curr-label">USD</span>)</h4>
+                        <div id="leg2-interest-pv-display" style="font-size: 13px; color: var(--text-muted);">Interest
+                            PV: 0.00</div>
+                        <div id="leg2-notional-pv-display"
+                            style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">Notional PV: 0.00
+                        </div>
+                        <div id="leg2-total-pv-display"
+                            style="font-size: 20px; font-weight: 700; color: var(--accent);">0.00</div>
                     </div>
                     <div style="border-left: 1px solid var(--border-color); padding-left: 30px;">
-                        <h4 style="color: var(--text-secondary); font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Net Swap NPV (in <span class="leg1-curr-label">USD</span>)</h4>
-                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 21px;">(Leg 1 PV + Leg 2 PV)</div>
-                        <div id="net-npv-display" style="font-size: 24px; font-weight: 800; color: var(--success); text-shadow: 0 0 10px rgba(16,185,129,0.25);">0.00</div>
+                        <h4
+                            style="color: var(--text-secondary); font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">
+                            Net Swap NPV (in <span class="leg1-curr-label">USD</span>)</h4>
+                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 21px;">(Leg 1 PV + Leg 2
+                            PV)</div>
+                        <div id="net-npv-display"
+                            style="font-size: 24px; font-weight: 800; color: var(--success); text-shadow: 0 0 10px rgba(16,185,129,0.25);">
+                            0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk metrics -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <div class="card-header">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <h2>Cross-Currency Risk Sensitivities</h2>
+                </div>
+                <div class="card-body" style="padding: 24px;">
+                    <div
+                        style="display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-around; text-align: center; margin-bottom: 24px;">
+                        <div>
+                            <span style="display: block; font-size: 12px; opacity: 0.7; text-transform: uppercase;">Leg
+                                1 Parallel DV01</span>
+                            <span id="risk-leg1-dv01"
+                                style="font-family: monospace; font-size: 18px; font-weight: 700; color: var(--primary);">—</span>
+                        </div>
+                        <div>
+                            <span style="display: block; font-size: 12px; opacity: 0.7; text-transform: uppercase;">Leg
+                                2 Parallel DV01</span>
+                            <span id="risk-leg2-dv01"
+                                style="font-family: monospace; font-size: 18px; font-weight: 700; color: var(--accent);">—</span>
+                        </div>
+                        <div>
+                            <span style="display: block; font-size: 12px; opacity: 0.7; text-transform: uppercase;">FX
+                                Delta (+1% spot)</span>
+                            <span id="risk-fx-delta"
+                                style="font-family: monospace; font-size: 18px; font-weight: 700; color: #ec4899;">—</span>
+                        </div>
+                        <div id="risk-leg1-spread-wrap" style="display: none;">
+                            <span style="display: block; font-size: 12px; opacity: 0.7; text-transform: uppercase;">Leg
+                                1 Spread PVBP</span>
+                            <span id="risk-leg1-spread"
+                                style="font-family: monospace; font-size: 18px; font-weight: 700;">—</span>
+                        </div>
+                        <div id="risk-leg2-spread-wrap" style="display: none;">
+                            <span style="display: block; font-size: 12px; opacity: 0.7; text-transform: uppercase;">Leg
+                                2 Spread PVBP</span>
+                            <span id="risk-leg2-spread"
+                                style="font-family: monospace; font-size: 18px; font-weight: 700;">—</span>
+                        </div>
+                    </div>
+                    <p id="risk-method-note"
+                        style="font-size: 12px; color: var(--text-muted); text-align: center; margin-bottom: 20px;"></p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <h3
+                                style="font-size: 13px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 10px;">
+                                Leg 1 Delta Vector (<span class="leg1-curr-label">USD</span>)
+                            </h3>
+                            <div class="scroll-container output-table-wrapper" style="max-height: 280px;">
+                                <table class="results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Instrument</th>
+                                            <th>Tenor</th>
+                                            <th>Quote</th>
+                                            <th>Δ NPV (+1bp)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leg1-delta-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div>
+                            <h3
+                                style="font-size: 13px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 10px;">
+                                Leg 2 Delta Vector (<span class="leg2-curr-label">EUR</span>)
+                            </h3>
+                            <div class="scroll-container output-table-wrapper" style="max-height: 280px;">
+                                <table class="results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Instrument</th>
+                                            <th>Tenor</th>
+                                            <th>Quote</th>
+                                            <th>Δ NPV (+1bp)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leg2-delta-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -336,7 +456,8 @@
             <div style="display: grid; grid-template-columns: 2fr 3fr; gap: 1rem;">
                 <!-- Cashflow bar chart timeline -->
                 <div class="card">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="card-header"
+                        style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <i class="fa-solid fa-water"></i>
                             <h2>Projected Cashflow Timeline</h2>
@@ -351,7 +472,8 @@
 
                 <!-- Merged Cashflow Schedule -->
                 <div class="card">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="card-header"
+                        style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <i class="fa-solid fa-calendar-days"></i>
                             <h2>Projected Cashflow Schedule & PV</h2>
@@ -403,72 +525,80 @@
                     </div>
                 </div>
 
-            <!-- Yield Curve Nodes & FX Forwards Table Container -->
-            <div class="card">
-                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <i class="fa-solid fa-table"></i>
-                        <h2>Curve Nodes & Forward Rates</h2>
+                <!-- Yield Curve Nodes & FX Forwards Table Container -->
+                <div class="card">
+                    <div class="card-header"
+                        style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-table"></i>
+                            <h2>Curve Nodes & Forward Rates</h2>
+                        </div>
+                        <div class="chart-toggles">
+                            <button id="show-curve1-table" class="tab-btn active"><span id="curve1-tab-label">USD
+                                    Nodes</span></button>
+                            <button id="show-curve2-table" class="tab-btn"><span id="curve2-tab-label">EUR
+                                    Nodes</span></button>
+                            <button id="show-fx-table" class="tab-btn">FX Forward Curve</button>
+                        </div>
                     </div>
-                    <div class="chart-toggles">
-                        <button id="show-curve1-table" class="tab-btn active"><span id="curve1-tab-label">USD Nodes</span></button>
-                        <button id="show-curve2-table" class="tab-btn"><span id="curve2-tab-label">EUR Nodes</span></button>
-                        <button id="show-fx-table" class="tab-btn">FX Forward Curve</button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <!-- Curve 1 Nodes Wrapper -->
-                    <div id="curve1-table-wrapper" class="scroll-container output-table-wrapper" style="max-height: 320px; padding: 10px;">
-                        <table class="results-table">
-                            <thead>
-                                <tr>
-                                    <th>Tenor</th>
-                                    <th>DF</th>
-                                    <th>Zero Rate</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="curve1-knots-tbody"></tbody>
-                        </table>
-                    </div>
+                    <div class="card-body">
+                        <!-- Curve 1 Nodes Wrapper -->
+                        <div id="curve1-table-wrapper" class="scroll-container output-table-wrapper"
+                            style="max-height: 320px; padding: 10px;">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tenor</th>
+                                        <th>DF</th>
+                                        <th>Zero Rate</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="curve1-knots-tbody"></tbody>
+                            </table>
+                        </div>
 
-                    <!-- Curve 2 Nodes Wrapper -->
-                    <div id="curve2-table-wrapper" class="scroll-container output-table-wrapper" style="max-height: 320px; padding: 10px; display: none;">
-                        <table class="results-table">
-                            <thead>
-                                <tr>
-                                    <th>Tenor</th>
-                                    <th>DF</th>
-                                    <th>Zero Rate</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="curve2-knots-tbody"></tbody>
-                        </table>
-                    </div>
+                        <!-- Curve 2 Nodes Wrapper -->
+                        <div id="curve2-table-wrapper" class="scroll-container output-table-wrapper"
+                            style="max-height: 320px; padding: 10px; display: none;">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tenor</th>
+                                        <th>DF</th>
+                                        <th>Zero Rate</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="curve2-knots-tbody"></tbody>
+                            </table>
+                        </div>
 
-                    <!-- FX Forward Curve Wrapper -->
-                    <div id="fx-table-wrapper" class="scroll-container output-table-wrapper" style="max-height: 320px; padding: 10px; display: none;">
-                        <table class="results-table">
-                            <thead>
-                                <tr>
-                                    <th>Tenor</th>
-                                    <th>Time (Y)</th>
-                                    <th>Forward Rate</th>
-                                </tr>
-                            </thead>
-                            <tbody id="fx-forward-tbody"></tbody>
-                        </table>
+                        <!-- FX Forward Curve Wrapper -->
+                        <div id="fx-table-wrapper" class="scroll-container output-table-wrapper"
+                            style="max-height: 320px; padding: 10px; display: none;">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tenor</th>
+                                        <th>Time (Y)</th>
+                                        <th>Forward Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fx-forward-tbody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
     </main>
 
     <footer class="app-footer">
-        <p>&copy; 2026 YieldCurve. Built for institutional-grade fixed income analytics. Styled with inspiration from AnimeStats.</p>
+        <p>&copy; 2026 YieldCurve. Built for institutional-grade fixed income analytics. Styled with inspiration from
+            AnimeStats.</p>
     </footer>
 
     <script src="currency_swap.js"></script>
 </body>
+
 </html>
