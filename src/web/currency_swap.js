@@ -18,10 +18,8 @@ const alertContainer = document.getElementById('alert-container');
 
 // Leg 1 Elements
 const leg1Currency = document.getElementById('leg1-currency');
-const leg1Position = document.getElementById('leg1-position');
 const leg1Type = document.getElementById('leg1-type');
 const leg1Rate = document.getElementById('leg1-rate');
-const leg1RateLabel = document.getElementById('leg1-rate-label');
 const leg1Notional = document.getElementById('leg1-notional');
 const leg1Frequency = document.getElementById('leg1-frequency');
 const leg1Daycount = document.getElementById('leg1-daycount');
@@ -29,10 +27,8 @@ const leg1Tenor = document.getElementById('leg1-tenor');
 
 // Leg 2 Elements
 const leg2Currency = document.getElementById('leg2-currency');
-const leg2Position = document.getElementById('leg2-position');
 const leg2Type = document.getElementById('leg2-type');
 const leg2Rate = document.getElementById('leg2-rate');
-const leg2RateLabel = document.getElementById('leg2-rate-label');
 const leg2Notional = document.getElementById('leg2-notional');
 const leg2Frequency = document.getElementById('leg2-frequency');
 const leg2Daycount = document.getElementById('leg2-daycount');
@@ -48,13 +44,10 @@ const curve1NodesTitle = document.getElementById('curve1-nodes-title');
 const curve2NodesTitle = document.getElementById('curve2-nodes-title');
 const curve1Dropzone = document.getElementById('curve1-dropzone');
 const curve1FileInput = document.getElementById('curve1-file');
-const curve1Status = document.getElementById('curve1-status');
 const curve2Dropzone = document.getElementById('curve2-dropzone');
 const curve2FileInput = document.getElementById('curve2-file');
-const curve2Status = document.getElementById('curve2-status');
 const basisDropzone = document.getElementById('basis-dropzone');
 const basisFileInput = document.getElementById('basis-file');
-const basisStatus = document.getElementById('basis-status');
 
 // Output Tables & Toggles
 const showZeroRateBtn = document.getElementById('show-zero-rate');
@@ -79,23 +72,105 @@ const curve1TabLabel = document.getElementById('curve1-tab-label');
 const curve2TabLabel = document.getElementById('curve2-tab-label');
 const basisTabLabel = document.getElementById('basis-tab-label');
 
+function updateRateTypeUI(legNum, selectElement) {
+    const floatInputs = document.getElementById(`leg${legNum}-float-inputs`);
+    const fixedInputs = document.getElementById(`leg${legNum}-fixed-inputs`);
+    
+    if (!floatInputs || !fixedInputs) return;
+
+    if (selectElement.value === 'floating') {
+        floatInputs.style.display = 'flex';
+        fixedInputs.style.display = 'none';
+    } else {
+        floatInputs.style.display = 'none';
+        fixedInputs.style.display = 'flex';
+    }
+}
+
+if (leg1Type) leg1Type.addEventListener('change', (e) => updateRateTypeUI(1, e.target));
+if (leg2Type) leg2Type.addEventListener('change', (e) => updateRateTypeUI(2, e.target));
+
+const btnLoadCurve1 = document.getElementById('btn-load-curve1');
+const btnLoadCurve2 = document.getElementById('btn-load-curve2');
+
+if (btnLoadCurve1) {
+    btnLoadCurve1.addEventListener('click', () => {
+        const dropzoneUI = document.getElementById('curve1-dropzone-ui');
+        const ccy = leg1Currency ? leg1Currency.value : 'USD';
+        if (dropzoneUI) {
+            dropzoneUI.innerHTML = `
+                <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 8px; padding: 30px; text-align: center; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-circle-check" style="color: #22c55e; font-size: 32px; margin-bottom: 10px;"></i>
+                    <h3 style="color: #22c55e; margin: 0; font-size: 16px;">OIS ${ccy} Curve Loaded</h3>
+                    <p style="color: var(--text-muted); font-size: 12px; margin-top: 5px;">Using default sample data.</p>
+                </div>
+            `;
+        }
+        curve1MarketQuotes = [];
+        showAlert(`Default ${ccy} Curve successfully applied.`, 'success');
+    });
+}
+
+if (btnLoadCurve2) {
+    btnLoadCurve2.addEventListener('click', () => {
+        const dropzoneUI = document.getElementById('curve2-dropzone-ui');
+        const ccy = leg2Currency ? leg2Currency.value : 'EUR';
+        if (dropzoneUI) {
+            dropzoneUI.innerHTML = `
+                <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 8px; padding: 30px; text-align: center; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-circle-check" style="color: #22c55e; font-size: 32px; margin-bottom: 10px;"></i>
+                    <h3 style="color: #22c55e; margin: 0; font-size: 16px;">${ccy} Curve Loaded</h3>
+                    <p style="color: var(--text-muted); font-size: 12px; margin-top: 5px;">Using default sample data.</p>
+                </div>
+            `;
+        }
+        curve2MarketQuotes = [];
+        showAlert(`Default ${ccy} Curve successfully applied.`, 'success');
+    });
+}
+
 // Initial Setup
 document.addEventListener('DOMContentLoaded', () => {
-    // Theme sync
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeIcon(savedTheme);
 
-    // Formatting & Sync listeners
-    initNotionalFormatting(leg1Notional);
-    initNotionalFormatting(leg2Notional);
+    if (leg1Notional) initNotionalFormatting(leg1Notional);
+    if (leg2Notional) initNotionalFormatting(leg2Notional);
     initSyncingListeners();
     updateLabelStates();
+
+    const toggleTableBtn = document.getElementById('toggle-cashflow-table');
+    const cashflowsTable = document.getElementById('cashflows-table');
+    const cashflowGridRow = document.getElementById('cashflow-grid-row');
+    let isTableExpanded = true;
+
+    if (toggleTableBtn && cashflowsTable && cashflowGridRow) {
+        toggleTableBtn.addEventListener('click', () => {
+            isTableExpanded = !isTableExpanded;
+            
+            if (isTableExpanded) {
+                cashflowGridRow.style.gridTemplateColumns = '2fr 3fr';
+                cashflowsTable.classList.remove('table-collapsed');
+                toggleTableBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+                toggleTableBtn.title = 'Hide extra data';
+            } else {
+                cashflowGridRow.style.gridTemplateColumns = '3fr 2fr';
+                cashflowsTable.classList.add('table-collapsed');
+                toggleTableBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+                toggleTableBtn.title = 'Expand hidden data';
+            }
+
+            setTimeout(() => {
+                if (typeof timelineChart !== 'undefined' && timelineChart) timelineChart.resize();
+            }, 400);
+        });
+    }
 });
 
-// Comma Formatting Utilities
 function formatWithCommas(value) {
-    let num = value.replace(/[^0-9.]/g, '');
+    if (!value) return '';
+    let num = String(value).replace(/[^0-9.]/g, '');
     if (!num) return '';
     let parts = num.split('.');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -103,7 +178,8 @@ function formatWithCommas(value) {
 }
 
 function stripCommas(value) {
-    return parseFloat(value.replace(/,/g, '')) || 0.0;
+    if (!value) return 0.0;
+    return parseFloat(String(value).replace(/,/g, '')) || 0.0;
 }
 
 function initNotionalFormatting(input) {
@@ -113,16 +189,21 @@ function initNotionalFormatting(input) {
     input.value = formatWithCommas(input.value);
 }
 
-// UI Label Syncing
-function updateLabelStates() {
-    const c1 = leg1Currency.value;
-    const c2 = leg2Currency.value;
+function formatDateShort(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear().toString().slice(-2)}`;
+}
 
-    // Label pairs
+function updateLabelStates() {
+    const c1 = leg1Currency ? leg1Currency.value : 'USD';
+    const c2 = leg2Currency ? leg2Currency.value : 'EUR';
+
     if (fxPairLabel) fxPairLabel.textContent = `${c1}/${c2}`;
     if (curve1Name) curve1Name.textContent = c1;
     if (curve2Name) curve2Name.textContent = c2;
-    if (basisPairName) basisPairName.textContent = `${c2}/${c1}`; // EUR/USD basis (Leg 2/Leg 1)
+    if (basisPairName) basisPairName.textContent = `${c2}/${c1}`;
     if (curve1NodesTitle) curve1NodesTitle.textContent = c1;
     if (curve2NodesTitle) curve2NodesTitle.textContent = c2;
 
@@ -132,93 +213,57 @@ function updateLabelStates() {
     if (curve1TabLabel) curve1TabLabel.textContent = `${c1} Nodes`;
     if (curve2TabLabel) curve2TabLabel.textContent = `${c2} Nodes`;
     if (basisTabLabel) basisTabLabel.textContent = `${c2} Basis Nodes`;
-
-    // Leg 1 type label
-    if (leg1Type && leg1RateLabel) {
-        if (leg1Type.value === 'fixed') {
-            leg1RateLabel.textContent = 'Fixed Rate (%)';
-        } else {
-            leg1RateLabel.textContent = 'Spread (%)';
-        }
-    }
-
-    // Leg 2 type label
-    if (leg2Type && leg2RateLabel) {
-        if (leg2Type.value === 'fixed') {
-            leg2RateLabel.textContent = 'Fixed Rate (%)';
-        } else {
-            leg2RateLabel.textContent = 'Spread (%)';
-        }
-    }
 }
 
 function initSyncingListeners() {
-    leg1Currency.addEventListener('change', updateLabelStates);
-    leg2Currency.addEventListener('change', updateLabelStates);
+    if (leg1Currency) leg1Currency.addEventListener('change', updateLabelStates);
+    if (leg2Currency) leg2Currency.addEventListener('change', updateLabelStates);
 
-    leg1Type.addEventListener('change', updateLabelStates);
-    leg2Type.addEventListener('change', updateLabelStates);
+    if (leg1Tenor && leg2Tenor) {
+        leg1Tenor.addEventListener('input', (e) => {
+            leg2Tenor.value = e.target.value;
+        });
+    }
 
-    // Leg 1 Position controls Leg 2 Position
-    leg1Position.addEventListener('change', (e) => {
-        leg2Position.value = e.target.value === 'receiver' ? 'payer' : 'receiver';
+    if (recalcNotionalBtn && spotFxInput && leg1Notional && leg2Notional) {
+        recalcNotionalBtn.addEventListener('click', () => {
+            const spotFx = parseFloat(spotFxInput.value) || 1.0;
+            const n1 = stripCommas(leg1Notional.value);
+            if (n1 > 0 && spotFx > 0) {
+                const n2 = n1 / spotFx;
+                leg2Notional.value = formatWithCommas(n2.toFixed(2));
+                showAlert('Leg 2 notional successfully synced with Leg 1 notional and Spot FX rate.', 'success');
+            }
+        });
+    }
+}
+
+function safeAddDragDrop(dropzoneEl, inputEl, curveNum) {
+    if (!dropzoneEl || !inputEl) return;
+    dropzoneEl.addEventListener('click', () => inputEl.click());
+    dropzoneEl.addEventListener('dragover', (e) => { e.preventDefault(); dropzoneEl.classList.add('dragover'); });
+    dropzoneEl.addEventListener('dragleave', () => dropzoneEl.classList.remove('dragover'));
+    dropzoneEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzoneEl.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) handleCurveFile(e.dataTransfer.files[0], curveNum);
     });
-
-    // Leg 1 Tenor controls Leg 2 Tenor
-    leg1Tenor.addEventListener('input', (e) => {
-        leg2Tenor.value = e.target.value;
-    });
-
-    // Recalc Notional Button
-    recalcNotionalBtn.addEventListener('click', () => {
-        const spotFx = parseFloat(spotFxInput.value) || 1.0;
-        const n1 = stripCommas(leg1Notional.value);
-        if (n1 > 0 && spotFx > 0) {
-            const n2 = n1 / spotFx;
-            leg2Notional.value = formatWithCommas(n2.toFixed(2));
-            showAlert('Leg 2 notional successfully synced with Leg 1 notional and Spot FX rate.', 'success');
-        }
+    inputEl.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) handleCurveFile(e.target.files[0], curveNum);
     });
 }
 
-// Drag & Drop / File Uploads Curve 1
-curve1Dropzone.addEventListener('click', () => curve1FileInput.click());
-curve1Dropzone.addEventListener('dragover', (e) => { e.preventDefault(); curve1Dropzone.classList.add('dragover'); });
-curve1Dropzone.addEventListener('dragleave', () => curve1Dropzone.classList.remove('dragover'));
-curve1Dropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    curve1Dropzone.classList.remove('dragover');
-    if (e.dataTransfer.files.length > 0) handleCurveFile(e.dataTransfer.files[0], 1);
-});
-curve1FileInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) handleCurveFile(e.target.files[0], 1);
-});
+safeAddDragDrop(curve1Dropzone, curve1FileInput, 1);
+safeAddDragDrop(curve2Dropzone, curve2FileInput, 2);
+safeAddDragDrop(basisDropzone, basisFileInput, 3);
 
-// Drag & Drop / File Uploads Curve 2
-curve2Dropzone.addEventListener('click', () => curve2FileInput.click());
-curve2Dropzone.addEventListener('dragover', (e) => { e.preventDefault(); curve2Dropzone.classList.add('dragover'); });
-curve2Dropzone.addEventListener('dragleave', () => curve2Dropzone.classList.remove('dragover'));
-curve2Dropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    curve2Dropzone.classList.remove('dragover');
-    if (e.dataTransfer.files.length > 0) handleCurveFile(e.dataTransfer.files[0], 2);
-});
-curve2FileInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) handleCurveFile(e.target.files[0], 2);
-});
-
-// Drag & Drop / File Uploads Curve Basis
-basisDropzone.addEventListener('click', () => basisFileInput.click());
-basisDropzone.addEventListener('dragover', (e) => { e.preventDefault(); basisDropzone.classList.add('dragover'); });
-basisDropzone.addEventListener('dragleave', () => basisDropzone.classList.remove('dragover'));
-basisDropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    basisDropzone.classList.remove('dragover');
-    if (e.dataTransfer.files.length > 0) handleCurveFile(e.dataTransfer.files[0], 3);
-});
-basisFileInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) handleCurveFile(e.target.files[0], 3);
-});
+function setStatusHTML(curveNum, html) {
+    let el;
+    if (curveNum === 1) el = document.getElementById('curve1-status');
+    else if (curveNum === 2) el = document.getElementById('curve2-status');
+    else el = document.getElementById('basis-status');
+    if (el) el.innerHTML = html;
+}
 
 function handleCurveFile(file, curveNum) {
     const reader = new FileReader();
@@ -226,17 +271,18 @@ function handleCurveFile(file, curveNum) {
         try {
             const parsed = parseCSV(e.target.result);
             if (parsed.length > 0) {
+                const successMsg = `<span style="color: var(--success); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Loaded ${parsed.length} quotes from ${file.name}</span>`;
                 if (curveNum === 1) {
                     curve1MarketQuotes = parsed;
-                    curve1Status.innerHTML = `<span style="color: var(--success); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Loaded ${parsed.length} quotes from ${file.name}</span>`;
+                    setStatusHTML(1, successMsg);
                 } else if (curveNum === 2) {
                     curve2MarketQuotes = parsed;
-                    curve2Status.innerHTML = `<span style="color: var(--success); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Loaded ${parsed.length} quotes from ${file.name}</span>`;
+                    setStatusHTML(2, successMsg);
                 } else {
                     basisMarketQuotes = parsed;
-                    basisStatus.innerHTML = `<span style="color: var(--success); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Loaded ${parsed.length} quotes from ${file.name}</span>`;
+                    setStatusHTML(3, successMsg);
                 }
-                showAlert(`Curve ${curveNum} market data successfully loaded!`, 'success');
+                showAlert(`Curve market data successfully loaded!`, 'success');
             } else {
                 showAlert('CSV file was empty or missing required columns.', 'danger');
             }
@@ -284,32 +330,31 @@ function parseCSV(text) {
     return records;
 }
 
-resetCurvesBtn.addEventListener('click', () => {
-    curve1MarketQuotes = [];
-    curve2MarketQuotes = [];
-    basisMarketQuotes = [];
-    curve1Status.textContent = 'Using default USD OIS curve sample data.';
-    curve2Status.textContent = 'Using default EUR curve sample data.';
-    basisStatus.textContent = 'Using default EUR/USD market basis curve sample data.';
-    curve1FileInput.value = '';
-    curve2FileInput.value = '';
-    basisFileInput.value = '';
-    showAlert('Reset back to default sample curves.', 'info');
-    triggerCalculation();
-});
+if (resetCurvesBtn) {
+    resetCurvesBtn.addEventListener('click', () => {
+        curve1MarketQuotes = [];
+        curve2MarketQuotes = [];
+        basisMarketQuotes = [];
+        setStatusHTML(1, 'Using default USD OIS curve sample data.');
+        setStatusHTML(2, 'Using default EUR curve sample data.');
+        setStatusHTML(3, 'Using default EUR/USD market basis curve sample data.');
+        if (curve1FileInput) curve1FileInput.value = '';
+        if (curve2FileInput) curve2FileInput.value = '';
+        if (basisFileInput) basisFileInput.value = '';
+        showAlert('Reset back to default sample curves.', 'info');
+        triggerCalculation();
+    });
+}
 
-// Alert Handler
 function showAlert(message, type = 'info') {
+    if (!alertContainer) return;
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type}`;
     let iconClass = 'fa-circle-info';
     if (type === 'danger') iconClass = 'fa-circle-xmark';
     if (type === 'success') iconClass = 'fa-circle-check';
 
-    alertDiv.innerHTML = `
-        <i class="fa-solid ${iconClass}"></i>
-        <span>${message}</span>
-    `;
+    alertDiv.innerHTML = `<i class="fa-solid ${iconClass}"></i> <span>${message}</span>`;
     alertContainer.innerHTML = '';
     alertContainer.appendChild(alertDiv);
 
@@ -323,72 +368,83 @@ function showAlert(message, type = 'info') {
     }
 }
 
-// Theme Toggle
-themeToggleBtn.addEventListener('click', () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateThemeIcon(newTheme);
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
 
-    if (calculationResults) {
-        renderCurvesChart();
-        renderTimelineChart();
-    }
-});
-
-function updateThemeIcon(theme) {
-    const icon = themeToggleBtn.querySelector('i');
-    icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        if (calculationResults) {
+            renderCurvesChart();
+            renderTimelineChart();
+        }
+    });
 }
 
-// Calculate Action
-calculateBtn.addEventListener('click', triggerCalculation);
+function updateThemeIcon(theme) {
+    if (!themeToggleBtn) return;
+    const icon = themeToggleBtn.querySelector('i');
+    if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+
+if (calculateBtn) calculateBtn.addEventListener('click', triggerCalculation);
 
 async function triggerCalculation() {
-    calculateBtn.disabled = true;
-    calculateBtn.innerHTML = `<span class="spinner"></span> Pricing Swap...`;
-
-    const tradeDate = tradeDateInput.value.trim();
-    const spotFx = parseFloat(spotFxInput.value) || 1.0;
-
-    const leg1 = {
-        currency: leg1Currency.value,
-        notional: stripCommas(leg1Notional.value),
-        rate_type: leg1Type.value,
-        rate_or_spread: parseFloat(leg1Rate.value) || 0.0,
-        frequency: parseInt(leg1Frequency.value),
-        day_count: leg1Daycount.value,
-        tenor_years: parseInt(leg1Tenor.value),
-        is_payer: leg1Position.value === 'payer'
-    };
-
-    const leg2 = {
-        currency: leg2Currency.value,
-        notional: stripCommas(leg2Notional.value),
-        rate_type: leg2Type.value,
-        rate_or_spread: parseFloat(leg2Rate.value) || 0.0,
-        frequency: parseInt(leg2Frequency.value),
-        day_count: leg2Daycount.value,
-        tenor_years: parseInt(leg1Tenor.value), // Matched
-        is_payer: leg2Position.value === 'payer'
-    };
-
-    const curve_config1 = {
-        day_count_convention: leg1Daycount.value,
-        payment_frequency: parseInt(leg1Frequency.value),
-        interpolation_method: document.getElementById('curve1-interpolation').value,
-        futures_cutoff_years: parseFloat(document.getElementById('curve1-cutoff').value) || 2.0
-    };
-
-    const curve_config2 = {
-        day_count_convention: leg2Daycount.value,
-        payment_frequency: parseInt(leg2Frequency.value),
-        interpolation_method: document.getElementById('curve2-interpolation').value,
-        futures_cutoff_years: parseFloat(document.getElementById('curve2-cutoff').value) || 2.0
-    };
+    if (!calculateBtn) return;
 
     try {
+        calculateBtn.disabled = true;
+        calculateBtn.innerHTML = `<span class="spinner"></span> Pricing Swap...`;
+
+        const tradeDate = tradeDateInput ? tradeDateInput.value.trim() : '28-05-2026';
+        const spotFx = spotFxInput ? (parseFloat(spotFxInput.value) || 1.0) : 1.0;
+
+        const leg1RateOrSpread = (leg1Type && leg1Type.value === 'fixed') 
+            ? (parseFloat(document.getElementById('leg1-rate')?.value) || 0.0) 
+            : (parseFloat(document.getElementById('leg1-spread')?.value) || 0.0);
+
+        const leg1 = {
+            currency: leg1Currency ? leg1Currency.value : 'USD',
+            notional: leg1Notional ? stripCommas(leg1Notional.value) : 10000000,
+            rate_type: leg1Type ? leg1Type.value : 'floating',
+            rate_or_spread: leg1RateOrSpread,
+            frequency: leg1Frequency ? parseInt(leg1Frequency.value) : 2,
+            day_count: leg1Daycount ? leg1Daycount.value : 'ACT/365',
+            tenor_years: leg1Tenor ? parseInt(leg1Tenor.value) : 5,
+            is_payer: false 
+        };
+
+        const leg2RateOrSpread = (leg2Type && leg2Type.value === 'fixed') 
+            ? (parseFloat(document.getElementById('leg2-rate')?.value) || 0.0) 
+            : (parseFloat(document.getElementById('leg2-spread')?.value) || 0.0);
+
+        const leg2 = {
+            currency: leg2Currency ? leg2Currency.value : 'EUR',
+            notional: leg2Notional ? stripCommas(leg2Notional.value) : 10000000,
+            rate_type: leg2Type ? leg2Type.value : 'fixed',
+            rate_or_spread: leg2RateOrSpread,
+            frequency: leg2Frequency ? parseInt(leg2Frequency.value) : 2,
+            day_count: leg2Daycount ? leg2Daycount.value : 'ACT/360',
+            tenor_years: leg1Tenor ? parseInt(leg1Tenor.value) : 5, 
+            is_payer: true 
+        };
+
+        const curve_config1 = {
+            day_count_convention: leg1Daycount ? leg1Daycount.value : 'ACT/365',
+            payment_frequency: leg1Frequency ? parseInt(leg1Frequency.value) : 2,
+            interpolation_method: document.getElementById('curve1-interpolation')?.value || 'Cubic Spline',
+            futures_cutoff_years: parseFloat(document.getElementById('curve1-cutoff')?.value) || 2.0
+        };
+
+        const curve_config2 = {
+            day_count_convention: leg2Daycount ? leg2Daycount.value : 'ACT/360',
+            payment_frequency: leg2Frequency ? parseInt(leg2Frequency.value) : 2,
+            interpolation_method: document.getElementById('curve2-interpolation')?.value || 'Cubic Spline',
+            futures_cutoff_years: parseFloat(document.getElementById('curve2-cutoff')?.value) || 2.0
+        };
+
         const response = await fetch('/api/calculate_currency_swap', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -409,10 +465,10 @@ async function triggerCalculation() {
 
         if (!data.success) {
             showAlert(data.error || 'Pricing calculation failed.', 'danger');
-            resultsContainer.style.display = 'none';
+            if (resultsContainer) resultsContainer.style.display = 'none';
         } else {
             calculationResults = data;
-            resultsContainer.style.display = 'grid';
+            if (resultsContainer) resultsContainer.style.display = 'grid';
             showAlert('Cross-currency swap valued successfully!', 'success');
 
             updateNPVDisplays(data.npv_results);
@@ -424,13 +480,15 @@ async function triggerCalculation() {
             renderCurvesChart();
             renderTimelineChart();
 
-            resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            if (resultsContainer) resultsContainer.scrollIntoView({ behavior: 'smooth' });
         }
     } catch (err) {
-        showAlert(`Server connection error: ${err.message}`, 'danger');
+        showAlert(`Frontend/Server error: ${err.message}`, 'danger');
     } finally {
-        calculateBtn.disabled = false;
-        calculateBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Calculate Swap Price & NPV`;
+        if (calculateBtn) {
+            calculateBtn.disabled = false;
+            calculateBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Calculate Swap Price & NPV`;
+        }
     }
 }
 
@@ -443,38 +501,49 @@ function formatRiskAmount(value, currency) {
 function renderRiskResults(risk) {
     if (!risk || !risk.parallel) return;
 
-    const c1 = leg1Currency.value;
+    const c1 = leg1Currency ? leg1Currency.value : 'USD';
     const p = risk.parallel;
 
-    document.getElementById('risk-leg1-dv01').textContent = formatRiskAmount(p.leg1_dv01, c1);
-    document.getElementById('risk-leg2-dv01').textContent = formatRiskAmount(p.leg2_dv01, c1);
+    const el1 = document.getElementById('risk-leg1-dv01');
+    const el2 = document.getElementById('risk-leg2-dv01');
+    const elB = document.getElementById('risk-basis-dv01');
     
-    if (document.getElementById('risk-basis-dv01')) {
-        document.getElementById('risk-basis-dv01').textContent = formatRiskAmount(p.basis_dv01, c1);
-    }
+    if (el1) el1.textContent = formatRiskAmount(p.leg1_dv01, c1);
+    if (el2) el2.textContent = formatRiskAmount(p.leg2_dv01, c1);
+    if (elB) elB.textContent = formatRiskAmount(p.basis_dv01, c1);
 
     const fxEl = document.getElementById('risk-fx-delta');
-    const fxDelta = p.fx_delta_1pct;
-    fxEl.textContent = `${fxDelta >= 0 ? '+' : '-'}${c1} ${Math.abs(fxDelta).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    fxEl.style.color = fxDelta >= 0 ? 'var(--success)' : 'var(--danger)';
+    if (fxEl) {
+        const fxDelta = p.fx_delta_1pct;
+        fxEl.textContent = `${fxDelta >= 0 ? '+' : '-'}${c1} ${Math.abs(fxDelta).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        fxEl.style.color = fxDelta >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
 
     const leg1SpreadWrap = document.getElementById('risk-leg1-spread-wrap');
     const leg2SpreadWrap = document.getElementById('risk-leg2-spread-wrap');
-    if (p.leg1_spread_pvbp != null) {
-        leg1SpreadWrap.style.display = 'block';
-        document.getElementById('risk-leg1-spread').textContent = formatRiskAmount(p.leg1_spread_pvbp, c1);
-    } else {
-        leg1SpreadWrap.style.display = 'none';
+    const riskLeg1Spread = document.getElementById('risk-leg1-spread');
+    const riskLeg2Spread = document.getElementById('risk-leg2-spread');
+    
+    if (leg1SpreadWrap && riskLeg1Spread) {
+        if (p.leg1_spread_pvbp != null) {
+            leg1SpreadWrap.style.display = 'block';
+            riskLeg1Spread.textContent = formatRiskAmount(p.leg1_spread_pvbp, c1);
+        } else {
+            leg1SpreadWrap.style.display = 'none';
+        }
     }
-    if (p.leg2_spread_pvbp != null) {
-        leg2SpreadWrap.style.display = 'block';
-        document.getElementById('risk-leg2-spread').textContent = formatRiskAmount(p.leg2_spread_pvbp, c1);
-    } else {
-        leg2SpreadWrap.style.display = 'none';
+    
+    if (leg2SpreadWrap && riskLeg2Spread) {
+        if (p.leg2_spread_pvbp != null) {
+            leg2SpreadWrap.style.display = 'block';
+            riskLeg2Spread.textContent = formatRiskAmount(p.leg2_spread_pvbp, c1);
+        } else {
+            leg2SpreadWrap.style.display = 'none';
+        }
     }
 
     const methodNote = document.getElementById('risk-method-note');
-    if (risk.method) {
+    if (methodNote && risk.method) {
         methodNote.textContent = `Rate bumps: ${risk.method.rate_bump}. FX: ${risk.method.fx_bump}. Spread: ${risk.method.spread_bump}. All ΔNPV in ${c1}.`;
     }
 
@@ -482,7 +551,6 @@ function renderRiskResults(risk) {
     renderDeltaVectorTable('leg2-delta-tbody', risk.leg2_delta_vector || [], c1);
     renderDeltaVectorTable('basis-delta-tbody', risk.basis_delta_vector || [], c1);
     
-    // Reset inputs on new pricing calculation runs
     document.querySelectorAll('.pnl-move-input').forEach(input => input.value = "0.0");
     const fxInput = document.getElementById('pnl-fx-bump');
     if (fxInput) fxInput.value = "0.0";
@@ -492,6 +560,7 @@ function renderRiskResults(risk) {
 
 function renderDeltaVectorTable(tbodyId, rows, currency) {
     const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
     tbody.innerHTML = '';
     if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No pillars</td></tr>';
@@ -516,54 +585,58 @@ function renderDeltaVectorTable(tbodyId, rows, currency) {
 }
 
 function updateNPVDisplays(results) {
-    const c1 = leg1Currency.value;
+    const c1 = leg1Currency ? leg1Currency.value : 'USD';
 
-    document.getElementById('leg1-interest-pv-display').textContent = `Interest PV: ${c1} ${results.leg1_interest_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('leg1-notional-pv-display').textContent = `Notional PV: ${c1} ${results.leg1_notional_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('leg1-total-pv-display').textContent = `${c1} ${results.leg1_total_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const l1i = document.getElementById('leg1-interest-pv-display');
+    const l1n = document.getElementById('leg1-notional-pv-display');
+    const l1t = document.getElementById('leg1-total-pv-display');
+    if (l1i) l1i.textContent = `Interest PV: ${c1} ${results.leg1_interest_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (l1n) l1n.textContent = `Notional PV: ${c1} ${results.leg1_notional_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (l1t) l1t.textContent = `${c1} ${results.leg1_total_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-    document.getElementById('leg2-interest-pv-display').textContent = `Interest PV: ${c1} ${results.leg2_interest_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('leg2-notional-pv-display').textContent = `Notional PV: ${c1} ${results.leg2_notional_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('leg2-total-pv-display').textContent = `${c1} ${results.leg2_total_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const l2i = document.getElementById('leg2-interest-pv-display');
+    const l2n = document.getElementById('leg2-notional-pv-display');
+    const l2t = document.getElementById('leg2-total-pv-display');
+    if (l2i) l2i.textContent = `Interest PV: ${c1} ${results.leg2_interest_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (l2n) l2n.textContent = `Notional PV: ${c1} ${results.leg2_notional_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (l2t) l2t.textContent = `${c1} ${results.leg2_total_pv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const netNPV = document.getElementById('net-npv-display');
-    netNPV.textContent = `${c1} ${results.total_net_npv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-    // Style Net NPV based on sign
-    if (results.total_net_npv >= 0.0) {
-        netNPV.style.color = 'var(--success)';
-        netNPV.style.textShadow = '0 0 10px rgba(16,185,129,0.25)';
-    } else {
-        netNPV.style.color = 'var(--danger)';
-        netNPV.style.textShadow = '0 0 10px rgba(239,68,68,0.25)';
+    if (netNPV) {
+        netNPV.textContent = `${c1} ${results.total_net_npv.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (results.total_net_npv >= 0.0) {
+            netNPV.style.color = 'var(--success)';
+            netNPV.style.textShadow = '0 0 10px rgba(16,185,129,0.25)';
+        } else {
+            netNPV.style.color = 'var(--danger)';
+            netNPV.style.textShadow = '0 0 10px rgba(239,68,68,0.25)';
+        }
     }
 }
 
 function renderCashflowTable(cashflows) {
+    if (!cashflowsTbody) return;
     cashflowsTbody.innerHTML = '';
     cashflows.forEach(cf => {
         const tr = document.createElement('tr');
-
-        // Highlight maturity principal exchange row
         if (cf.type === 'principal') {
             tr.style.background = 'rgba(255, 255, 255, 0.04)';
             tr.style.fontWeight = 'bold';
         }
 
-        // Colors for positive/negative cashflows
-        const l1Color = cf.leg1_amount >= 0 ? 'color: var(--success);' : 'color: var(--danger);';
-        const l2Color = cf.leg2_amount >= 0 ? 'color: var(--success);' : 'color: var(--danger);';
+        const l1Color = cf.leg1_amount >= 0 ? 'color: #06b6d4;' : 'color: var(--danger);'; 
+        const l2Color = cf.leg2_amount >= 0 ? 'color: #f59e0b;' : 'color: var(--danger);'; 
         const netColor = cf.net_cashflow >= 0 ? 'color: var(--success);' : 'color: var(--danger);';
 
         tr.innerHTML = `
-            <td>${cf.date}</td>
-            <td><span class="status-badge ${cf.type === 'principal' ? 'active' : 'skipped'}">${cf.type.toUpperCase()}</span></td>
+            <td>${formatDateShort(cf.date)}</td>
+            <td class="col-hideable"><span class="status-badge ${cf.type === 'principal' ? 'active' : 'skipped'}">${cf.type.toUpperCase()}</span></td>
             <td style="${l1Color}">${cf.leg1_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-            <td style="${l2Color}">${cf.leg2_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-            <td>${cf.fx_forward.toFixed(6)}</td>
+            <td class="col-hideable" style="${l2Color}">${cf.leg2_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+            <td>${cf.fx_forward.toFixed(4)}</td>
             <td style="${l2Color}">${cf.leg2_converted.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td style="${netColor}">${cf.net_cashflow.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-            <td>${cf.df.toFixed(6)}</td>
+            <td>${cf.df.toFixed(4)}</td>
             <td style="${netColor} font-weight: bold;">${cf.pv.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
         `;
         cashflowsTbody.appendChild(tr);
@@ -571,37 +644,41 @@ function renderCashflowTable(cashflows) {
 }
 
 function renderKnotTables(knots1, knots2, knotsBasis) {
-    curve1KnotsTbody.innerHTML = '';
-    knots1.forEach(k => {
-        const tr = document.createElement('tr');
-        let badge = `<span class="status-badge active">Active</span>`;
-        if (k.skipped) badge = `<span class="status-badge skipped">Skipped</span>`;
-        if (k.error) badge = `<span class="status-badge error">Error</span>`;
+    if (curve1KnotsTbody && knots1) {
+        curve1KnotsTbody.innerHTML = '';
+        knots1.forEach(k => {
+            const tr = document.createElement('tr');
+            let badge = `<span class="status-badge active">Active</span>`;
+            if (k.skipped) badge = `<span class="status-badge skipped">Skipped</span>`;
+            if (k.error) badge = `<span class="status-badge error">Error</span>`;
 
-        tr.innerHTML = `
-            <td><strong>${k.tenor}</strong></td>
-            <td>${k.df !== undefined ? k.df.toFixed(5) : '-'}</td>
-            <td>${k.zero_rate !== undefined ? k.zero_rate.toFixed(3) + '%' : '-'}</td>
-            <td>${badge}</td>
-        `;
-        curve1KnotsTbody.appendChild(tr);
-    });
+            tr.innerHTML = `
+                <td><strong>${k.tenor}</strong></td>
+                <td>${k.df !== undefined ? k.df.toFixed(5) : '-'}</td>
+                <td>${k.zero_rate !== undefined ? k.zero_rate.toFixed(3) + '%' : '-'}</td>
+                <td>${badge}</td>
+            `;
+            curve1KnotsTbody.appendChild(tr);
+        });
+    }
 
-    curve2KnotsTbody.innerHTML = '';
-    knots2.forEach(k => {
-        const tr = document.createElement('tr');
-        let badge = `<span class="status-badge active">Active</span>`;
-        if (k.skipped) badge = `<span class="status-badge skipped">Skipped</span>`;
-        if (k.error) badge = `<span class="status-badge error">Error</span>`;
+    if (curve2KnotsTbody && knots2) {
+        curve2KnotsTbody.innerHTML = '';
+        knots2.forEach(k => {
+            const tr = document.createElement('tr');
+            let badge = `<span class="status-badge active">Active</span>`;
+            if (k.skipped) badge = `<span class="status-badge skipped">Skipped</span>`;
+            if (k.error) badge = `<span class="status-badge error">Error</span>`;
 
-        tr.innerHTML = `
-            <td><strong>${k.tenor}</strong></td>
-            <td>${k.df !== undefined ? k.df.toFixed(5) : '-'}</td>
-            <td>${k.zero_rate !== undefined ? k.zero_rate.toFixed(3) + '%' : '-'}</td>
-            <td>${badge}</td>
-        `;
-        curve2KnotsTbody.appendChild(tr);
-    });
+            tr.innerHTML = `
+                <td><strong>${k.tenor}</strong></td>
+                <td>${k.df !== undefined ? k.df.toFixed(5) : '-'}</td>
+                <td>${k.zero_rate !== undefined ? k.zero_rate.toFixed(3) + '%' : '-'}</td>
+                <td>${badge}</td>
+            `;
+            curve2KnotsTbody.appendChild(tr);
+        });
+    }
 
     if (basisKnotsTbody && knotsBasis) {
         basisKnotsTbody.innerHTML = '';
@@ -623,6 +700,7 @@ function renderKnotTables(knots1, knots2, knotsBasis) {
 }
 
 function renderFXForwardTable(fxForward) {
+    if (!fxForwardTbody) return;
     fxForwardTbody.innerHTML = '';
     fxForward.forEach(item => {
         const tr = document.createElement('tr');
@@ -635,32 +713,35 @@ function renderFXForwardTable(fxForward) {
     });
 }
 
-// Chart.js render zero rate, discount factor, or FX forward curves
-showZeroRateBtn.addEventListener('click', () => {
-    if (currentChartType === 'zero_rate') return;
-    currentChartType = 'zero_rate';
-    showZeroRateBtn.classList.add('active');
-    showDfBtn.classList.remove('active');
-    if (showFxForwardBtn) showFxForwardBtn.classList.remove('active');
-    renderCurvesChart();
-});
+if (showZeroRateBtn) {
+    showZeroRateBtn.addEventListener('click', () => {
+        if (currentChartType === 'zero_rate') return;
+        currentChartType = 'zero_rate';
+        showZeroRateBtn.classList.add('active');
+        if (showDfBtn) showDfBtn.classList.remove('active');
+        if (showFxForwardBtn) showFxForwardBtn.classList.remove('active');
+        renderCurvesChart();
+    });
+}
 
-showDfBtn.addEventListener('click', () => {
-    if (currentChartType === 'discount_factor') return;
-    currentChartType = 'discount_factor';
-    showDfBtn.classList.add('active');
-    showZeroRateBtn.classList.remove('active');
-    if (showFxForwardBtn) showFxForwardBtn.classList.remove('active');
-    renderCurvesChart();
-});
+if (showDfBtn) {
+    showDfBtn.addEventListener('click', () => {
+        if (currentChartType === 'discount_factor') return;
+        currentChartType = 'discount_factor';
+        showDfBtn.classList.add('active');
+        if (showZeroRateBtn) showZeroRateBtn.classList.remove('active');
+        if (showFxForwardBtn) showFxForwardBtn.classList.remove('active');
+        renderCurvesChart();
+    });
+}
 
 if (showFxForwardBtn) {
     showFxForwardBtn.addEventListener('click', () => {
         if (currentChartType === 'fx_forward') return;
         currentChartType = 'fx_forward';
         showFxForwardBtn.classList.add('active');
-        showZeroRateBtn.classList.remove('active');
-        showDfBtn.classList.remove('active');
+        if (showZeroRateBtn) showZeroRateBtn.classList.remove('active');
+        if (showDfBtn) showDfBtn.classList.remove('active');
         renderCurvesChart();
     });
 }
@@ -678,8 +759,8 @@ function renderCurvesChart() {
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
     const textColor = isDark ? '#94a3b8' : '#475569';
 
-    const c1 = leg1Currency.value;
-    const c2 = leg2Currency.value;
+    const c1 = leg1Currency ? leg1Currency.value : 'USD';
+    const c2 = leg2Currency ? leg2Currency.value : 'EUR';
 
     let chartTitle = '';
     let yLabel = '';
@@ -700,72 +781,18 @@ function renderCurvesChart() {
         const knotsData2 = activeKnots2.map(k => ({ x: k.t, y: k.zero_rate, label: k.tenor }));
 
         datasets = [
-            {
-                label: `${c1} Curve`,
-                data: dataset1,
-                showLine: true,
-                borderColor: '#3b82f6', // USD blue
-                borderWidth: 2.5,
-                pointRadius: 0,
-                fill: false,
-                tension: 0.1
-            },
-            {
-                label: `${c1} Nodes`,
-                data: knotsData1,
-                showLine: false,
-                pointBackgroundColor: '#06b6d4',
-                pointBorderColor: isDark ? '#070913' : '#ffffff',
-                pointBorderWidth: 1.5,
-                pointRadius: 5,
-                z: 5
-            },
-            {
-                label: `${c2} Curve`,
-                data: dataset2,
-                showLine: true,
-                borderColor: '#f59e0b', // EUR orange
-                borderWidth: 2.5,
-                pointRadius: 0,
-                fill: false,
-                tension: 0.1
-            },
-            {
-                label: `${c2} Nodes`,
-                data: knotsData2,
-                showLine: false,
-                pointBackgroundColor: '#ef4444',
-                pointBorderColor: isDark ? '#070913' : '#ffffff',
-                pointBorderWidth: 1.5,
-                pointRadius: 5,
-                z: 5
-            }
+            { label: `${c1} Curve`, data: dataset1, showLine: true, borderColor: '#3b82f6', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.1 },
+            { label: `${c1} Nodes`, data: knotsData1, showLine: false, pointBackgroundColor: '#06b6d4', pointBorderColor: isDark ? '#070913' : '#ffffff', pointBorderWidth: 1.5, pointRadius: 5, z: 5 },
+            { label: `${c2} Curve`, data: dataset2, showLine: true, borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.1 },
+            { label: `${c2} Nodes`, data: knotsData2, showLine: false, pointBackgroundColor: '#ef4444', pointBorderColor: isDark ? '#070913' : '#ffffff', pointBorderWidth: 1.5, pointRadius: 5, z: 5 }
         ];
 
         if (calculationResults.basis_curve) {
             const datasetBasis = calculationResults.basis_curve.times.map((t, idx) => ({ x: t, y: calculationResults.basis_curve.zero_rates[idx] }));
             const knotsDataBasis = activeKnotsBasis.map(k => ({ x: k.t, y: k.zero_rate, label: k.tenor }));
             datasets.push(
-                {
-                    label: `${c2} Basis Curve`,
-                    data: datasetBasis,
-                    showLine: true,
-                    borderColor: '#10b981', // green
-                    borderWidth: 2.5,
-                    pointRadius: 0,
-                    fill: false,
-                    tension: 0.1
-                },
-                {
-                    label: `${c2} Basis Nodes`,
-                    data: knotsDataBasis,
-                    showLine: false,
-                    pointBackgroundColor: '#34d399',
-                    pointBorderColor: isDark ? '#070913' : '#ffffff',
-                    pointBorderWidth: 1.5,
-                    pointRadius: 5,
-                    z: 5
-                }
+                { label: `${c2} Basis Curve`, data: datasetBasis, showLine: true, borderColor: '#10b981', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.1 },
+                { label: `${c2} Basis Nodes`, data: knotsDataBasis, showLine: false, pointBackgroundColor: '#34d399', pointBorderColor: isDark ? '#070913' : '#ffffff', pointBorderWidth: 1.5, pointRadius: 5, z: 5 }
             );
         }
     } else if (currentChartType === 'discount_factor') {
@@ -784,46 +811,10 @@ function renderCurvesChart() {
         knotsData2.unshift({ x: 0, y: 1.0, label: 'Origin' });
 
         datasets = [
-            {
-                label: `${c1} Curve`,
-                data: dataset1,
-                showLine: true,
-                borderColor: '#3b82f6',
-                borderWidth: 2.5,
-                pointRadius: 0,
-                fill: false,
-                tension: 0.1
-            },
-            {
-                label: `${c1} Nodes`,
-                data: knotsData1,
-                showLine: false,
-                pointBackgroundColor: '#06b6d4',
-                pointBorderColor: isDark ? '#070913' : '#ffffff',
-                pointBorderWidth: 1.5,
-                pointRadius: 5,
-                z: 5
-            },
-            {
-                label: `${c2} Curve`,
-                data: dataset2,
-                showLine: true,
-                borderColor: '#f59e0b',
-                borderWidth: 2.5,
-                pointRadius: 0,
-                fill: false,
-                tension: 0.1
-            },
-            {
-                label: `${c2} Nodes`,
-                data: knotsData2,
-                showLine: false,
-                pointBackgroundColor: '#ef4444',
-                pointBorderColor: isDark ? '#070913' : '#ffffff',
-                pointBorderWidth: 1.5,
-                pointRadius: 5,
-                z: 5
-            }
+            { label: `${c1} Curve`, data: dataset1, showLine: true, borderColor: '#3b82f6', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.1 },
+            { label: `${c1} Nodes`, data: knotsData1, showLine: false, pointBackgroundColor: '#06b6d4', pointBorderColor: isDark ? '#070913' : '#ffffff', pointBorderWidth: 1.5, pointRadius: 5, z: 5 },
+            { label: `${c2} Curve`, data: dataset2, showLine: true, borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.1 },
+            { label: `${c2} Nodes`, data: knotsData2, showLine: false, pointBackgroundColor: '#ef4444', pointBorderColor: isDark ? '#070913' : '#ffffff', pointBorderWidth: 1.5, pointRadius: 5, z: 5 }
         ];
 
         if (calculationResults.basis_curve) {
@@ -832,26 +823,8 @@ function renderCurvesChart() {
             datasetBasis.unshift({ x: 0, y: 1.0 });
             knotsDataBasis.unshift({ x: 0, y: 1.0, label: 'Origin' });
             datasets.push(
-                {
-                    label: `${c2} Basis Curve`,
-                    data: datasetBasis,
-                    showLine: true,
-                    borderColor: '#10b981',
-                    borderWidth: 2.5,
-                    pointRadius: 0,
-                    fill: false,
-                    tension: 0.1
-                },
-                {
-                    label: `${c2} Basis Nodes`,
-                    data: knotsDataBasis,
-                    showLine: false,
-                    pointBackgroundColor: '#34d399',
-                    pointBorderColor: isDark ? '#070913' : '#ffffff',
-                    pointBorderWidth: 1.5,
-                    pointRadius: 5,
-                    z: 5
-                }
+                { label: `${c2} Basis Curve`, data: datasetBasis, showLine: true, borderColor: '#10b981', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.1 },
+                { label: `${c2} Basis Nodes`, data: knotsDataBasis, showLine: false, pointBackgroundColor: '#34d399', pointBorderColor: isDark ? '#070913' : '#ffffff', pointBorderWidth: 1.5, pointRadius: 5, z: 5 }
             );
         }
     } else {
@@ -862,32 +835,15 @@ function renderCurvesChart() {
         fxData.sort((a, b) => a.t - b.t);
 
         const smoothData = fxData.map(item => ({ x: item.t, y: item.forward_rate }));
-        smoothData.unshift({ x: 0, y: parseFloat(spotFxInput.value) || 1.0 });
+        const currentFx = spotFxInput ? parseFloat(spotFxInput.value) || 1.0 : 1.0;
+        smoothData.unshift({ x: 0, y: currentFx });
 
         const knotData = fxData.map(item => ({ x: item.t, y: item.forward_rate, label: item.tenor }));
-        knotData.unshift({ x: 0, y: parseFloat(spotFxInput.value) || 1.0, label: 'Spot' });
+        knotData.unshift({ x: 0, y: currentFx, label: 'Spot' });
 
         datasets = [
-            {
-                label: `Forward FX Rate`,
-                data: smoothData,
-                showLine: true,
-                borderColor: '#06b6d4', // Cyan
-                borderWidth: 2.5,
-                pointRadius: 0,
-                fill: false,
-                tension: 0.1
-            },
-            {
-                label: 'Tenor Points',
-                data: knotData,
-                showLine: false,
-                pointBackgroundColor: '#ef4444', // Red
-                pointBorderColor: isDark ? '#070913' : '#ffffff',
-                pointBorderWidth: 1.5,
-                pointRadius: 5,
-                z: 5
-            }
+            { label: `Forward FX Rate`, data: smoothData, showLine: true, borderColor: '#06b6d4', borderWidth: 2.5, pointRadius: 0, fill: false, tension: 0.1 },
+            { label: 'Tenor Points', data: knotData, showLine: false, pointBackgroundColor: '#ef4444', pointBorderColor: isDark ? '#070913' : '#ffffff', pointBorderWidth: 1.5, pointRadius: 5, z: 5 }
         ];
     }
 
@@ -898,15 +854,8 @@ function renderCurvesChart() {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: chartTitle,
-                    color: isDark ? '#f8fafc' : '#0f172a',
-                    font: { family: 'Outfit', size: 16, weight: '600' }
-                },
-                legend: {
-                    labels: { color: textColor, font: { family: 'Inter', size: 11 } }
-                },
+                title: { display: true, text: chartTitle, color: isDark ? '#f8fafc' : '#0f172a', font: { family: 'Outfit', size: 16, weight: '600' } },
+                legend: { labels: { color: textColor, font: { family: 'Inter', size: 11 } } },
                 tooltip: {
                     callbacks: {
                         label: function (context) {
@@ -920,17 +869,8 @@ function renderCurvesChart() {
                 }
             },
             scales: {
-                x: {
-                    type: 'linear',
-                    title: { display: true, text: 'Tenor Time (Years)', color: textColor, font: { family: 'Outfit', size: 12, weight: '600' } },
-                    grid: { color: gridColor },
-                    ticks: { color: textColor }
-                },
-                y: {
-                    title: { display: true, text: yLabel, color: textColor, font: { family: 'Outfit', size: 12, weight: '600' } },
-                    grid: { color: gridColor },
-                    ticks: { color: textColor }
-                }
+                x: { type: 'linear', title: { display: true, text: 'Tenor Time (Years)', color: textColor, font: { family: 'Outfit', size: 12, weight: '600' } }, grid: { color: gridColor }, ticks: { color: textColor } },
+                y: { title: { display: true, text: yLabel, color: textColor, font: { family: 'Outfit', size: 12, weight: '600' } }, grid: { color: gridColor }, ticks: { color: textColor } }
             }
         }
     });
@@ -949,17 +889,15 @@ function renderTimelineChart() {
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
     const textColor = isDark ? '#94a3b8' : '#475569';
 
-    // Process cashflows: group by date
     const interestCfs = calculationResults.cashflows.filter(cf => cf.type === 'interest');
 
-    const labels = interestCfs.map(cf => cf.date);
+    const labels = interestCfs.map(cf => formatDateShort(cf.date));
     const leg1Flows = interestCfs.map(cf => cf.leg1_amount);
-    const leg2Flows = interestCfs.map(cf => cf.leg2_converted); // converted to Currency 1
+    const leg2Flows = interestCfs.map(cf => cf.leg2_converted);
 
-    // Net cumulative PV of interest payments
     let cumulative = 0.0;
     const cumulativeFlows = interestCfs.map(cf => {
-        cumulative += cf.pv; // already discounted net cashflow in Leg 1 currency
+        cumulative += cf.pv;
         return cumulative;
     });
 
@@ -968,89 +906,51 @@ function renderTimelineChart() {
         data: {
             labels: labels,
             datasets: [
-                {
-                    type: 'line',
-                    label: 'Cumulative Net PV (Interest)',
-                    data: cumulativeFlows,
-                    borderColor: '#10b981', // green
-                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                    borderWidth: 3,
-                    tension: 0.3,
-                    fill: true,
-                    yAxisID: 'y'
-                },
-                {
-                    type: 'bar',
-                    label: `Leg 1 Period Interest`,
-                    data: leg1Flows,
-                    backgroundColor: 'rgba(59, 130, 246, 0.65)', // Blue
-                    barThickness: 6,
-                    yAxisID: 'y'
-                },
-                {
-                    type: 'bar',
-                    label: `Leg 2 Period (Converted)`,
-                    data: leg2Flows,
-                    backgroundColor: 'rgba(245, 158, 11, 0.65)', // Orange
-                    barThickness: 6,
-                    yAxisID: 'y'
-                }
+                { type: 'line', label: 'Cumulative Net PV (Interest)', data: cumulativeFlows, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.05)', borderWidth: 3, tension: 0.3, fill: true, yAxisID: 'y' },
+                { type: 'bar', label: `Leg 1 Period Interest`, data: leg1Flows, backgroundColor: 'rgba(6, 182, 212, 0.75)', barThickness: 6, yAxisID: 'y' },
+                { type: 'bar', label: `Leg 2 Period (Converted)`, data: leg2Flows, backgroundColor: 'rgba(245, 158, 11, 0.75)', barThickness: 6, yAxisID: 'y' }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: 'Cashflow Interest Projections & Cumulative Net PV',
-                    color: isDark ? '#f8fafc' : '#0f172a',
-                    font: { family: 'Outfit', size: 15, weight: '600' }
-                },
-                legend: {
-                    labels: { color: textColor, font: { family: 'Inter', size: 11 } }
-                }
+                title: { display: true, text: 'Cashflow Interest Projections & Cumulative Net PV', color: isDark ? '#f8fafc' : '#0f172a', font: { family: 'Outfit', size: 15, weight: '600' } },
+                legend: { labels: { color: textColor, font: { family: 'Inter', size: 11 } } }
             },
             scales: {
-                x: {
-                    grid: { color: gridColor },
-                    ticks: { color: textColor, font: { family: 'Inter', size: 10 } }
-                },
-                y: {
-                    grid: { color: gridColor },
-                    ticks: { color: textColor, font: { family: 'Inter', size: 10 } },
-                    title: { display: true, text: 'Value (Leg 1 Currency)', color: textColor, font: { family: 'Outfit', size: 12, weight: '600' } }
-                }
+                x: { grid: { color: gridColor }, ticks: { color: textColor, font: { family: 'Inter', size: 10 } } },
+                y: { grid: { color: gridColor }, ticks: { color: textColor, font: { family: 'Inter', size: 10 } }, title: { display: true, text: 'Value (Leg 1 Currency)', color: textColor, font: { family: 'Outfit', size: 12, weight: '600' } } }
             }
         }
     });
 }
 
-// Export cashflow table to CSV
-exportCashflowsBtn.addEventListener('click', () => {
-    if (!calculationResults || !calculationResults.cashflows) return;
+if (exportCashflowsBtn) {
+    exportCashflowsBtn.addEventListener('click', () => {
+        if (!calculationResults || !calculationResults.cashflows) return;
 
-    const c1 = leg1Currency.value;
-    const c2 = leg2Currency.value;
+        const c1 = leg1Currency ? leg1Currency.value : 'USD';
+        const c2 = leg2Currency ? leg2Currency.value : 'EUR';
 
-    let csvContent = `PaymentDate,Type,Leg1_Cashflow_${c1},Leg2_Cashflow_${c2},ForwardFXRate,Leg2_Converted_${c1},Net_Cashflow_${c1},DiscountFactor_${c1},PV_Net_Cashflow_${c1}\n`;
+        let csvContent = `PaymentDate,Type,Leg1_Cashflow_${c1},Leg2_Cashflow_${c2},ForwardFXRate,Leg2_Converted_${c1},Net_Cashflow_${c1},DiscountFactor_${c1},PV_Net_Cashflow_${c1}\n`;
 
-    calculationResults.cashflows.forEach(cf => {
-        csvContent += `${cf.date},${cf.type},${cf.leg1_amount},${cf.leg2_amount},${cf.fx_forward},${cf.leg2_converted},${cf.net_cashflow},${cf.df},${cf.pv}\n`;
+        calculationResults.cashflows.forEach(cf => {
+            csvContent += `${cf.date},${cf.type},${cf.leg1_amount},${cf.leg2_amount},${cf.fx_forward},${cf.leg2_converted},${cf.net_cashflow},${cf.df},${cf.pv}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `currency_swap_cashflows_${c1}_${c2}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     });
+}
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `currency_swap_cashflows_${leg1Currency.value}_${leg2Currency.value}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-});
-
-// Toggle Curve & Forward Tables Logic
 if (showCurve1TableBtn && showCurve2TableBtn && showBasisTableBtn && showFxTableBtn) {
     showCurve1TableBtn.addEventListener('click', () => {
         showCurve1TableBtn.classList.add('active');
@@ -1058,10 +958,10 @@ if (showCurve1TableBtn && showCurve2TableBtn && showBasisTableBtn && showFxTable
         showBasisTableBtn.classList.remove('active');
         showFxTableBtn.classList.remove('active');
 
-        curve1TableWrapper.style.display = 'block';
-        curve2TableWrapper.style.display = 'none';
-        basisTableWrapper.style.display = 'none';
-        fxTableWrapper.style.display = 'none';
+        if (curve1TableWrapper) curve1TableWrapper.style.display = 'block';
+        if (curve2TableWrapper) curve2TableWrapper.style.display = 'none';
+        if (basisTableWrapper) basisTableWrapper.style.display = 'none';
+        if (fxTableWrapper) fxTableWrapper.style.display = 'none';
     });
 
     showCurve2TableBtn.addEventListener('click', () => {
@@ -1070,10 +970,10 @@ if (showCurve1TableBtn && showCurve2TableBtn && showBasisTableBtn && showFxTable
         showBasisTableBtn.classList.remove('active');
         showFxTableBtn.classList.remove('active');
 
-        curve1TableWrapper.style.display = 'none';
-        curve2TableWrapper.style.display = 'block';
-        basisTableWrapper.style.display = 'none';
-        fxTableWrapper.style.display = 'none';
+        if (curve1TableWrapper) curve1TableWrapper.style.display = 'none';
+        if (curve2TableWrapper) curve2TableWrapper.style.display = 'block';
+        if (basisTableWrapper) basisTableWrapper.style.display = 'none';
+        if (fxTableWrapper) fxTableWrapper.style.display = 'none';
     });
 
     showBasisTableBtn.addEventListener('click', () => {
@@ -1082,10 +982,10 @@ if (showCurve1TableBtn && showCurve2TableBtn && showBasisTableBtn && showFxTable
         showBasisTableBtn.classList.add('active');
         showFxTableBtn.classList.remove('active');
 
-        curve1TableWrapper.style.display = 'none';
-        curve2TableWrapper.style.display = 'none';
-        basisTableWrapper.style.display = 'block';
-        fxTableWrapper.style.display = 'none';
+        if (curve1TableWrapper) curve1TableWrapper.style.display = 'none';
+        if (curve2TableWrapper) curve2TableWrapper.style.display = 'none';
+        if (basisTableWrapper) basisTableWrapper.style.display = 'block';
+        if (fxTableWrapper) fxTableWrapper.style.display = 'none';
     });
 
     showFxTableBtn.addEventListener('click', () => {
@@ -1094,21 +994,19 @@ if (showCurve1TableBtn && showCurve2TableBtn && showBasisTableBtn && showFxTable
         showBasisTableBtn.classList.remove('active');
         showFxTableBtn.classList.add('active');
 
-        curve1TableWrapper.style.display = 'none';
-        curve2TableWrapper.style.display = 'none';
-        basisTableWrapper.style.display = 'none';
-        fxTableWrapper.style.display = 'block';
+        if (curve1TableWrapper) curve1TableWrapper.style.display = 'none';
+        if (curve2TableWrapper) curve2TableWrapper.style.display = 'none';
+        if (basisTableWrapper) basisTableWrapper.style.display = 'none';
+        if (fxTableWrapper) fxTableWrapper.style.display = 'block';
     });
 }
 
-// P&L Attribution & Scenario Calculator Logic
 function updatePnlAttribution() {
     if (!calculationResults || !calculationResults.risk_results) return;
 
-    const c1 = leg1Currency.value;
+    const c1 = leg1Currency ? leg1Currency.value : 'USD';
     const risk = calculationResults.risk_results;
     
-    // 1. Leg 1 Rate P&L
     let leg1Pnl = 0.0;
     document.querySelectorAll('#leg1-delta-tbody .pnl-move-input').forEach(input => {
         const move = parseFloat(input.value) || 0.0;
@@ -1116,7 +1014,6 @@ function updatePnlAttribution() {
         leg1Pnl += move * delta;
     });
 
-    // 2. Leg 2 Rate P&L
     let leg2Pnl = 0.0;
     document.querySelectorAll('#leg2-delta-tbody .pnl-move-input').forEach(input => {
         const move = parseFloat(input.value) || 0.0;
@@ -1124,7 +1021,6 @@ function updatePnlAttribution() {
         leg2Pnl += move * delta;
     });
 
-    // 3. Basis Curve P&L
     let basisPnl = 0.0;
     document.querySelectorAll('#basis-delta-tbody .pnl-move-input').forEach(input => {
         const move = parseFloat(input.value) || 0.0;
@@ -1132,40 +1028,41 @@ function updatePnlAttribution() {
         basisPnl += move * delta;
     });
 
-    // 4. FX Spot P&L
-    const fxMove = parseFloat(document.getElementById('pnl-fx-bump').value) || 0.0;
-    const fxDelta = risk.parallel.fx_delta_1pct; // sensitivity for +1% relative move
+    const fxBumpEl = document.getElementById('pnl-fx-bump');
+    const fxMove = fxBumpEl ? (parseFloat(fxBumpEl.value) || 0.0) : 0.0;
+    const fxDelta = risk.parallel.fx_delta_1pct; 
     const fxPnl = fxMove * fxDelta;
 
-    // Sum total
     const totalPnl = leg1Pnl + leg2Pnl + basisPnl + fxPnl;
 
-    // Display formatted results
     const formatPnlText = (val) => {
         const prefix = val >= 0 ? '+' : '-';
         const absVal = Math.abs(val);
         return `${prefix}${c1} ${absVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
-    document.getElementById('pnl-leg1-contrib').textContent = formatPnlText(leg1Pnl);
-    document.getElementById('pnl-leg2-contrib').textContent = formatPnlText(leg2Pnl);
-    document.getElementById('pnl-basis-contrib').textContent = formatPnlText(basisPnl);
-    document.getElementById('pnl-fx-contrib').textContent = formatPnlText(fxPnl);
+    const l1c = document.getElementById('pnl-leg1-contrib');
+    const l2c = document.getElementById('pnl-leg2-contrib');
+    const bc = document.getElementById('pnl-basis-contrib');
+    const fxc = document.getElementById('pnl-fx-contrib');
+    if (l1c) l1c.textContent = formatPnlText(leg1Pnl);
+    if (l2c) l2c.textContent = formatPnlText(leg2Pnl);
+    if (bc) bc.textContent = formatPnlText(basisPnl);
+    if (fxc) fxc.textContent = formatPnlText(fxPnl);
 
     const totalEl = document.getElementById('pnl-total-impact');
-    totalEl.textContent = formatPnlText(totalPnl);
-    
-    // Style total text color based on sign
-    if (totalPnl >= 0) {
-        totalEl.style.color = 'var(--success)';
-        totalEl.style.textShadow = '0 0 10px rgba(16,185,129,0.25)';
-    } else {
-        totalEl.style.color = 'var(--danger)';
-        totalEl.style.textShadow = '0 0 10px rgba(239,68,68,0.25)';
+    if (totalEl) {
+        totalEl.textContent = formatPnlText(totalPnl);
+        if (totalPnl >= 0) {
+            totalEl.style.color = 'var(--success)';
+            totalEl.style.textShadow = '0 0 10px rgba(16,185,129,0.25)';
+        } else {
+            totalEl.style.color = 'var(--danger)';
+            totalEl.style.textShadow = '0 0 10px rgba(239,68,68,0.25)';
+        }
     }
 }
 
-// Global listeners for P&L widget interactions
 document.addEventListener('input', (e) => {
     if (e.target.classList.contains('pnl-move-input') || e.target.id === 'pnl-fx-bump') {
         updatePnlAttribution();

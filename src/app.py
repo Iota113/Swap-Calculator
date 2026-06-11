@@ -642,6 +642,7 @@ def get_sample_data(filename):
         'treasury_fallback.csv',
         'interest_rate_swap_portfolio.csv',
         'cross_asset_portfolio.csv',
+        'asset_swap_sample.csv',
         'basis_fallback.csv'
     }
     if filename not in allowed_files:
@@ -788,6 +789,15 @@ def _generate_smooth_curve(knots, interpolation_method):
         'method': interpolation_method
     }
 
+@app.route('/api/resolve_ticker/<ticker>', methods=['GET'])
+def resolve_ticker(ticker):
+    """Hits the AssetPriceOracle to get the real name of a ticker for the UI."""
+    try:
+        meta = AssetPriceOracle.get_ticker_metadata(ticker)
+        return jsonify({'success': True, 'name': meta['name'], 'type': meta['type']})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
 @app.route('/api/calculate_currency_swap', methods=['POST'])
 def calculate_currency_swap():
     try:
