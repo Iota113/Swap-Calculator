@@ -17,7 +17,6 @@ const alertContainer = document.getElementById('alert-container');
 
 // Leg 1 Elements
 const leg1Currency = document.getElementById('leg1-currency');
-const leg1Position = document.getElementById('leg1-position');
 const leg1Type = document.getElementById('leg1-type');
 const leg1Rate = document.getElementById('leg1-rate');
 const leg1RateLabel = document.getElementById('leg1-rate-label');
@@ -28,7 +27,6 @@ const leg1Tenor = document.getElementById('leg1-tenor');
 
 // Leg 2 Elements
 const leg2Currency = document.getElementById('leg2-currency');
-const leg2Position = document.getElementById('leg2-position');
 const leg2Type = document.getElementById('leg2-type');
 const leg2Rate = document.getElementById('leg2-rate');
 const leg2RateLabel = document.getElementById('leg2-rate-label');
@@ -70,6 +68,62 @@ const fxTableWrapper = document.getElementById('fx-table-wrapper');
 const curve1TabLabel = document.getElementById('curve1-tab-label');
 const curve2TabLabel = document.getElementById('curve2-tab-label');
 
+
+function updateRateTypeUI(legNum, selectElement) {
+    const floatInputs = document.getElementById(`leg${legNum}-float-inputs`);
+    const fixedInputs = document.getElementById(`leg${legNum}-fixed-inputs`);
+    
+    if (selectElement.value === 'floating') {
+        floatInputs.style.display = 'flex';
+        fixedInputs.style.display = 'none';
+    } else {
+        floatInputs.style.display = 'none';
+        fixedInputs.style.display = 'flex';
+    }
+}
+
+leg1Type.addEventListener('change', (e) => updateRateTypeUI(1, e.target));
+leg2Type.addEventListener('change', (e) => updateRateTypeUI(2, e.target));
+
+
+// --- NEW LOGIC FOR THE 'LOAD DEFAULT' BUTTONS & UI REPLACEMENT ---
+const btnLoadCurve1 = document.getElementById('btn-load-curve1');
+const btnLoadCurve2 = document.getElementById('btn-load-curve2');
+
+btnLoadCurve1.addEventListener('click', () => {
+    const dropzoneUI = document.getElementById('curve1-dropzone-ui');
+    const ccy = document.getElementById('leg1-currency').value;
+    
+    // Visually replace the dropzone box
+    dropzoneUI.innerHTML = `
+        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 8px; padding: 30px; text-align: center; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-circle-check" style="color: #22c55e; font-size: 32px; margin-bottom: 10px;"></i>
+            <h3 style="color: #22c55e; margin: 0; font-size: 16px;">OIS ${ccy} Curve Loaded</h3>
+            <p style="color: var(--text-muted); font-size: 12px; margin-top: 5px;">Using default sample data.</p>
+        </div>
+    `;
+    
+    // Clear custom loaded quotes so the backend falls back to standard templates
+    curve1MarketQuotes = [];
+    showAlert(`Default ${ccy} Curve successfully applied.`, 'success');
+});
+
+btnLoadCurve2.addEventListener('click', () => {
+    const dropzoneUI = document.getElementById('curve2-dropzone-ui');
+    const ccy = document.getElementById('leg2-currency').value;
+    
+    dropzoneUI.innerHTML = `
+        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 8px; padding: 30px; text-align: center; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-circle-check" style="color: #22c55e; font-size: 32px; margin-bottom: 10px;"></i>
+            <h3 style="color: #22c55e; margin: 0; font-size: 16px;">${ccy} Curve Loaded</h3>
+            <p style="color: var(--text-muted); font-size: 12px; margin-top: 5px;">Using default sample data.</p>
+        </div>
+    `;
+    
+    curve2MarketQuotes = [];
+    showAlert(`Default ${ccy} Curve successfully applied.`, 'success');
+});
+
 // Initial Setup
 document.addEventListener('DOMContentLoaded', () => {
     // Theme sync
@@ -82,8 +136,39 @@ document.addEventListener('DOMContentLoaded', () => {
     initNotionalFormatting(leg2Notional);
     initSyncingListeners();
     updateLabelStates();
-});
 
+    const toggleTableBtn = document.getElementById('toggle-cashflow-table');
+    const cashflowsTable = document.getElementById('cashflows-table');
+    const cashflowGridRow = document.getElementById('cashflow-grid-row');
+    let isTableExpanded = true;
+
+    if (toggleTableBtn && cashflowsTable && cashflowGridRow) {
+        toggleTableBtn.addEventListener('click', () => {
+            isTableExpanded = !isTableExpanded;
+            
+            if (isTableExpanded) {
+                // Expanded state
+                cashflowGridRow.style.gridTemplateColumns = '2fr 3fr';
+                cashflowsTable.classList.remove('table-collapsed');
+                toggleTableBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+                toggleTableBtn.title = 'Hide extra data';
+            } else {
+                // Hidden/Collapsed state
+                cashflowGridRow.style.gridTemplateColumns = '3fr 2fr';
+                cashflowsTable.classList.add('table-collapsed');
+                toggleTableBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+                toggleTableBtn.title = 'Expand hidden data';
+            }
+
+            // Tell the chart to redraw itself to fit the new space
+            setTimeout(() => {
+                if (typeof timelineChart !== 'undefined' && timelineChart) {
+                    timelineChart.resize();
+                }
+            }, 400);
+        });
+    }
+});
 // Comma Formatting Utilities
 function formatWithCommas(value) {
     let num = value.replace(/[^0-9.]/g, '');
@@ -104,6 +189,14 @@ function initNotionalFormatting(input) {
     input.value = formatWithCommas(input.value);
 }
 
+// Date Formatting Helper
+function formatDateShort(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear().toString().slice(-2)}`;
+}
+
 // UI Label Syncing
 function updateLabelStates() {
     const c1 = leg1Currency.value;
@@ -113,8 +206,7 @@ function updateLabelStates() {
     if (fxPairLabel) fxPairLabel.textContent = `${c1}/${c2}`;
     if (curve1Name) curve1Name.textContent = c1;
     if (curve2Name) curve2Name.textContent = c2;
-    if (curve1NodesTitle) curve1NodesTitle.textContent = c1;
-    if (curve2NodesTitle) curve2NodesTitle.textContent = c2;
+
 
     document.querySelectorAll('.leg1-curr-label').forEach(el => el.textContent = c1);
     document.querySelectorAll('.leg2-curr-label').forEach(el => el.textContent = c2);
@@ -145,14 +237,6 @@ function initSyncingListeners() {
     leg1Currency.addEventListener('change', updateLabelStates);
     leg2Currency.addEventListener('change', updateLabelStates);
 
-    leg1Type.addEventListener('change', updateLabelStates);
-    leg2Type.addEventListener('change', updateLabelStates);
-
-    // Leg 1 Position controls Leg 2 Position
-    leg1Position.addEventListener('change', (e) => {
-        leg2Position.value = e.target.value === 'receiver' ? 'payer' : 'receiver';
-    });
-
     // Leg 1 Tenor controls Leg 2 Tenor
     leg1Tenor.addEventListener('input', (e) => {
         leg2Tenor.value = e.target.value;
@@ -169,7 +253,6 @@ function initSyncingListeners() {
         }
     });
 }
-
 // Drag & Drop / File Uploads Curve 1
 curve1Dropzone.addEventListener('click', () => curve1FileInput.click());
 curve1Dropzone.addEventListener('dragover', (e) => { e.preventDefault(); curve1Dropzone.classList.add('dragover'); });
@@ -326,22 +409,27 @@ async function triggerCalculation() {
         currency: leg1Currency.value,
         notional: stripCommas(leg1Notional.value),
         rate_type: leg1Type.value,
-        rate_or_spread: parseFloat(leg1Rate.value) || 0.0,
+        // Dynamically pull from either the fixed rate box or the floating spread box
+        rate_or_spread: leg1Type.value === 'fixed' 
+            ? (parseFloat(document.getElementById('leg1-rate').value) || 0.0) 
+            : (parseFloat(document.getElementById('leg1-spread').value) || 0.0),
         frequency: parseInt(leg1Frequency.value),
         day_count: leg1Daycount.value,
         tenor_years: parseInt(leg1Tenor.value),
-        is_payer: leg1Position.value === 'payer'
+        is_payer: false // Defaulted: Base Leg Receives
     };
 
     const leg2 = {
         currency: leg2Currency.value,
         notional: stripCommas(leg2Notional.value),
         rate_type: leg2Type.value,
-        rate_or_spread: parseFloat(leg2Rate.value) || 0.0,
+        rate_or_spread: leg2Type.value === 'fixed' 
+            ? (parseFloat(document.getElementById('leg2-rate').value) || 0.0) 
+            : (parseFloat(document.getElementById('leg2-spread').value) || 0.0),
         frequency: parseInt(leg2Frequency.value),
         day_count: leg2Daycount.value,
-        tenor_years: parseInt(leg1Tenor.value), // Matched
-        is_payer: leg2Position.value === 'payer'
+        tenor_years: parseInt(leg1Tenor.value), // Matched to Leg 1
+        is_payer: true // Defaulted: Leg 2 Pays
     };
 
     const curve_config1 = {
@@ -497,26 +585,24 @@ function renderCashflowTable(cashflows) {
     cashflows.forEach(cf => {
         const tr = document.createElement('tr');
 
-        // Highlight maturity principal exchange row
         if (cf.type === 'principal') {
             tr.style.background = 'rgba(255, 255, 255, 0.04)';
             tr.style.fontWeight = 'bold';
         }
 
-        // Colors for positive/negative cashflows
-        const l1Color = cf.leg1_amount >= 0 ? 'color: var(--success);' : 'color: var(--danger);';
-        const l2Color = cf.leg2_amount >= 0 ? 'color: var(--success);' : 'color: var(--danger);';
+        const l1Color = cf.leg1_amount >= 0 ? 'color: #06b6d4;' : 'color: var(--danger);'; // Turquoise for Leg 1 positive
+        const l2Color = cf.leg2_amount >= 0 ? 'color: #f59e0b;' : 'color: var(--danger);'; // Orange for Leg 2 positive
         const netColor = cf.net_cashflow >= 0 ? 'color: var(--success);' : 'color: var(--danger);';
 
         tr.innerHTML = `
-            <td>${cf.date}</td>
-            <td><span class="status-badge ${cf.type === 'principal' ? 'active' : 'skipped'}">${cf.type.toUpperCase()}</span></td>
+            <td>${formatDateShort(cf.date)}</td>
+            <td class="col-hideable"><span class="status-badge ${cf.type === 'principal' ? 'active' : 'skipped'}">${cf.type.toUpperCase()}</span></td>
             <td style="${l1Color}">${cf.leg1_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-            <td style="${l2Color}">${cf.leg2_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-            <td>${cf.fx_forward.toFixed(6)}</td>
+            <td class="col-hideable" style="${l2Color}">${cf.leg2_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+            <td>${cf.fx_forward.toFixed(4)}</td>
             <td style="${l2Color}">${cf.leg2_converted.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td style="${netColor}">${cf.net_cashflow.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-            <td>${cf.df.toFixed(6)}</td>
+            <td>${cf.df.toFixed(4)}</td>
             <td style="${netColor} font-weight: bold;">${cf.pv.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
         `;
         cashflowsTbody.appendChild(tr);
@@ -830,14 +916,13 @@ function renderTimelineChart() {
     // Process cashflows: group by date
     const interestCfs = calculationResults.cashflows.filter(cf => cf.type === 'interest');
 
-    const labels = interestCfs.map(cf => cf.date);
+    const labels = interestCfs.map(cf => formatDateShort(cf.date));
     const leg1Flows = interestCfs.map(cf => cf.leg1_amount);
-    const leg2Flows = interestCfs.map(cf => cf.leg2_converted); // converted to Currency 1
+    const leg2Flows = interestCfs.map(cf => cf.leg2_converted);
 
-    // Net cumulative PV of interest payments
     let cumulative = 0.0;
     const cumulativeFlows = interestCfs.map(cf => {
-        cumulative += cf.pv; // already discounted net cashflow in Leg 1 currency
+        cumulative += cf.pv;
         return cumulative;
     });
 
@@ -850,7 +935,7 @@ function renderTimelineChart() {
                     type: 'line',
                     label: 'Cumulative Net PV (Interest)',
                     data: cumulativeFlows,
-                    borderColor: '#10b981', // green
+                    borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.05)',
                     borderWidth: 3,
                     tension: 0.3,
@@ -861,7 +946,7 @@ function renderTimelineChart() {
                     type: 'bar',
                     label: `Leg 1 Period Interest`,
                     data: leg1Flows,
-                    backgroundColor: 'rgba(59, 130, 246, 0.65)', // Blue
+                    backgroundColor: 'rgba(6, 182, 212, 0.75)', // Turquoise/Cyan
                     barThickness: 6,
                     yAxisID: 'y'
                 },
@@ -869,7 +954,7 @@ function renderTimelineChart() {
                     type: 'bar',
                     label: `Leg 2 Period (Converted)`,
                     data: leg2Flows,
-                    backgroundColor: 'rgba(245, 158, 11, 0.65)', // Orange
+                    backgroundColor: 'rgba(245, 158, 11, 0.75)', // Orange
                     barThickness: 6,
                     yAxisID: 'y'
                 }
