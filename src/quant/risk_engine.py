@@ -79,6 +79,8 @@ def _pillar_delta_vector(
     config: dict,
     leg_key: str,
     bp_shift: float,
+    basis_market_data: Optional[List[dict]] = None,
+    config_basis: Optional[dict] = None,
 ) -> List[dict]:
     deltas = []
     for idx, record in enumerate(market_data):
@@ -88,8 +90,52 @@ def _pillar_delta_vector(
         bumped_data = bump_market_data_pillar(market_data, idx, bp_shift)
         bumped_builder = rebuild_curve(bumped_data, config)
 
-        price_kwargs = {"curve1": bumped_builder} if leg_key == "1" else {"curve2": bumped_builder}
+        if leg_key == "1":
+            price_kwargs = {"curve1": bumped_builder}
+        else:
+            if basis_market_data and config_basis:
+                from quant.basis_curve_builder import CrossCurrencyBasisCurveBuilder
+                bumped_basis_builder = CrossCurrencyBasisCurveBuilder(basis_market_data, bumped_builder, config_basis)
+                bumped_basis_builder.build_curve()
+            else:
+                bumped_basis_builder = bumped_builder
+            price_kwargs = {"curve2": bumped_builder, "curve2_basis": bumped_basis_builder}
+
         _, summary = pricer.price_swap(**price_kwargs)
+        delta = summary["total_net_npv"] - base_npv
+
+        entry = {
+            "pillar_index": idx,
+            "instrument": record["Instrument"],
+            "tenor": record["Tenor"],
+            "quote": record["Quote"],
+            "quote_type": record.get("QuoteType", "RATE"),
+            "delta": round(delta, 2),
+            "pvbp": round(abs(delta), 2),
+        }
+        deltas.append(entry)
+
+    return deltas
+
+
+def _basis_pillar_delta_vector(
+    pricer,
+    base_npv: float,
+    basis_market_data: List[dict],
+    config_basis: dict,
+    bp_shift: float,
+) -> List[dict]:
+    from quant.basis_curve_builder import CrossCurrencyBasisCurveBuilder
+    deltas = []
+    for idx, record in enumerate(basis_market_data):
+        if record.get("skipped"):
+            continue
+
+        bumped_data = bump_market_data_pillar(basis_market_data, idx, bp_shift)
+        bumped_builder = CrossCurrencyBasisCurveBuilder(bumped_data, pricer.curve2, config_basis)
+        bumped_builder.build_curve()
+
+        _, summary = pricer.price_swap(curve2_basis=bumped_builder)
         delta = summary["total_net_npv"] - base_npv
 
         entry = {
@@ -136,37 +182,52 @@ class RiskEngine:
         config2: dict,
         bp_shift: float = BP_SHIFT,
         fx_shift_pct: float = FX_SHIFT_PCT,
+        basis_market_data: Optional[List[dict]] = None,
+        config_basis: Optional[dict] = None,
     ) -> Dict:
         """
         Cross-currency swap sensitivities:
-          - parallel DV01 per curve
+          - parallel DV01 per curve (including basis curve)
           - per-pillar delta vectors per curve
           - FX delta (NPV change per +fx_shift_pct spot move)
           - basis spread PVBP per floating leg
         """
-        _, base_summary = pricer.price_swap()
+        basis_builder = None
+        if basis_market_data and config_basis:
+            from quant.basis_curve_builder import CrossCurrencyBasisCurveBuilder
+            basis_builder = CrossCurrencyBasisCurveBuilder(basis_market_data, pricer.curve2, config_basis)
+            basis_builder.build_curve()
+
+        _, base_summary = pricer.price_swap(curve2_basis=basis_builder)
         base_npv = base_summary["total_net_npv"]
 
         bumped_builder1 = rebuild_curve(
             bump_market_data_parallel(active_market_data1, bp_shift), config1
         )
-        _, leg1_parallel_summary = pricer.price_swap(curve1=bumped_builder1)
+        _, leg1_parallel_summary = pricer.price_swap(curve1=bumped_builder1, curve2_basis=basis_builder)
         leg1_parallel_delta = leg1_parallel_summary["total_net_npv"] - base_npv
 
         bumped_builder2 = rebuild_curve(
             bump_market_data_parallel(active_market_data2, bp_shift), config2
         )
-        _, leg2_parallel_summary = pricer.price_swap(curve2=bumped_builder2)
+        if basis_market_data and config_basis:
+            from quant.basis_curve_builder import CrossCurrencyBasisCurveBuilder
+            bumped_basis_builder2 = CrossCurrencyBasisCurveBuilder(basis_market_data, bumped_builder2, config_basis)
+            bumped_basis_builder2.build_curve()
+        else:
+            bumped_basis_builder2 = bumped_builder2
+        _, leg2_parallel_summary = pricer.price_swap(curve2=bumped_builder2, curve2_basis=bumped_basis_builder2)
         leg2_parallel_delta = leg2_parallel_summary["total_net_npv"] - base_npv
 
         bumped_spot = pricer.spot_fx_rate * (1.0 + fx_shift_pct)
-        _, fx_summary = pricer.price_swap(spot_fx_rate=bumped_spot)
+        _, fx_summary = pricer.price_swap(spot_fx_rate=bumped_spot, curve2_basis=basis_builder)
         fx_delta = fx_summary["total_net_npv"] - base_npv
 
         leg1_spread = None
         if _is_floating_leg(pricer.leg1):
             _, spread_summary = pricer.price_swap(
-                leg1_config=_spread_bump_config(pricer.leg1, bp_shift)
+                leg1_config=_spread_bump_config(pricer.leg1, bp_shift),
+                curve2_basis=basis_builder
             )
             leg1_spread = {
                 "delta": round(spread_summary["total_net_npv"] - base_npv, 2),
@@ -176,12 +237,24 @@ class RiskEngine:
         leg2_spread = None
         if _is_floating_leg(pricer.leg2):
             _, spread_summary = pricer.price_swap(
-                leg2_config=_spread_bump_config(pricer.leg2, bp_shift)
+                leg2_config=_spread_bump_config(pricer.leg2, bp_shift),
+                curve2_basis=basis_builder
             )
             leg2_spread = {
                 "delta": round(spread_summary["total_net_npv"] - base_npv, 2),
                 "pvbp": round(abs(spread_summary["total_net_npv"] - base_npv), 2),
             }
+
+        basis_parallel_delta = 0.0
+        basis_parallel_dv01 = 0.0
+        if basis_builder and basis_market_data and config_basis:
+            from quant.basis_curve_builder import CrossCurrencyBasisCurveBuilder
+            bumped_basis_data = bump_market_data_parallel(basis_market_data, bp_shift)
+            bumped_basis_builder = CrossCurrencyBasisCurveBuilder(bumped_basis_data, pricer.curve2, config_basis)
+            bumped_basis_builder.build_curve()
+            _, basis_parallel_summary = pricer.price_swap(curve2_basis=bumped_basis_builder)
+            basis_parallel_delta = basis_parallel_summary["total_net_npv"] - base_npv
+            basis_parallel_dv01 = abs(basis_parallel_delta)
 
         return {
             "base_npv": round(base_npv, 2),
@@ -190,6 +263,8 @@ class RiskEngine:
                 "leg1_delta": round(leg1_parallel_delta, 2),
                 "leg2_dv01": round(abs(leg2_parallel_delta), 2),
                 "leg2_delta": round(leg2_parallel_delta, 2),
+                "basis_dv01": round(basis_parallel_dv01, 2),
+                "basis_delta": round(basis_parallel_delta, 2),
                 "fx_delta_1pct": round(fx_delta, 2),
                 "fx_shift_pct": fx_shift_pct,
                 "leg1_spread_pvbp": leg1_spread["pvbp"] if leg1_spread else None,
@@ -201,8 +276,12 @@ class RiskEngine:
                 pricer, base_npv, active_market_data1, config1, "1", bp_shift
             ),
             "leg2_delta_vector": _pillar_delta_vector(
-                pricer, base_npv, active_market_data2, config2, "2", bp_shift
+                pricer, base_npv, active_market_data2, config2, "2", bp_shift,
+                basis_market_data=basis_market_data, config_basis=config_basis
             ),
+            "basis_delta_vector": _basis_pillar_delta_vector(
+                pricer, base_npv, basis_market_data, config_basis, bp_shift
+            ) if basis_builder and basis_market_data and config_basis else [],
             "method": {
                 "rate_bump": "+1 bp on market quotes (parallel or per pillar)",
                 "fx_bump": f"+{fx_shift_pct * 100:.0f}% relative spot shift",

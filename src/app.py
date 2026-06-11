@@ -642,7 +642,8 @@ def get_sample_data(filename):
         'treasury_fallback.csv',
         'interest_rate_swap_portfolio.csv',
         'cross_asset_portfolio.csv',
-        'asset_swap_sample.csv'
+        'asset_swap_sample.csv',
+        'basis_fallback.csv'
     }
     if filename not in allowed_files:
         return jsonify({'success': False, 'error': 'Forbidden or not found'}), 404
@@ -810,6 +811,7 @@ def calculate_currency_swap():
         
         leg1_market_raw = req_data.get('leg1_market_data', [])
         leg2_market_raw = req_data.get('leg2_market_data', [])
+        basis_market_raw = req_data.get('basis_market_data', [])
         
         curve_config1 = req_data.get('curve_config1', {})
         curve_config2 = req_data.get('curve_config2', {})
@@ -819,6 +821,8 @@ def calculate_currency_swap():
             leg1_market_raw = load_fallback_csv('usd_ois_fallback.csv')
         if not leg2_market_raw:
             leg2_market_raw = load_fallback_csv('eur_fallback.csv')
+        if not basis_market_raw:
+            basis_market_raw = load_fallback_csv('basis_fallback.csv')
             
         # Parse trade date
         try:
@@ -838,8 +842,13 @@ def calculate_currency_swap():
         leg2_records, err = _parse_and_validate_market_data(leg2_market_raw, 'OIS')
         if err:
             return jsonify({'success': False, 'error': f"Leg 2 Curve: {err}"}), 400
+
+        # Parse market data for Basis
+        basis_records, err = _parse_and_validate_market_data(basis_market_raw, 'OIS')
+        if err:
+            return jsonify({'success': False, 'error': f"Basis Curve: {err}"}), 400
             
-        # Resolve overlaps for both
+        # Resolve overlaps
         config1 = {
             'trade_date': trade_date_str,
             'day_count_convention': curve_config1.get('day_count_convention', 'ACT/365'),
@@ -853,6 +862,12 @@ def calculate_currency_swap():
             'payment_frequency': int(curve_config2.get('payment_frequency', 2)),
             'interpolation_method': curve_config2.get('interpolation_method', 'Cubic Spline'),
             'futures_cutoff_years': float(curve_config2.get('futures_cutoff_years', 2.0))
+        }
+        config_basis = {
+            'trade_date': trade_date_str,
+            'day_count_convention': curve_config2.get('day_count_convention', 'ACT/365'),
+            'payment_frequency': int(curve_config2.get('payment_frequency', 2)),
+            'interpolation_method': curve_config2.get('interpolation_method', 'Cubic Spline'),
         }
         
         leg1_records = resolve_liquidity_overlaps(
@@ -870,11 +885,20 @@ def calculate_currency_swap():
             day_count_convention=config2['day_count_convention'],
             config=config2
         )
+
+        basis_records = resolve_liquidity_overlaps(
+            market_data_records=basis_records,
+            curve_type='OIS',
+            trade_date=trade_date,
+            day_count_convention=config_basis['day_count_convention'],
+            config=config_basis
+        )
         
         active_records1 = [r for r in leg1_records if not r.get('skipped', False)]
         active_records2 = [r for r in leg2_records if not r.get('skipped', False)]
+        active_basis_records = [r for r in basis_records if not r.get('skipped', False)]
         
-        if not active_records1 or not active_records2:
+        if not active_records1 or not active_records2 or not active_basis_records:
             return jsonify({
                 'success': False,
                 'error': 'All loaded instruments were flagged as skipped by the liquidity overlap filter.'
@@ -886,6 +910,10 @@ def calculate_currency_swap():
         
         builder2 = FuturesCurveBuilder(market_data=active_records2, config=config2)
         builder2.build_curve()
+
+        from quant.basis_curve_builder import CrossCurrencyBasisCurveBuilder
+        basis_builder = CrossCurrencyBasisCurveBuilder(market_data=active_basis_records, curve2=builder2, config=config_basis)
+        basis_builder.build_curve()
         
         # Determine swap maturity
         tenor_years = int(leg1.get('tenor_years', 5))
@@ -899,7 +927,8 @@ def calculate_currency_swap():
             leg1_config=leg1,
             leg2_config=leg2,
             curve_builder1=builder1,
-            curve_builder2=builder2
+            curve_builder2=builder2,
+            curve_builder2_basis=basis_builder
         )
         
         cashflows, npv_results = pricer.price_swap()
@@ -910,15 +939,19 @@ def calculate_currency_swap():
             active_market_data2=active_records2,
             config1=config1,
             config2=config2,
+            basis_market_data=active_basis_records,
+            config_basis=config_basis
         )
         
         # Generate knots outputs for visualization
         knots1 = _generate_curve_knots(leg1_records, builder1, config1)
         knots2 = _generate_curve_knots(leg2_records, builder2, config2)
+        knots_basis = _generate_curve_knots(basis_records, basis_builder, config_basis)
         
         # Generate smooth curves
         smooth_curve1 = _generate_smooth_curve(knots1, config1['interpolation_method'])
         smooth_curve2 = _generate_smooth_curve(knots2, config2['interpolation_method'])
+        smooth_curve_basis = _generate_smooth_curve(knots_basis, config_basis['interpolation_method'])
         
         # Generate FX Forward Curve at standard tenors
         std_tenors = ['O/N', '1M', '3M', '6M', '1Y', '2Y', '3Y', '5Y', '7Y', '10Y', '15Y', '30Y']
@@ -930,7 +963,7 @@ def calculate_currency_swap():
                 t1 = calculate_year_fraction(trade_date, t_date, config1['day_count_convention'])
                 t2 = calculate_year_fraction(trade_date, t_date, config2['day_count_convention'])
                 df1 = builder1._get_discount_factor(t1)
-                df2 = builder2._get_discount_factor(t2)
+                df2 = basis_builder._get_discount_factor(t2)
                 f_rate = spot_fx_rate * (df2 / df1) if df1 > 0 else spot_fx_rate
                 fx_forward_curve.append({
                     'tenor': tenor,
@@ -944,8 +977,10 @@ def calculate_currency_swap():
             'success': True,
             'leg1_knots': knots1,
             'leg2_knots': knots2,
+            'basis_knots': knots_basis,
             'leg1_curve': smooth_curve1,
             'leg2_curve': smooth_curve2,
+            'basis_curve': smooth_curve_basis,
             'fx_forward_curve': fx_forward_curve,
             'cashflows': cashflows,
             'npv_results': npv_results,

@@ -993,6 +993,16 @@
                             </li>
                         </ul>
                     </div>
+
+                    <div class="highlight-card">
+                        <h4>3. Market Cross-Currency Basis Spread (Curve Spread)</h4>
+                        <ul>
+                            <li><strong>Where:</strong> Traded as market quotes for cross-currency basis swaps across different tenors (e.g., 1Y, 5Y, 10Y).</li>
+                            <li><strong>Unit:</strong> Basis Points (bps) per annum, where $1 \text{ bp} = 0.0001$.</li>
+                            <li><strong>Description:</strong> Represents the market-wide premium/discount for swapping funding between two currencies. These spreads are bootstrapped directly into a basis-adjusted foreign currency discounting curve.</li>
+                            <li><strong>Application:</strong> Adjusts the zero rates of the foreign discounting curve to prevent arbitrage in cross-currency pricing. The application fully supports bootstrapping the market basis curve from these quotes and using it to discount foreign currency cashflows.</li>
+                        </ul>
+                    </div>
                 </section>
                 <!-- Section 9 -->
                 <section class="docs-section" id="liquidity-engine">
@@ -1107,10 +1117,19 @@
                 <section class="docs-section" id="ccs-risk">
                     <h2><i class="fa-solid fa-shield-halved"></i> 11. Cross-Currency Risk &amp; Sensitivities</h2>
                     <p>
-                        Cross-Currency Swaps (CCS) expose traders to multiple risk factors across two independent yield
-                        curves (Base and Foreign currencies) as well as the spot FX rate and contractual coupon spreads.
-                        The quantitative engine uses a <strong>bump-and-revalue</strong> approach to calculate highly
-                        accurate sensitivities.
+                        The ultimate goal of analyzing cross-currency sensitivities is to estimate the daily <strong>P&amp;L impact</strong>—how fluctuations in market interest rates, basis spreads, and foreign exchange rates translate into financial profit or loss for the swap position.
+                    </p>
+                    <p>
+                        <strong>What is P&amp;L impact?</strong> Daily P&amp;L impact is the change in the swap's Net Present Value (NPV) from one trading day to the next due to shifts in underlying market risk factors.
+                    </p>
+                    <div class="highlight-card" style="border-left-color: #0d6efd;">
+                        <h4><i class="fa-solid fa-circle-info" style="color: #0d6efd;"></i> Choose Your Framework</h4>
+                        <p>
+                            In quantitative finance, there are multiple ways to calculate and attribute P&amp;L impact. In this calculator, we have chosen the <strong>Sensitivity-Based (Taylor Series / Dot Product) Framework</strong>. This method measures the portfolio's directional sensitivities (Deltas) to individual risk factors and sums their products with the market changes. While computationally efficient and standard for real-time risk management, this is an approximation. Other industry-standard frameworks exist, such as <em>Step-by-Step Full Revaluation</em>, which sequentially reprices the portfolio for each factor to eliminate approximation error (unexplained P&amp;L) at the cost of significantly higher computational overhead.
+                        </p>
+                    </div>
+                    <p>
+                        The sections below outline how we calculate the base value and individual sensitivities that compose this framework.
                     </p>
 
                     <h3>1. Base Net Present Value ($NPV_{\text{base}}$)</h3>
@@ -1214,9 +1233,9 @@
                         </li>
                     </ol>
 
-                    <h3>5. Basis Spread PVBP</h3>
+                    <h3>5. Contractual Coupon Spread PVBP</h3>
                     <p>
-                        If a leg is a floating rate leg with a contractual basis spread, the engine calculates the
+                        If a leg is a floating rate leg with a contractual coupon spread (as defined in <a href="#spread-differences">Section 8.2</a>), the engine calculates the
                         sensitivity of the swap value to a $+1$ bp shift in that contractual spread (percent per annum):
                     </p>
                     <ol>
@@ -1229,12 +1248,59 @@
                             </div>
                         </li>
                         <li>Re-value the swap to obtain $NPV_{\text{bumped, spread}}$.</li>
-                        <li>Compute the Spread PVBP:
+                        <li>Compute the Contractual Spread PVBP (Spread PVBP):
                             <div class="equation-block">
                                 $$\text{Spread PVBP} = \left| NPV_{\text{bumped, spread}} - NPV_{\text{base}} \right|$$
                             </div>
                         </li>
                     </ol>
+
+                    <h3>6. Market Cross-Currency Basis Delta (Theoretical)</h3>
+                    <p>
+                        In institutional trading, valuing cross-currency swaps requires adjusting the foreign currency discounting curve by the <strong>market cross-currency basis spreads</strong> (as defined in <a href="#spread-differences">Section 8.3</a>). Bumping these basis spreads at each tenor gives rise to the <strong>Cross-Currency Basis Delta Vector</strong> ($\mathbf{\Delta}_{Basis}$):
+                    </p>
+                    <ol>
+                        <li><strong>Basis Curve Shift</strong>: Each pillar $j$ of the market basis spread curve is bumped by $+1$ bp individually.</li>
+                        <li><strong>Foreign Discount Curve Re-bootstrap</strong>: The basis-adjusted foreign discount curve is rebuilt.</li>
+                        <li><strong>Re-pricing</strong>: The foreign currency leg's cashflows are discounted using this new basis-adjusted curve, yielding $NPV_{\text{bumped, basis } j}$.</li>
+                        <li><strong>Basis Delta Output</strong>:
+                            <div class="equation-block">
+                                $$\Delta_{Basis, j} = NPV_{\text{bumped, basis } j} - NPV_{\text{base}}$$
+                            </div>
+                        </li>
+                    </ol>
+                    <div class="highlight-card" style="border-left-color: #10b981;">
+                        <h4><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Capability Note: Fully Supported</h4>
+                        <p>
+                            The calculator fully supports bootstrapping the <strong>market cross-currency basis curve</strong> from market basis swap quotes (see <a href="#spread-differences">Section 8.3</a>) and uses it to discount foreign currency cashflows. Consequently, it calculates the complete <strong>Cross-Currency Basis Delta vector</strong> ($\mathbf{\Delta}_{Basis}$) alongside the Domestic IR Delta vector ($\mathbf{\Delta}_{Dom}$), the Foreign IR Delta vector ($\mathbf{\Delta}_{For}$), and the contractual <em>Spread PVBP</em> (which is the sensitivity to the individual swap contract's own spread parameter, see <a href="#spread-differences">Section 8.2</a>).
+                        </p>
+                    </div>
+
+                    <h3>7. Daily P&amp;L Attribution &amp; the Dot Product Formula</h3>
+                    <p>
+                        To reconcile daily changes in a cross-currency swap portfolio's Net Present Value ($NPV$), risk managers perform a <strong>P&amp;L Attribution</strong>. By using a first-order Taylor expansion, we approximate the daily P&amp;L impact as the <strong>dot product</strong> of the sensitivity vectors (deltas) and the daily market rate moves:
+                    </p>
+                    <div class="equation-block">
+                        $$\Delta P\&L \approx \mathbf{\Delta}_{Dom} \cdot \mathbf{\delta r}_{Dom} + \mathbf{\Delta}_{For} \cdot \mathbf{\delta r}_{For} + \mathbf{\Delta}_{Basis} \cdot \mathbf{\delta b}_{Basis} + \Delta_{FX} \cdot \delta S_{FX}$$
+                    </div>
+                    <p>
+                        Where:
+                    </p>
+                    <ul>
+                        <li>$\mathbf{\Delta}_{Dom} \cdot \mathbf{\delta r}_{Dom} = \sum_{i=1}^N \Delta_{Dom, i} \times \delta r_{Dom, i}$ represents the P&amp;L contribution from domestic interest rate moves.</li>
+                        <li>$\mathbf{\Delta}_{For} \cdot \mathbf{\delta r}_{For} = \sum_{j=1}^M \Delta_{For, j} \times \delta r_{For, j}$ represents the P&amp;L contribution from foreign interest rate moves.</li>
+                        <li>$\mathbf{\Delta}_{Basis} \cdot \mathbf{\delta b}_{Basis} = \sum_{k=1}^K \Delta_{Basis, k} \times \delta b_{Basis, k}$ represents the P&amp;L contribution from market basis curve moves.</li>
+                        <li>$\Delta_{FX} \cdot \delta S_{FX}$ represents the P&amp;L contribution from spot FX fluctuations.</li>
+                    </ul>
+                    <p>
+                        This dot product formulation allows risk managers to pinpoint exactly which market moves drove the daily trading profit or loss.
+                    </p>
+                    <div class="highlight-card" style="border-left-color: #f59e0b;">
+                        <h4><i class="fa-solid fa-circle-info" style="color: #f59e0b;"></i> Application Note: Sensitivity Output Only</h4>
+                        <p>
+                            The calculator computes and outputs all the necessary component sensitivities—the delta vectors ($\mathbf{\Delta}_{Dom}$, $\mathbf{\Delta}_{For}$, $\mathbf{\Delta}_{Basis}$) and FX Spot Delta ($\Delta_{FX}$)—which serve as the inputs to this dot product formula. The application itself does not calculate the final P&amp;L attribution or dot product, as it does not store historical curve data or ingest daily market moves ($\mathbf{\delta r}$, $\mathbf{\delta b}$, $\delta S$).
+                        </p>
+                    </div>
                 </section>
 
                 <!-- Section 12 -->
