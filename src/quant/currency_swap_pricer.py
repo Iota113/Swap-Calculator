@@ -101,7 +101,8 @@ class CurrencySwapPricer:
         """
         curve1 = curve1 or self.curve1
         curve2 = curve2 or self.curve2
-        curve2_basis = curve2_basis or self.curve2_basis or curve2
+        if curve2_basis is None:
+            curve2_basis = curve2 if self.curve2_basis is self.curve2 else self.curve2_basis
         spot = spot_fx_rate if spot_fx_rate is not None else self.spot_fx_rate
 
         leg1_cfg = {**self.leg1, **(leg1_config or {})}
