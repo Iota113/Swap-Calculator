@@ -1,0 +1,5 @@
+Position,Rate,Notional,Ticker,Tenor,Freq,DayCount,TradeDate
+receiver,4.25,10000000,GOOGL,5,2,ACT/360,15-05-2026
+payer,3.80,5000000,MSFT,2,4,30/360,10-06-2026
+receiver,4.10,25000000,CL=F,1,12,ACT/365,01-06-2026
+payer,3.95,15000000,SI=F,3,2,EQUAL,20-05-2026
