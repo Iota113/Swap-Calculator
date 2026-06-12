@@ -5,19 +5,6 @@ import datetime
 class AssetPriceOracle:
 
     @staticmethod
-    def get_ticker_metadata(ticker: str) -> dict:
-        """Queries Yahoo Finance for the official company/commodity name."""
-        ticker_clean = ticker.strip().upper()
-        asset_type = 'Commodity' if '=F' in ticker_clean else 'Equity'
-        try:
-            info = yf.Ticker(ticker_clean).info
-            # Fallbacks: Short name -> Long name -> Just the ticker
-            name = info.get('shortName') or info.get('longName') or ticker_clean
-            return {'name': name, 'type': asset_type}
-        except Exception:
-            return {'name': ticker_clean, 'type': asset_type}
-
-    @staticmethod
     def get_dividend_yield(ticker: str) -> float:
         """Fetches the annualized dividend yield. Returns 0.0 for commodities/missing data."""
         stock = yf.Ticker(ticker.strip().upper())
